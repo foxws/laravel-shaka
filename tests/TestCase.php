@@ -2,9 +2,9 @@
 
 namespace Foxws\Shaka\Tests;
 
+use Foxws\Shaka\ShakaServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Foxws\Shaka\ShakaServiceProvider;
 
 class TestCase extends Orchestra
 {

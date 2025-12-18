@@ -12,6 +12,5 @@ class ShakaPackager
         public readonly ?int $timeout = null,
         public readonly ?string $temporaryFilesRoot = null,
         public readonly ?string $temporaryFilesEncrypted = null,
-    )
-    {}
+    ) {}
 }

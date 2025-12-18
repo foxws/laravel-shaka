@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace Foxws\Shaka\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class ShakaCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'laravel-shaka';
 
     public $description = 'My command';
 

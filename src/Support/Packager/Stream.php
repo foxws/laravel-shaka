@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Foxws\Shaka\Support\Packager;
 
-use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
 
 class Stream
@@ -15,6 +14,6 @@ class Stream
 
     public static function make(): self
     {
-        return new self();
+        return new self;
     }
 }

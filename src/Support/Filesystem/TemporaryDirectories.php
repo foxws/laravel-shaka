@@ -10,15 +10,11 @@ class TemporaryDirectories
 {
     /**
      * Root of the temporary directories.
-     *
-     * @var string
      */
     protected string $root;
 
     /**
      * Array of all directories
-     *
-     * @var array
      */
     protected array $directories = [];
 

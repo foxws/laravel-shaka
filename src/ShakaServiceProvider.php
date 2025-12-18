@@ -2,9 +2,9 @@
 
 namespace Foxws\Shaka;
 
+use Foxws\Shaka\Commands\ShakaCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Foxws\Shaka\Commands\ShakaCommand;
 
 class ShakaServiceProvider extends PackageServiceProvider
 {

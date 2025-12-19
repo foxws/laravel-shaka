@@ -118,13 +118,16 @@ class Packager
      */
     public function addVideoStream(string $input, string $output, ?array $options = []): self
     {
-        // Resolve input to full local path
+        // Resolve input to full local path for Shaka Packager
         $inputPath = $this->resolveInputPath($input);
 
-        // Resolve output to full local path
+        // Resolve output to full local path for Shaka Packager
         $outputPath = $this->resolveOutputPath($output);
 
         $this->builder()->addVideoStream($inputPath, $outputPath, $options);
+
+        // Store the relative output path for later copying
+        $this->builder()->addMetadata('relative_output', $this->getRelativeOutputPath($output));
 
         return $this;
     }
@@ -134,13 +137,16 @@ class Packager
      */
     public function addAudioStream(string $input, string $output, ?array $options = []): self
     {
-        // Resolve input to full local path
+        // Resolve input to full local path for Shaka Packager
         $inputPath = $this->resolveInputPath($input);
 
-        // Resolve output to full local path
+        // Resolve output to full local path for Shaka Packager
         $outputPath = $this->resolveOutputPath($output);
 
         $this->builder()->addAudioStream($inputPath, $outputPath, $options);
+
+        // Store the relative output path for later copying
+        $this->builder()->addMetadata('relative_output', $this->getRelativeOutputPath($output));
 
         return $this;
     }
@@ -199,6 +205,21 @@ class Packager
     }
 
     /**
+     * Get relative output path (with directory from first media)
+     */
+    protected function getRelativeOutputPath(string $output): string
+    {
+        if ($this->mediaCollection && $this->mediaCollection->count() > 0) {
+            $firstMedia = $this->mediaCollection->collection()->first();
+            $directory = $firstMedia->getDirectory();
+
+            return $directory.$output;
+        }
+
+        return $output;
+    }
+
+    /**
      * Set MPD output
      */
     public function withMpdOutput(string $path): self
@@ -206,6 +227,9 @@ class Packager
         $fullPath = $this->resolveOutputPath($path);
 
         $this->builder()->withMpdOutput($fullPath);
+
+        // Store relative path for copying
+        $this->builder()->addMetadata('relative_mpd_output', $this->getRelativeOutputPath($path));
 
         return $this;
     }
@@ -218,6 +242,9 @@ class Packager
         $fullPath = $this->resolveOutputPath($path);
 
         $this->builder()->withHlsMasterPlaylist($fullPath);
+
+        // Store relative path for copying
+        $this->builder()->addMetadata('relative_hls_output', $this->getRelativeOutputPath($path));
 
         return $this;
     }
@@ -269,9 +296,15 @@ class Packager
         // Get the first media's disk as the source disk
         $sourceDisk = $this->mediaCollection->collection()->first()?->getDisk();
 
+        // Collect relative output paths from builder metadata
+        $metadata = $this->builder->getMetadata();
+
         return new PackagerResult($result, [
             'streams' => $this->builder->getStreams()->toArray(),
             'options' => $this->builder->getOptions(),
+            'relative_outputs' => $metadata['relative_output'] ?? [],
+            'relative_mpd_output' => $metadata['relative_mpd_output'] ?? null,
+            'relative_hls_output' => $metadata['relative_hls_output'] ?? null,
         ], $sourceDisk);
     }
 

@@ -87,29 +87,23 @@ class PackagerResult
     }
 
     /**
-     * Collect all output file paths from metadata
+     * Collect all output file paths from metadata (using relative paths)
      */
     protected function collectOutputPaths(): array
     {
         $paths = [];
 
-        // Collect stream outputs
-        $streams = $this->getMetadataValue('streams', []);
-
-        foreach ($streams as $stream) {
-            if (isset($stream['output'])) {
-                $paths[] = $stream['output'];
-            }
-        }
+        // Collect relative stream outputs
+        $relativeOutputs = $this->getMetadataValue('relative_outputs', []);
+        $paths = array_merge($paths, $relativeOutputs);
 
         // Collect manifest outputs
-        $options = $this->getMetadataValue('options', []);
-
-        if (isset($options['mpd_output'])) {
-            $paths[] = $options['mpd_output'];
+        if ($relativeMpd = $this->getMetadataValue('relative_mpd_output')) {
+            $paths[] = $relativeMpd;
         }
-        if (isset($options['hls_master_playlist_output'])) {
-            $paths[] = $options['hls_master_playlist_output'];
+
+        if ($relativeHls = $this->getMetadataValue('relative_hls_output')) {
+            $paths[] = $relativeHls;
         }
 
         return array_unique($paths);

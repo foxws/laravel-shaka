@@ -118,6 +118,14 @@ class MediaOpener
         return $this->packager;
     }
 
+    /**
+     * Returns an instance of MediaExporter with the packager.
+     */
+    public function export(): Exporters\MediaExporter
+    {
+        return new Exporters\MediaExporter($this->packager);
+    }
+
     public function cleanupTemporaryFiles(): self
     {
         app(TemporaryDirectories::class)->deleteAll();

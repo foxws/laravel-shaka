@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Foxws\Shaka\Exporters;
 
+use Foxws\Shaka\Filesystem\Disk;
+use Foxws\Shaka\Filesystem\Media;
 use Foxws\Shaka\MediaOpener;
-use Foxws\Shaka\Support\Filesystem\Disk;
-use Foxws\Shaka\Support\Filesystem\Media;
-use Foxws\Shaka\Support\Packager\Packager;
+use Foxws\Shaka\Support\Packager;
+use Foxws\Shaka\Support\PackagerResult;
 use Illuminate\Support\Traits\ForwardsCalls;
 
 class MediaExporter
@@ -20,12 +21,11 @@ class MediaExporter
 
     protected ?string $visibility = null;
 
-    protected ?array $afterSavingCallbacks = null;
+    protected ?array $afterSavingCallbacks = [];
 
-    public function __construct(Packager $packager, Disk $toDisk)
+    public function __construct(Packager $packager)
     {
         $this->packager = $packager;
-        $this->toDisk = $toDisk;
     }
 
     protected function getDisk(): Disk
@@ -97,31 +97,26 @@ class MediaExporter
         return $outputMedia;
     }
 
-    protected function runAfterSavingCallbacks(?Media $outputMedia = null)
+    protected function runAfterSavingCallbacks(PackagerResult $result)
     {
         foreach ($this->afterSavingCallbacks as $key => $callback) {
-            call_user_func($callback, $this, $outputMedia);
+            call_user_func($callback, $this, $result);
 
             unset($this->afterSavingCallbacks[$key]);
         }
     }
 
-    public function save(?string $path = null)
+    public function save(?string $path = null): MediaOpener
     {
-        $outputMedia = $this->prepareSaving($path);
+        // Execute the packaging operation
+        $result = $this->packager->export();
 
-        // $this->packager->applyBeforeSavingCallbacks();
-
-        if ($outputMedia) {
-            $outputMedia->copyAllFromTemporaryDirectory($this->visibility);
-            $outputMedia->setVisibility($path, $this->visibility);
+        // If toDisk is set, copy outputs to target disk
+        if ($this->toDisk) {
+            $result->toDisk($this->toDisk, $this->visibility);
         }
 
-        // if ($this->onProgressCallback) {
-        //     call_user_func($this->onProgressCallback, 100, 0, 0);
-        // }
-
-        $this->runAfterSavingCallbacks($outputMedia);
+        $this->runAfterSavingCallbacks($result);
 
         return $this->getMediaOpener();
     }

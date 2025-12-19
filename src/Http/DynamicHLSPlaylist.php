@@ -141,6 +141,10 @@ class DynamicHLSPlaylist implements Responsable
      */
     protected function resolveKeyUrl(string $key): string
     {
+        if (! $this->keyUrlResolver) {
+            return $key;
+        }
+
         if (array_key_exists($key, $this->keyCache)) {
             return $this->keyCache[$key];
         }
@@ -153,6 +157,10 @@ class DynamicHLSPlaylist implements Responsable
      */
     protected function resolveMediaUrl(string $filename): string
     {
+        if (! $this->mediaUrlResolver) {
+            return $filename;
+        }
+
         if (array_key_exists($filename, $this->mediaCache)) {
             return $this->mediaCache[$filename];
         }
@@ -165,6 +173,10 @@ class DynamicHLSPlaylist implements Responsable
      */
     protected function resolvePlaylistUrl(string $filename): string
     {
+        if (! $this->playlistUrlResolver) {
+            return $filename;
+        }
+
         if (array_key_exists($filename, $this->playlistCache)) {
             return $this->playlistCache[$filename];
         }

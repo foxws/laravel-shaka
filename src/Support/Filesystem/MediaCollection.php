@@ -31,6 +31,16 @@ class MediaCollection
         return $this->items->map->getLocalPath()->all();
     }
 
+    /**
+     * Find a Media object by its path.
+     */
+    public function findByPath(string $path): ?Media
+    {
+        return $this->items->first(function (Media $media) use ($path) {
+            return $media->getPath() === $path;
+        });
+    }
+
     public function collection(): Collection
     {
         return $this->items;

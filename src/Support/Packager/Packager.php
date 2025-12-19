@@ -118,7 +118,10 @@ class Packager
      */
     public function addVideoStream(string $input, string $output, ?array $options = []): self
     {
-        $this->builder()->addVideoStream($input, $output, $options);
+        // Resolve input to full local path
+        $inputPath = $this->resolveInputPath($input);
+
+        $this->builder()->addVideoStream($inputPath, $output, $options);
 
         return $this;
     }
@@ -128,7 +131,10 @@ class Packager
      */
     public function addAudioStream(string $input, string $output, ?array $options = []): self
     {
-        $this->builder()->addAudioStream($input, $output, $options);
+        // Resolve input to full local path
+        $inputPath = $this->resolveInputPath($input);
+
+        $this->builder()->addAudioStream($inputPath, $output, $options);
 
         return $this;
     }
@@ -141,6 +147,24 @@ class Packager
         $this->builder()->addStream($stream);
 
         return $this;
+    }
+
+    /**
+     * Resolve input path to full local path from MediaCollection
+     */
+    protected function resolveInputPath(string $input): string
+    {
+        // Try to find media in collection
+        if ($this->mediaCollection) {
+            $media = $this->mediaCollection->findByPath($input);
+
+            if ($media) {
+                return $media->getLocalPath();
+            }
+        }
+
+        // If not found, assume it's already a full path
+        return $input;
     }
 
     /**

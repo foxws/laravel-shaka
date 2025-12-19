@@ -310,7 +310,7 @@ class Packager
     protected function filterSensitiveOptions(array $options): array
     {
         $filtered = $options;
-        
+
         // List of sensitive keys that should be redacted
         $sensitiveKeys = [
             'keys',

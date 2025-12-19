@@ -41,9 +41,9 @@ class Shaka
     public function clone(): self
     {
         return new Shaka(
-            $this->disk,
-            $this->packager,
-            $this->collection
+            $this->disk?->getName(),
+            $this->packager->fresh(),
+            clone $this->collection
         );
     }
 
@@ -52,6 +52,11 @@ class Shaka
         $this->disk = Disk::make($disk);
 
         return $this;
+    }
+
+    public function getDisk(): ?Disk
+    {
+        return $this->disk;
     }
 
     private static function makeLocalDiskFromPath(string $path): Disk
@@ -80,7 +85,18 @@ class Shaka
             $this->collection->push($media);
         }
 
+        // Initialize the packager with the collection
+        $this->packager->open($this->collection);
+
         return $this;
+    }
+
+    /**
+     * Open files from a specific disk
+     */
+    public function openFromDisk(Filesystem|string $disk, $paths): self
+    {
+        return $this->fromDisk($disk)->open($paths);
     }
 
     public function get(): MediaCollection

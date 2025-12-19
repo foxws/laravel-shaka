@@ -21,7 +21,7 @@ class FluentBuilderExamples
             ->addVideoStream('input.mp4', 'video.mp4')
             ->addAudioStream('input.mp4', 'audio.mp4')
             ->withMpdOutput('manifest.mpd')
-            ->execute();
+            ->export();
     }
 
     /**
@@ -42,7 +42,7 @@ class FluentBuilderExamples
             ->addAudioStream('input.mp4', 'audio.mp4')
             ->withMpdOutput('manifest.mpd')
             ->withSegmentDuration(6)
-            ->execute();
+            ->export();
     }
 
     /**
@@ -59,7 +59,7 @@ class FluentBuilderExamples
                 'key_server_url' => 'https://example.com/license',
             ])
             ->withSegmentDuration(6)
-            ->execute();
+            ->export();
     }
 
     /**
@@ -75,7 +75,7 @@ class FluentBuilderExamples
             ->addVideoStream('input3.mp4', 'video_3.mp4')
             ->addAudioStream('input3.mp4', 'audio_3.mp4')
             ->withMpdOutput('manifest.mpd')
-            ->execute();
+            ->export();
     }
 
     /**
@@ -93,7 +93,7 @@ class FluentBuilderExamples
             ->addAudioStream('input.mp4', 'audio.mp4')
             ->withMpdOutput('manifest.mpd')
             ->withSegmentDuration(4)
-            ->execute();
+            ->export();
     }
 
     /**
@@ -129,7 +129,7 @@ class FluentBuilderExamples
                 'language' => 'es',
             ])
             ->withMpdOutput('manifest.mpd')
-            ->execute();
+            ->export();
     }
 
     /**
@@ -150,8 +150,8 @@ class FluentBuilderExamples
         $builder->withMpdOutput('manifest.mpd');
         $builder->withSegmentDuration(6);
 
-        // Execute
-        $result = $shaka->execute();
+        // Export
+        $result = $shaka->export();
     }
 
     /**
@@ -164,7 +164,7 @@ class FluentBuilderExamples
                 ->addVideoStream('input.mp4', 'video.mp4')
                 ->addAudioStream('input.mp4', 'audio.mp4')
                 ->withMpdOutput('manifest.mpd')
-                ->execute();
+                ->export();
 
             logger()->info('Packaging successful', $result->toArray());
         } catch (\Foxws\Shaka\Exceptions\RuntimeException $e) {
@@ -202,7 +202,7 @@ class FluentBuilderExamples
             ])
             ->withMpdOutput('manifest.mpd')
             ->withSegmentDuration(4)
-            ->execute();
+            ->export();
     }
 
     /**
@@ -219,7 +219,7 @@ class FluentBuilderExamples
             ->open($mediaCollection)
             ->addVideoStream('input.mp4', 'output1/video.mp4')
             ->withMpdOutput('output1/manifest.mpd')
-            ->execute();
+            ->export();
 
         // Get a fresh packager instance for the next operation
         $freshPackager = $packager->fresh();
@@ -230,6 +230,6 @@ class FluentBuilderExamples
             ->addVideoStream('input.mp4', 'output2/video.mp4')
             ->addAudioStream('input.mp4', 'output2/audio.mp4')
             ->withHlsMasterPlaylist('output2/master.m3u8')
-            ->execute();
+            ->export();
     }
 }

@@ -184,7 +184,7 @@ class Packager
     }
 
     /**
-     * Execute packaging with the configured builder
+     * Export packaging with the configured builder
      */
     public function export(): PackagerResult
     {
@@ -248,7 +248,7 @@ class Packager
             ]);
         }
 
-        // Execute via driver
+        // Export via driver
         $result = $this->driver->command($arguments);
 
         if ($this->logger) {

@@ -363,7 +363,7 @@ class Packager
 
         return new PackagerResult($result, [
             'streams' => $this->builder->getStreams()->toArray(),
-            'options' => $this->builder->getOptions(),
+            'options' => $this->filterSensitiveOptions($this->builder->getOptions()),
             'relative_outputs' => $metadata['relative_output'] ?? [],
             'relative_mpd_output' => $metadata['relative_mpd_output'] ?? null,
             'relative_hls_output' => $metadata['relative_hls_output'] ?? null,
@@ -390,7 +390,7 @@ class Packager
 
         return new PackagerResult($result, [
             'streams' => $builder->getStreams()->toArray(),
-            'options' => $builder->getOptions(),
+            'options' => $this->filterSensitiveOptions($builder->getOptions()),
         ]);
     }
 

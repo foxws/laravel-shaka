@@ -275,6 +275,18 @@ class Packager
     }
 
     /**
+     * Returns the final command that would be executed, useful for debugging purposes.
+     */
+    public function getCommand(): string
+    {
+        if (! $this->builder) {
+            throw new \RuntimeException('No streams configured. Use addVideoStream() or addAudioStream() first.');
+        }
+
+        return $this->builder->build();
+    }
+
+    /**
      * Export packaging with the configured builder
      */
     public function export(): PackagerResult

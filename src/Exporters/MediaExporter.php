@@ -58,26 +58,18 @@ class MediaExporter
 
     /**
      * Returns the final command, useful for debugging purposes.
-     *
-     * @return mixed
      */
-    public function getCommand(?string $path = null)
+    public function getCommand(): string
     {
-        $media = $this->prepareSaving($path);
-
-        return $this->packager->getFinalCommand(
-            optional($media)->getLocalPath() ?: '/dev/null'
-        );
+        return $this->packager->getCommand();
     }
 
     /**
      * Dump the final command and end the script.
-     *
-     * @return void
      */
-    public function dd(?string $path = null)
+    public function dd(): void
     {
-        dd($this->getCommand($path));
+        dd($this->getCommand());
     }
 
     /**

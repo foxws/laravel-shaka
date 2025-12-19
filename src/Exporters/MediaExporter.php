@@ -8,7 +8,6 @@ use Foxws\Shaka\MediaOpener;
 use Foxws\Shaka\Support\Filesystem\Disk;
 use Foxws\Shaka\Support\Filesystem\Media;
 use Foxws\Shaka\Support\Packager\Packager;
-use Foxws\Shaka\Support\ProcessOutput;
 use Illuminate\Support\Traits\ForwardsCalls;
 
 class MediaExporter
@@ -71,7 +70,7 @@ class MediaExporter
         );
     }
 
-     /**
+    /**
      * Dump the final command and end the script.
      *
      * @return void

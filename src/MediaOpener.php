@@ -49,7 +49,6 @@ class MediaOpener
 
     public function fromDisk(Disk|Filesystem|string $disk): self
     {
-        dd($disk);
         $this->disk = Disk::make($disk);
 
         return $this;

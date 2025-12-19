@@ -121,7 +121,7 @@ class Packager
     /**
      * Add a video stream to the builder
      */
-    public function addVideoStream(string $input, string $output, ?array $options = []): self
+    public function addVideoStream(string $input, string $output, array $options = []): self
     {
         // Resolve input to full local path for Shaka Packager
         $inputPath = $this->resolveInputPath($input);
@@ -140,7 +140,7 @@ class Packager
     /**
      * Add an audio stream to the builder
      */
-    public function addAudioStream(string $input, string $output, ?array $options = []): self
+    public function addAudioStream(string $input, string $output, array $options = []): self
     {
         // Resolve input to full local path for Shaka Packager
         $inputPath = $this->resolveInputPath($input);

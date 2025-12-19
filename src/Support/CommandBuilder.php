@@ -34,7 +34,7 @@ class CommandBuilder
         return $this;
     }
 
-    public function addVideoStream(string $input, string $output, ?array $options = []): self
+    public function addVideoStream(string $input, string $output, array $options = []): self
     {
         return $this->addStream(array_merge([
             'in' => $input,
@@ -43,7 +43,7 @@ class CommandBuilder
         ], $options));
     }
 
-    public function addAudioStream(string $input, string $output, ?array $options = []): self
+    public function addAudioStream(string $input, string $output, array $options = []): self
     {
         return $this->addStream(array_merge([
             'in' => $input,

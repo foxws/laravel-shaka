@@ -115,7 +115,7 @@ class MediaOpener
 
     public function getPackager(): Packager
     {
-        return $this->packager->open($this->collection);
+        return $this->packager;
     }
 
     public function cleanupTemporaryFiles(): self

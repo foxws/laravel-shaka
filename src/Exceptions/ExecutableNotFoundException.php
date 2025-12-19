@@ -6,6 +6,4 @@ namespace Foxws\Shaka\Exceptions;
 
 use Exception;
 
-class ExecutableNotFoundException extends Exception
-{
-}
+class ExecutableNotFoundException extends Exception {}

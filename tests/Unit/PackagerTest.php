@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Foxws\Shaka\Support\Packager\Packager;
-use Foxws\Shaka\Support\Packager\PackagerResult;
 use Foxws\Shaka\Support\Packager\ShakaPackagerDriver;
 
 it('can create packager instance', function () {

@@ -15,7 +15,7 @@ class Packager
 
     public function fresh(): self
     {
-        return new static();
+        return new static;
     }
 
     public function getMediaCollection(): MediaCollection

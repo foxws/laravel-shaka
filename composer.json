@@ -1,10 +1,17 @@
 {
+    "$schema": "https://getcomposer.org/schema.json",
     "name": "foxws/laravel-shaka",
-    "description": "This is my package laravel-shaka",
+    "description": "A Laravel package to interact with Shaka Packager for media packaging.",
     "keywords": [
-        "Foxws",
         "laravel",
-        "laravel-shaka"
+        "shaka",
+        "packager",
+        "media",
+        "video",
+        "audio",
+        "streaming",
+        "dash",
+        "hls"
     ],
     "homepage": "https://github.com/foxws/laravel-shaka",
     "license": "MIT",
@@ -35,8 +42,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Foxws\\Shaka\\": "src/",
-            "Foxws\\Shaka\\Database\\Factories\\": "database/factories/"
+            "Foxws\\Shaka\\": "src/"
         }
     },
     "autoload-dev": {

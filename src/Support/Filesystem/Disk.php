@@ -27,7 +27,7 @@ class Disk
         $this->disk = $disk;
     }
 
-    public static function make(Disk|string $disk): self
+    public static function make(mixed $disk): self
     {
         if ($disk instanceof self) {
             return $disk;

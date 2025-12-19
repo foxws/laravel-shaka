@@ -47,7 +47,7 @@ class Shaka
         );
     }
 
-    public function fromDisk(Filesystem|string $disk): self
+    public function fromDisk(Disk|Filesystem|string $disk): self
     {
         $this->disk = Disk::make($disk);
 

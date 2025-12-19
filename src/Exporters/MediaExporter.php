@@ -15,9 +15,9 @@ class MediaExporter
 {
     use ForwardsCalls;
 
-    protected Packager $packager;
+    protected ?Packager $packager = null;
 
-    protected Disk $toDisk;
+    protected ?Disk $toDisk = null;
 
     protected ?string $visibility = null;
 
@@ -111,7 +111,7 @@ class MediaExporter
     {
         $outputMedia = $this->prepareSaving($path);
 
-        $this->packager->applyBeforeSavingCallbacks();
+        // $this->packager->applyBeforeSavingCallbacks();
 
         if ($outputMedia) {
             $outputMedia->copyAllFromTemporaryDirectory($this->visibility);
@@ -142,8 +142,8 @@ class MediaExporter
      */
     public function __call($method, $arguments)
     {
-        $result = $this->forwardCallTo($driver = $this->driver, $method, $arguments);
+        $result = $this->forwardCallTo($packager = $this->packager, $method, $arguments);
 
-        return ($result === $driver) ? $this : $result;
+        return ($result === $packager) ? $this : $result;
     }
 }

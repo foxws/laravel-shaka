@@ -305,6 +305,33 @@ class Packager
     }
 
     /**
+     * Filter sensitive data from options before logging
+     */
+    protected function filterSensitiveOptions(array $options): array
+    {
+        $filtered = $options;
+        
+        // List of sensitive keys that should be redacted
+        $sensitiveKeys = [
+            'keys',
+            'key',
+            'key_id',
+            'pssh',
+            'protection_systems',
+            'raw_key',
+            'iv',
+        ];
+
+        foreach ($sensitiveKeys as $key) {
+            if (isset($filtered[$key])) {
+                $filtered[$key] = '[REDACTED]';
+            }
+        }
+
+        return $filtered;
+    }
+
+    /**
      * Export packaging with the configured builder
      */
     public function export(): PackagerResult
@@ -318,7 +345,7 @@ class Packager
         if ($this->logger) {
             $this->logger->info('Starting packaging operation', [
                 'streams' => $this->builder->getStreams()->count(),
-                'options' => $this->builder->getOptions(),
+                'options' => $this->filterSensitiveOptions($this->builder->getOptions()),
             ]);
         }
 
@@ -336,7 +363,7 @@ class Packager
 
         return new PackagerResult($result, [
             'streams' => $this->builder->getStreams()->toArray(),
-            'options' => $this->builder->getOptions(),
+            'options' => $this->filterSensitiveOptions($this->builder->getOptions()),
             'relative_outputs' => $metadata['relative_output'] ?? [],
             'relative_mpd_output' => $metadata['relative_mpd_output'] ?? null,
             'relative_hls_output' => $metadata['relative_hls_output'] ?? null,
@@ -351,7 +378,7 @@ class Packager
         if ($this->logger) {
             $this->logger->info('Starting packaging operation with builder', [
                 'streams' => $builder->getStreams()->count(),
-                'options' => $builder->getOptions(),
+                'options' => $this->filterSensitiveOptions($builder->getOptions()),
             ]);
         }
 
@@ -363,7 +390,7 @@ class Packager
 
         return new PackagerResult($result, [
             'streams' => $builder->getStreams()->toArray(),
-            'options' => $builder->getOptions(),
+            'options' => $this->filterSensitiveOptions($builder->getOptions()),
         ]);
     }
 

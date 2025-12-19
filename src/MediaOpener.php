@@ -126,6 +126,22 @@ class MediaOpener
         return new Exporters\MediaExporter($this->packager);
     }
 
+    /**
+     * Create a new DynamicHLSPlaylist instance for customizing HLS playlists.
+     */
+    public static function dynamicHLSPlaylist(?string $disk = null): Http\DynamicHLSPlaylist
+    {
+        return new Http\DynamicHLSPlaylist($disk);
+    }
+
+    /**
+     * Create a new DynamicDASHManifest instance for customizing DASH manifests.
+     */
+    public static function dynamicDASHManifest(?string $disk = null): Http\DynamicDASHManifest
+    {
+        return new Http\DynamicDASHManifest($disk);
+    }
+
     public function cleanupTemporaryFiles(): self
     {
         app(TemporaryDirectories::class)->deleteAll();

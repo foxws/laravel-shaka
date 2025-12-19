@@ -181,12 +181,21 @@ class DynamicHLSPlaylist implements Responsable
     }
 
     /**
-     * Returns a boolean whether the line contains a .M3U8 playlist filename
-     * or a .TS segment filename.
+     * Returns a boolean whether the line contains a .M3U8 playlist filename,
+     * a .TS segment filename, or a media filename (.mp4, .m4s, .m4a, .m4v, .aac, .vtt).
      */
     private static function lineHasMediaFilename(string $line): bool
     {
-        return ! Str::startsWith($line, '#') && Str::endsWith($line, ['.m3u8', '.ts']);
+        return ! Str::startsWith($line, '#') && Str::endsWith($line, [
+            '.m3u8',  // Playlist files
+            '.ts',    // Transport stream segments
+            '.mp4',   // MP4 media files
+            '.m4s',   // fMP4 media segments
+            '.m4a',   // Audio-only MP4
+            '.m4v',   // Video-only MP4
+            '.aac',   // AAC audio
+            '.vtt',   // WebVTT subtitles
+        ]);
     }
 
     /**
@@ -197,6 +206,20 @@ class DynamicHLSPlaylist implements Responsable
         preg_match_all('/#EXT-X-KEY:METHOD=AES-128,URI="([a-zA-Z0-9-_\/:]+.key)",IV=[a-z0-9]+/', $line, $matches);
 
         return $matches[1][0] ?? null;
+    }
+
+    /**
+     * Extract playlist URI from EXT-X-MEDIA line.
+     */
+    private static function extractPlaylistFromExtMediaLine(string $line): ?string
+    {
+        if (! Str::startsWith($line, '#EXT-X-MEDIA:')) {
+            return null;
+        }
+
+        preg_match('/URI="([^"]+)"/', $line, $matches);
+
+        return $matches[1] ?? null;
     }
 
     /**
@@ -232,22 +255,33 @@ class DynamicHLSPlaylist implements Responsable
     {
         return static::parseLines($this->disk->get($playlistPath))->map(function (string $line) {
             if (static::lineHasMediaFilename($line)) {
+                // Use playlist resolver for .m3u8 files, media resolver for everything else
                 return Str::endsWith($line, '.m3u8')
                     ? $this->resolvePlaylistUrl($line)
                     : $this->resolveMediaUrl($line);
             }
 
+            // Handle #EXT-X-KEY encryption lines
             $key = static::extractKeyFromExtLine($line);
-
-            if (! $key) {
-                return $line;
+            if ($key) {
+                return str_replace(
+                    '#EXT-X-KEY:METHOD=AES-128,URI="'.$key.'"',
+                    '#EXT-X-KEY:METHOD=AES-128,URI="'.$this->resolveKeyUrl($key).'"',
+                    $line
+                );
             }
 
-            return str_replace(
-                '#EXT-X-KEY:METHOD=AES-128,URI="'.$key.'"',
-                '#EXT-X-KEY:METHOD=AES-128,URI="'.$this->resolveKeyUrl($key).'"',
-                $line
-            );
+            // Handle #EXT-X-MEDIA lines with URI attribute
+            $playlistUri = static::extractPlaylistFromExtMediaLine($line);
+            if ($playlistUri) {
+                return str_replace(
+                    'URI="'.$playlistUri.'"',
+                    'URI="'.$this->resolvePlaylistUrl($playlistUri).'"',
+                    $line
+                );
+            }
+
+            return $line;
         })->implode(PHP_EOL);
     }
 

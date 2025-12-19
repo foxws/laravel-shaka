@@ -206,7 +206,51 @@ class FluentBuilderExamples
     }
 
     /**
-     * Example 10: Reusing the packager with different configurations
+     * Example 10: Adding WebVTT subtitles
+     */
+    public function addingSubtitles(): void
+    {
+        $result = Shaka::open('input.mp4')
+            ->export()
+            ->addVideoStream('input.mp4', 'video.mp4')
+            ->addAudioStream('input.mp4', 'audio.mp4')
+            ->addStream([
+                'in' => 'subtitles_en.vtt',
+                'stream' => 'text',
+                'output' => 'subtitles_en.vtt',
+                'language' => 'en',
+            ])
+            ->addStream([
+                'in' => 'subtitles_es.vtt',
+                'stream' => 'text',
+                'output' => 'subtitles_es.vtt',
+                'language' => 'es',
+            ])
+            ->withHlsMasterPlaylist('master.m3u8')
+            ->toDisk('export')
+            ->save();
+    }
+
+    /**
+     * Example 11: Custom output path with UUID
+     */
+    public function customOutputPath(): void
+    {
+        $uuid = '01234567-89ab-cdef-0123-456789abcdef';
+
+        $result = Shaka::fromDisk('videos')
+            ->open('source/input.mp4')
+            ->export()
+            ->outputPath($uuid)  // Files saved to: {uuid}/master.m3u8, {uuid}/video.mp4, etc.
+            ->addVideoStream('source/input.mp4', 'video.mp4')
+            ->addAudioStream('source/input.mp4', 'audio.mp4')
+            ->withHlsMasterPlaylist('master.m3u8')
+            ->toDisk('export')
+            ->save();
+    }
+
+    /**
+     * Example 12: Reusing the packager with different configurations
      */
     public function reusingPackager(Packager $packager): void
     {

@@ -150,7 +150,7 @@ class ShakaPackager
                     // End of quoted string
                     $inQuote = false;
                     $quoteChar = null;
-                } elseif (! $inQuote) {
+                } elseif (!$inQuote) {
                     // Start of quoted string
                     $inQuote = true;
                     $quoteChar = $char;
@@ -158,7 +158,7 @@ class ShakaPackager
                     // Different quote character inside quotes
                     $current .= $char;
                 }
-            } elseif ($char === ' ' && ! $inQuote) {
+            } elseif ($char === ' ' && !$inQuote) {
                 // Space outside quotes - end of argument
                 if ($current !== '') {
                     $arguments[] = $current;

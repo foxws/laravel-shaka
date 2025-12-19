@@ -16,7 +16,7 @@ class Disk
 {
     use ForwardsCalls;
 
-    protected ?Filesystem $disk = null;
+    protected Filesystem|string $disk;
 
     protected ?string $temporaryDirectory = null;
 
@@ -27,7 +27,7 @@ class Disk
         $this->disk = $disk;
     }
 
-    public static function make(Filesystem|string $disk): self
+    public static function make(Disk|string $disk): self
     {
         if ($disk instanceof self) {
             return $disk;

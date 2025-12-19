@@ -38,12 +38,11 @@ it('can create fresh instance', function () {
     expect($packager2->getDriver())->toBe($driver);
 });
 
-it('can create packager using static create method', function () {
-    config(['shaka.packager.binaries' => '/usr/local/bin/packager']);
-    config(['shaka.timeout' => 3600]);
+it('fresh instance has same driver', function () {
+    $driver = mock(ShakaPackager::class);
 
-    $packager = Packager::create();
+    $packager1 = new Packager($driver);
+    $packager2 = $packager1->fresh();
 
-    expect($packager)->toBeInstanceOf(Packager::class);
-    expect($packager->getDriver())->toBeInstanceOf(ShakaPackager::class);
-})->skip('Requires actual binary to be present');
+    expect($packager2->getDriver())->toBe($packager1->getDriver());
+});

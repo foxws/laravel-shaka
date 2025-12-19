@@ -1,0 +1,136 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Foxws\Shaka\Support\Packager;
+
+use Foxws\Shaka\Exceptions\ExecutableNotFoundException;
+use Foxws\Shaka\Exceptions\RuntimeException;
+use Illuminate\Support\Facades\Process;
+use Psr\Log\LoggerInterface;
+
+class ShakaPackagerDriver
+{
+    protected string $binaryPath;
+
+    protected ?LoggerInterface $logger;
+
+    protected int $timeout;
+
+    public function __construct(
+        string $binaryPath,
+        ?LoggerInterface $logger = null,
+        int $timeout = 3600
+    ) {
+        $this->binaryPath = $binaryPath;
+        $this->logger = $logger;
+        $this->timeout = $timeout;
+    }
+
+    public static function create(
+        ?LoggerInterface $logger = null,
+        ?array $configuration = null
+    ): self {
+        $config = $configuration ?? config('laravel-shaka');
+
+        $binaryPath = $config['packager']['binaries'] ?? '/usr/local/bin/packager';
+
+        $timeout = $config['timeout'] ?? 3600;
+
+        // Verify binary exists
+        if (! static::isExecutable($binaryPath)) {
+            throw new ExecutableNotFoundException(
+                "Shaka Packager binary not found at: {$binaryPath}"
+            );
+        }
+
+        return new self($binaryPath, $logger, $timeout);
+    }
+
+    protected static function isExecutable(string $path): bool
+    {
+        return is_file($path) && is_executable($path);
+    }
+
+    public function getName(): string
+    {
+        return 'packager';
+    }
+
+    public function getVersion(): string
+    {
+        $result = $this->command('--version');
+
+        if (preg_match('/packager version (.+)/i', $result, $matches)) {
+            return trim($matches[1]);
+        }
+
+        throw new RuntimeException('Cannot parse packager version');
+    }
+
+    public function command(string $command, array $options = []): string
+    {
+        $commandLine = sprintf('%s %s', $this->binaryPath, $command);
+
+        if ($this->logger) {
+            $this->logger->debug('Executing packager command', [
+                'command' => $commandLine,
+                'options' => $options,
+            ]);
+        }
+
+        $result = Process::timeout($this->timeout)
+            ->run($commandLine);
+
+        if ($result->failed()) {
+            $errorMessage = "Packager command failed: {$result->errorOutput()}";
+
+            if ($this->logger) {
+                $this->logger->error($errorMessage, [
+                    'command' => $commandLine,
+                    'exit_code' => $result->exitCode(),
+                    'output' => $result->output(),
+                ]);
+            }
+
+            throw new RuntimeException($errorMessage);
+        }
+
+        if ($this->logger) {
+            $this->logger->debug('Packager command completed', [
+                'output' => $result->output(),
+            ]);
+        }
+
+        return $result->output();
+    }
+
+    public function getBinaryPath(): string
+    {
+        return $this->binaryPath;
+    }
+
+    public function getTimeout(): int
+    {
+        return $this->timeout;
+    }
+
+    public function setTimeout(int $timeout): self
+    {
+        $this->timeout = $timeout;
+
+        return $this;
+    }
+
+    public function setLogger(?LoggerInterface $logger): self
+    {
+        $this->logger = $logger;
+
+        return $this;
+    }
+
+    public function getLogger(): ?LoggerInterface
+    {
+        return $this->logger;
+    }
+}

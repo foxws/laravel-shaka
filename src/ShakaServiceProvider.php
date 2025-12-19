@@ -35,9 +35,8 @@ class ShakaServiceProvider extends PackageServiceProvider
             $config = $this->app['config'];
 
             $baseConfig = [
-                // 'ffmpeg.binaries' => $config->get('laravel-shaka.ffmpeg.binaries'),
-                // 'ffprobe.binaries' => $config->get('laravel-shaka.ffprobe.binaries'),
-                // 'timeout' => $config->get('laravel-shaka.timeout'),
+                'packager.binaries' => $config->get('laravel-shaka.packager.binaries'),
+                'timeout' => $config->get('laravel-shaka.timeout'),
             ];
 
             if ($configuredTemporaryRoot = $config->get('laravel-shaka.temporary_files_root')) {
@@ -49,8 +48,24 @@ class ShakaServiceProvider extends PackageServiceProvider
 
         $this->app->singleton(TemporaryDirectories::class, function () {
             return new TemporaryDirectories(
-                $this->app['config']->get('laravel-ffmpeg.temporary_files_root', sys_get_temp_dir()),
+                $this->app['config']->get('laravel-shaka.temporary_files_root', sys_get_temp_dir()),
             );
+        });
+
+        // Register the Shaka Packager Driver
+        $this->app->singleton(\Foxws\Shaka\Support\Packager\ShakaPackagerDriver::class, function ($app) {
+            $logger = $app->make('laravel-shaka-logger');
+            $config = $app->make('laravel-shaka-configuration');
+
+            return \Foxws\Shaka\Support\Packager\ShakaPackagerDriver::create($logger, $config);
+        });
+
+        // Register the Packager
+        $this->app->singleton(Packager::class, function ($app) {
+            $driver = $app->make(\Foxws\Shaka\Support\Packager\ShakaPackagerDriver::class);
+            $logger = $app->make('laravel-shaka-logger');
+
+            return new Packager($driver, $logger);
         });
 
         // Register the main class to use with the facade

@@ -115,7 +115,7 @@ class ShakaPackager
 
     /**
      * Parse a command string into an array of arguments.
-     * Handles quoted arguments and special characters properly.
+     * Handles quoted arguments and escape sequences properly.
      */
     protected function parseCommandToArray(string $command): array
     {
@@ -128,7 +128,24 @@ class ShakaPackager
         for ($i = 0; $i < $length; $i++) {
             $char = $command[$i];
 
-            if (($char === '"' || $char === "'") && ($i === 0 || $command[$i - 1] !== '\\')) {
+            // Check for escape sequences
+            if ($char === '\\' && $i + 1 < $length) {
+                $nextChar = $command[$i + 1];
+                
+                // Handle escape sequences
+                if ($nextChar === '\\' || $nextChar === '"' || $nextChar === "'" || $nextChar === ' ') {
+                    // Add the escaped character
+                    $current .= $nextChar;
+                    $i++; // Skip the next character
+                    continue;
+                }
+                
+                // Not a recognized escape sequence, keep the backslash
+                $current .= $char;
+                continue;
+            }
+
+            if (($char === '"' || $char === "'")) {
                 if ($inQuote && $char === $quoteChar) {
                     // End of quoted string
                     $inQuote = false;
@@ -147,6 +164,7 @@ class ShakaPackager
                     $arguments[] = $current;
                     $current = '';
                 }
+                // Skip multiple consecutive spaces by not adding empty strings
             } else {
                 $current .= $char;
             }

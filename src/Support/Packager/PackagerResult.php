@@ -4,16 +4,22 @@ declare(strict_types=1);
 
 namespace Foxws\Shaka\Support\Packager;
 
+use Foxws\Shaka\Support\Filesystem\Disk;
+use Illuminate\Contracts\Filesystem\Filesystem;
+
 class PackagerResult
 {
     protected string $output;
 
     protected array $metadata = [];
 
-    public function __construct(string $output, array $metadata = [])
+    protected ?Disk $sourceDisk = null;
+
+    public function __construct(string $output, array $metadata = [], ?Disk $sourceDisk = null)
     {
         $this->output = $output;
         $this->metadata = $metadata;
+        $this->sourceDisk = $sourceDisk;
     }
 
     public function getOutput(): string
@@ -51,5 +57,61 @@ class PackagerResult
             'output' => $this->output,
             'metadata' => $this->metadata,
         ];
+    }
+
+    /**
+     * Copy exported files to a different disk
+     */
+    public function toDisk(Disk|Filesystem|string $disk, ?string $visibility = null): self
+    {
+        $targetDisk = Disk::make($disk);
+
+        if (! $this->sourceDisk) {
+            throw new \RuntimeException('Cannot copy files: source disk not set');
+        }
+
+        // Get output paths from metadata
+        $outputPaths = $this->collectOutputPaths();
+
+        foreach ($outputPaths as $path) {
+            if ($this->sourceDisk->exists($path)) {
+                $targetDisk->writeStream($path, $this->sourceDisk->readStream($path));
+
+                if ($visibility) {
+                    $targetDisk->setVisibility($path, $visibility);
+                }
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Collect all output file paths from metadata
+     */
+    protected function collectOutputPaths(): array
+    {
+        $paths = [];
+
+        // Collect stream outputs
+        $streams = $this->getMetadataValue('streams', []);
+
+        foreach ($streams as $stream) {
+            if (isset($stream['output'])) {
+                $paths[] = $stream['output'];
+            }
+        }
+
+        // Collect manifest outputs
+        $options = $this->getMetadataValue('options', []);
+
+        if (isset($options['mpd_output'])) {
+            $paths[] = $options['mpd_output'];
+        }
+        if (isset($options['hls_master_playlist_output'])) {
+            $paths[] = $options['hls_master_playlist_output'];
+        }
+
+        return array_unique($paths);
     }
 }

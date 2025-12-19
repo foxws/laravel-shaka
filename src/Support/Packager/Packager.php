@@ -231,10 +231,13 @@ class Packager
             $this->logger->info('Packaging operation completed');
         }
 
+        // Get the first media's disk as the source disk
+        $sourceDisk = $this->mediaCollection->collection()->first()?->getDisk();
+
         return new PackagerResult($result, [
             'streams' => $this->builder->getStreams()->toArray(),
             'options' => $this->builder->getOptions(),
-        ]);
+        ], $sourceDisk);
     }
 
     public function packageWithBuilder(CommandBuilder $builder): PackagerResult

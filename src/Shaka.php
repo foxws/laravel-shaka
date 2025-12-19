@@ -9,12 +9,12 @@ use Foxws\Shaka\Support\Filesystem\Media;
 use Foxws\Shaka\Support\Filesystem\MediaCollection;
 use Foxws\Shaka\Support\Filesystem\TemporaryDirectories;
 use Foxws\Shaka\Support\Packager\Packager;
-use Illuminate\Support\Traits\ForwardsCalls;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Filesystem\FilesystemManager;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Traits\ForwardsCalls;
 
 class Shaka
 {
@@ -30,8 +30,7 @@ class Shaka
         ?string $disk = null,
         ?Packager $packager = null,
         ?MediaCollection $mediaCollection = null
-    )
-    {
+    ) {
         $this->fromDisk($disk ?: config('filesystems.default'));
 
         $this->packager = $packager ?: app(Packager::class)->fresh();

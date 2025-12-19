@@ -21,6 +21,8 @@ class MediaExporter
 
     protected ?string $visibility = null;
 
+    protected ?string $outputPath = null;
+
     protected ?array $afterSavingCallbacks = [];
 
     public function __construct(Packager $packager)
@@ -45,6 +47,13 @@ class MediaExporter
     public function toDisk($disk): self
     {
         $this->toDisk = Disk::make($disk);
+
+        return $this;
+    }
+
+    public function inPath(string $path): self
+    {
+        $this->outputPath = rtrim($path, '/').'/';
 
         return $this;
     }
@@ -100,6 +109,11 @@ class MediaExporter
 
     public function save(?string $path = null): MediaOpener
     {
+        // Set custom output path in packager if specified
+        if ($this->outputPath) {
+            $this->packager->setOutputPath($this->outputPath);
+        }
+
         // Execute the packaging operation (writes to temporary directory)
         $result = $this->packager->export();
 

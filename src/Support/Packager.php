@@ -23,6 +23,8 @@ class Packager
 
     protected ?string $temporaryDirectory = null;
 
+    protected ?string $customOutputPath = null;
+
     public function __construct(
         ShakaPackager $packager,
         ?LoggerInterface $logger = null
@@ -195,10 +197,26 @@ class Packager
     }
 
     /**
-     * Get relative output path (with directory from first media)
+     * Set custom output path (overrides source directory structure)
+     */
+    public function setOutputPath(string $path): self
+    {
+        $this->customOutputPath = rtrim($path, '/').'/';
+
+        return $this;
+    }
+
+    /**
+     * Get relative output path (with directory from first media or custom path)
      */
     protected function getRelativeOutputPath(string $output): string
     {
+        // Use custom output path if set
+        if ($this->customOutputPath) {
+            return $this->customOutputPath.$output;
+        }
+
+        // Otherwise preserve source directory structure
         if ($this->mediaCollection && $this->mediaCollection->count() > 0) {
             $firstMedia = $this->mediaCollection->collection()->first();
             $directory = $firstMedia->getDirectory();

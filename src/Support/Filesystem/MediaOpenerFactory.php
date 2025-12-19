@@ -29,8 +29,20 @@ class MediaOpenerFactory
         return $this->packager = $resolver();
     }
 
-    public function make(): MediaOpener
+    public function new(): MediaOpener
     {
-        return new MediaOpener($this->defaultDisk, $this->driver());
+        return new MediaOpener($this->defaultDisk, $this->packager());
+    }
+
+    /**
+     * Handle dynamic method calls into the MediaOpener.
+     *
+     * @param  string  $method
+     * @param  array  $parameters
+     * @return mixed
+     */
+    public function __call($method, $parameters)
+    {
+        return $this->forwardCallTo($this->new(), $method, $parameters);
     }
 }

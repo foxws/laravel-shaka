@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Foxws\Shaka\Examples;
 
 use Foxws\Shaka\Facades\Shaka;
-use Foxws\Shaka\Support\Packager\Packager;
+use Foxws\Shaka\Support\Packager;
 
 /**
  * Examples using the fluent CommandBuilder API
@@ -83,8 +83,8 @@ class FluentBuilderExamples
      */
     public function usingPackagerDirectly(Packager $packager): void
     {
-        $mediaCollection = \Foxws\Shaka\Support\Filesystem\MediaCollection::make([
-            \Foxws\Shaka\Support\Filesystem\Media::make('videos', 'input.mp4'),
+        $mediaCollection = \Foxws\Shaka\Filesystem\MediaCollection::make([
+            \Foxws\Shaka\Filesystem\Media::make('videos', 'input.mp4'),
         ]);
 
         $result = $packager
@@ -210,8 +210,8 @@ class FluentBuilderExamples
      */
     public function reusingPackager(Packager $packager): void
     {
-        $mediaCollection = \Foxws\Shaka\Support\Filesystem\MediaCollection::make([
-            \Foxws\Shaka\Support\Filesystem\Media::make('videos', 'input.mp4'),
+        $mediaCollection = \Foxws\Shaka\Filesystem\MediaCollection::make([
+            \Foxws\Shaka\Filesystem\Media::make('videos', 'input.mp4'),
         ]);
 
         // First packaging operation

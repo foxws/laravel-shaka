@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Foxws\Shaka\Support\Packager;
+namespace Foxws\Shaka\Support;
 
-use Foxws\Shaka\Support\Filesystem\Disk;
+use Foxws\Shaka\Filesystem\Disk;
 use Illuminate\Contracts\Filesystem\Filesystem;
 
 class PackagerResult

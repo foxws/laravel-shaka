@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Foxws\Shaka\Support\Filesystem;
+namespace Foxws\Shaka\Filesystem;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Traits\ForwardsCalls;

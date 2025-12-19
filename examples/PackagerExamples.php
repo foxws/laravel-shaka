@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Foxws\Shaka\Examples;
 
-use Foxws\Shaka\Support\Filesystem\Media;
-use Foxws\Shaka\Support\Filesystem\MediaCollection;
-use Foxws\Shaka\Support\Packager\CommandBuilder;
-use Foxws\Shaka\Support\Packager\Packager;
-use Foxws\Shaka\Support\Packager\Stream;
+use Foxws\Shaka\Filesystem\Media;
+use Foxws\Shaka\Filesystem\MediaCollection;
+use Foxws\Shaka\Support\CommandBuilder;
+use Foxws\Shaka\Support\Packager;
+use Foxws\Shaka\Support\Stream;
 
 /**
  * Examples of how to use the Packager with different approaches

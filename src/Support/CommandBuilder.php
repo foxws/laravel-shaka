@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Foxws\Shaka\Support\Packager;
+namespace Foxws\Shaka\Support;
 
 use Illuminate\Support\Collection;
 

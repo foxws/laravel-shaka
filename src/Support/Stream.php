@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Foxws\Shaka\Support\Packager;
+namespace Foxws\Shaka\Support;
 
-use Foxws\Shaka\Support\Filesystem\Media;
+use Foxws\Shaka\Filesystem\Media;
 use Illuminate\Contracts\Support\Arrayable;
 
 class Stream implements Arrayable

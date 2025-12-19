@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Foxws\Shaka\Support\Packager;
+namespace Foxws\Shaka\Support;
 
 use Foxws\Shaka\Exceptions\ExecutableNotFoundException;
 use Foxws\Shaka\Exceptions\RuntimeException;

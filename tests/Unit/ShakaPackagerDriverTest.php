@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Foxws\Shaka\Exceptions\ExecutableNotFoundException;
-use Foxws\Shaka\Support\Packager\ShakaPackager;
+use Foxws\Shaka\Support\ShakaPackager;
 use Illuminate\Support\Facades\Config;
 
 beforeEach(function () {

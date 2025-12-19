@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Foxws\Shaka\Support\Filesystem;
+namespace Foxws\Shaka\Filesystem;
 
 use Closure;
 use Foxws\Shaka\MediaOpener;
-use Foxws\Shaka\Support\Packager\Packager;
+use Foxws\Shaka\Support\Packager;
 use Illuminate\Support\Traits\ForwardsCalls;
 
 class MediaOpenerFactory

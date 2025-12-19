@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Foxws\Shaka\Facades\Shaka;
-use Foxws\Shaka\Support\Filesystem\Disk;
+use Foxws\Shaka\Filesystem\Disk;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {

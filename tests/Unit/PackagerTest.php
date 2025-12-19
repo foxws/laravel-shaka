@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use Foxws\Shaka\Support\Packager\Packager;
-use Foxws\Shaka\Support\Packager\ShakaPackager;
+use Foxws\Shaka\Support\Packager;
+use Foxws\Shaka\Support\ShakaPackager;
 
 it('can create packager instance', function () {
     $driver = mock(ShakaPackager::class);

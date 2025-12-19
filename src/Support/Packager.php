@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Foxws\Shaka\Support\Packager;
+namespace Foxws\Shaka\Support;
 
-use Foxws\Shaka\Support\Filesystem\MediaCollection;
+use Foxws\Shaka\Filesystem\MediaCollection;
 use Illuminate\Support\Traits\ForwardsCalls;
 use Psr\Log\LoggerInterface;
 

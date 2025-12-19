@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Foxws\Shaka;
 
-use Foxws\Shaka\Support\Filesystem\MediaOpenerFactory;
-use Foxws\Shaka\Support\Filesystem\TemporaryDirectories;
-use Foxws\Shaka\Support\Packager\Packager;
-use Foxws\Shaka\Support\Packager\ShakaPackager;
+use Foxws\Shaka\Filesystem\MediaOpenerFactory;
+use Foxws\Shaka\Filesystem\TemporaryDirectories;
+use Foxws\Shaka\Support\Packager;
+use Foxws\Shaka\Support\ShakaPackager;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 

@@ -6,11 +6,11 @@ namespace Foxws\Shaka\Support;
 
 class ProcessOutput
 {
-    private $all;
+    private array $all;
 
-    private $errors;
+    private array $errors;
 
-    private $out;
+    private array $out;
 
     public function __construct(array $all, array $errors, array $out)
     {

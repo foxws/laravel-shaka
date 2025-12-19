@@ -211,7 +211,6 @@ class FluentBuilderExamples
     public function addingSubtitles(): void
     {
         $result = Shaka::open('input.mp4')
-            ->export()
             ->addVideoStream('input.mp4', 'video.mp4')
             ->addAudioStream('input.mp4', 'audio.mp4')
             ->addStream([
@@ -227,6 +226,7 @@ class FluentBuilderExamples
                 'language' => 'es',
             ])
             ->withHlsMasterPlaylist('master.m3u8')
+            ->export()
             ->toDisk('export')
             ->save();
     }
@@ -240,11 +240,11 @@ class FluentBuilderExamples
 
         $result = Shaka::fromDisk('videos')
             ->open('source/input.mp4')
-            ->export()
-            ->outputPath($uuid)  // Files saved to: {uuid}/master.m3u8, {uuid}/video.mp4, etc.
             ->addVideoStream('source/input.mp4', 'video.mp4')
             ->addAudioStream('source/input.mp4', 'audio.mp4')
             ->withHlsMasterPlaylist('master.m3u8')
+            ->export()
+            ->outputPath($uuid)  // Files saved to: {uuid}/master.m3u8, {uuid}/video.mp4, etc.
             ->toDisk('export')
             ->save();
     }
@@ -256,31 +256,31 @@ class FluentBuilderExamples
     {
         // Shorter segments (2s) - better for live streaming, more seeking precision
         $liveResult = Shaka::open('input.mp4')
-            ->export()
             ->addVideoStream('input.mp4', 'video.mp4')
             ->addAudioStream('input.mp4', 'audio.mp4')
             ->withHlsMasterPlaylist('live.m3u8')
             ->withSegmentDuration(2)  // 2 second segments
+            ->export()
             ->toDisk('export')
             ->save();
 
         // Longer segments (10s) - better for VOD, reduces overhead
         $vodResult = Shaka::open('input.mp4')
-            ->export()
             ->addVideoStream('input.mp4', 'video.mp4')
             ->addAudioStream('input.mp4', 'audio.mp4')
             ->withHlsMasterPlaylist('vod.m3u8')
             ->withSegmentDuration(10)  // 10 second segments
+            ->export()
             ->toDisk('export')
             ->save();
 
         // Default (6s) - balanced for most use cases
         $balancedResult = Shaka::open('input.mp4')
-            ->export()
             ->addVideoStream('input.mp4', 'video.mp4')
             ->addAudioStream('input.mp4', 'audio.mp4')
             ->withHlsMasterPlaylist('balanced.m3u8')
             ->withSegmentDuration(6)  // Default: 6 second segments
+            ->export()
             ->toDisk('export')
             ->save();
     }

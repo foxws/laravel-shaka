@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Facade;
 /**
  * @method static \Foxws\Shaka\MediaOpener fromDisk($disk)
  * @method static \Foxws\Shaka\MediaOpener open($path)
+ * @method static \Foxws\Shaka\MediaOpener openFromDisk($disk, $path)
  * @method static \Foxws\Shaka\MediaOpener cleanupTemporaryFiles()
  *
  * @see \Foxws\Shaka\MediaOpener

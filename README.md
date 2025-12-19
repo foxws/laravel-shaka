@@ -116,12 +116,70 @@ $result = Shaka::open('input.mp4')
     ->export();
 ```
 
+### Dynamic URL Resolvers (HLS & DASH)
+
+Customize how URLs are generated for your streaming manifests:
+
+**HLS Example:**
+```php
+use Foxws\Shaka\Http\DynamicHLSPlaylist;
+
+$playlist = (new DynamicHLSPlaylist('videos'))
+    ->setKeyUrlResolver(fn ($key) => route('video.key', ['key' => $key]))
+    ->setMediaUrlResolver(fn ($file) => Storage::disk('cdn')->url($file))
+    ->setPlaylistUrlResolver(fn ($pl) => route('video.playlist', ['playlist' => $pl]))
+    ->open('master.m3u8');
+
+return $playlist->toResponse($request);
+```
+
+**DASH Example:**
+```php
+use Foxws\Shaka\Http\DynamicDASHManifest;
+
+$manifest = (new DynamicDASHManifest('videos'))
+    ->setMediaUrlResolver(fn ($file) => Storage::disk('cdn')->url($file))
+    ->setInitUrlResolver(fn ($file) => Storage::disk('cdn')->url("init/{$file}"))
+    ->open('manifest.mpd');
+
+return $manifest->toResponse($request);
+```
+
+**Use cases for URL resolvers:**
+- 🔐 Generate signed URLs for secure content delivery
+- 🌐 Integrate with CDN services
+- 🏢 Support multi-tenant applications
+- 🔄 Implement dynamic key rotation
+- 📊 Track media access patterns
+
+See [URL Resolver Examples](examples/UrlResolverExamples.php) and [Documentation](docs/URL_RESOLVERS.md) for more details.
+
 ## Available Methods
 
 ### Disk Management
 
 - `fromDisk(string $disk)` - Set the disk to use
 - `openFromDisk(string $disk, $paths)` - Set disk and open files in one call
+
+### Dynamic URL Resolvers
+
+**DynamicHLSPlaylist:**
+- `new DynamicHLSPlaylist(?string $disk)` - Create HLS playlist processor
+- `open(string $path)` - Open a playlist file
+- `setKeyUrlResolver(callable $resolver)` - Set resolver for encryption key URLs
+- `setMediaUrlResolver(callable $resolver)` - Set resolver for media segment URLs
+- `setPlaylistUrlResolver(callable $resolver)` - Set resolver for sub-playlist URLs
+- `get()` - Get processed playlist content
+- `all()` - Get all processed playlists (master + segments)
+- `toResponse($request)` - Return as HTTP response
+
+**DynamicDASHManifest:**
+- `new DynamicDASHManifest(?string $disk)` - Create DASH manifest processor
+- `open(string $path)` - Open a manifest file
+- `setMediaUrlResolver(callable $resolver)` - Set resolver for media segment URLs
+- `setInitUrlResolver(callable $resolver)` - Set resolver for initialization segment URLs
+- `get()` - Get processed manifest content
+- `toResponse($request)` - Return as HTTP response
 
 ### Stream Configuration
 

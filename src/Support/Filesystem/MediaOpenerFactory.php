@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Foxws\Shaka\Support\Filesystem;
 
 use Closure;
-use Foxws\Shaka\Shaka;
+use Foxws\Shaka\MediaOpener;
 use Foxws\Shaka\Support\Packager\Packager;
 use Illuminate\Support\Traits\ForwardsCalls;
 
@@ -40,9 +40,9 @@ class MediaOpenerFactory
         return $this->packager = $resolver();
     }
 
-    public function new(): Shaka
+    public function new(): MediaOpener
     {
-        return new Shaka($this->defaultDisk, $this->packager());
+        return new MediaOpener($this->defaultDisk, $this->packager());
     }
 
     /**

@@ -97,13 +97,13 @@ class PackagerResult
         $relativeOutputs = $this->getMetadataValue('relative_outputs', []);
         $paths = array_merge($paths, $relativeOutputs);
 
-        // Collect manifest outputs
+        // Collect manifest outputs (these are stored as arrays with single values)
         if ($relativeMpd = $this->getMetadataValue('relative_mpd_output')) {
-            $paths[] = $relativeMpd;
+            $paths[] = is_array($relativeMpd) ? $relativeMpd[0] : $relativeMpd;
         }
 
         if ($relativeHls = $this->getMetadataValue('relative_hls_output')) {
-            $paths[] = $relativeHls;
+            $paths[] = is_array($relativeHls) ? $relativeHls[0] : $relativeHls;
         }
 
         return array_unique($paths);

@@ -124,7 +124,7 @@ class MediaExporter
     protected function getMediaOpener(): MediaOpener
     {
         return new MediaOpener(
-            $this->packager->getMediaCollection()->last()->getDisk(),
+            $this->packager->getMediaCollection()->last()->getDisk()->getName(),
             $this->packager,
             $this->packager->getMediaCollection()
         );

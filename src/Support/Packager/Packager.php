@@ -188,7 +188,7 @@ class Packager
             $directory = $firstMedia->getDirectory();
 
             // Combine directory with output filename
-            $outputWithDir = $directory . $output;
+            $outputWithDir = $directory.$output;
 
             // Get full local path
             return $disk->path($outputWithDir);

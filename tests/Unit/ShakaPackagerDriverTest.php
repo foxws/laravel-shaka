@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Foxws\Shaka\Exceptions\ExecutableNotFoundException;
-use Foxws\Shaka\Support\Packager\ShakaPackagerDriver;
+use Foxws\Shaka\Support\Packager\ShakaPackager;
 use Illuminate\Support\Facades\Config;
 
 beforeEach(function () {
@@ -12,20 +12,20 @@ beforeEach(function () {
 });
 
 it('can create driver instance', function () {
-    $driver = ShakaPackagerDriver::create();
+    $driver = ShakaPackager::create();
 
-    expect($driver)->toBeInstanceOf(ShakaPackagerDriver::class);
+    expect($driver)->toBeInstanceOf(ShakaPackager::class);
     expect($driver->getName())->toBe('packager');
 });
 
 it('throws exception when binary not found', function () {
     Config::set('shaka.packager.binaries', '/nonexistent/packager');
 
-    ShakaPackagerDriver::create();
+    ShakaPackager::create();
 })->throws(ExecutableNotFoundException::class);
 
 it('can get and set timeout', function () {
-    $driver = ShakaPackagerDriver::create();
+    $driver = ShakaPackager::create();
 
     expect($driver->getTimeout())->toBe(3600);
 
@@ -35,7 +35,7 @@ it('can get and set timeout', function () {
 });
 
 it('can get binary path', function () {
-    $driver = ShakaPackagerDriver::create();
+    $driver = ShakaPackager::create();
 
     expect($driver->getBinaryPath())->toBe('/usr/local/bin/packager');
 });

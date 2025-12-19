@@ -238,10 +238,10 @@ You can also configure the packager at runtime:
 
 ```php
 use Foxws\Shaka\Support\Packager\Packager;
-use Foxws\Shaka\Support\Packager\ShakaPackagerDriver;
+use Foxws\Shaka\Support\Packager\ShakaPackager;
 
 // Create with custom configuration
-$driver = new ShakaPackagerDriver(
+$driver = new ShakaPackager(
     binaryPath: '/custom/path/packager',
     logger: Log::channel('custom'),
     timeout: 7200
@@ -267,7 +267,7 @@ $packager = Packager::create(
 Modify driver settings after instantiation:
 
 ```php
-$driver = app(ShakaPackagerDriver::class);
+$driver = app(ShakaPackager::class);
 
 // Change timeout
 $driver->setTimeout(7200);

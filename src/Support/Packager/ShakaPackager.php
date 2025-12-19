@@ -9,7 +9,7 @@ use Foxws\Shaka\Exceptions\RuntimeException;
 use Illuminate\Support\Facades\Process;
 use Psr\Log\LoggerInterface;
 
-class ShakaPackagerDriver
+class ShakaPackager
 {
     protected string $binaryPath;
 

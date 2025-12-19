@@ -4,14 +4,14 @@ Laravel Shaka implements a clean, testable architecture based on the proven patt
 
 ## Architecture Layers
 
-### 1. Driver Layer (`ShakaPackagerDriver`)
+### 1. Driver Layer (`ShakaPackager`)
 
 The driver layer handles direct interaction with the Shaka Packager binary:
 
 ```php
 namespace Foxws\Shaka\Support\Packager;
 
-class ShakaPackagerDriver
+class ShakaPackager
 {
     protected string $binaryPath;
     protected ?LoggerInterface $logger;
@@ -53,7 +53,7 @@ namespace Foxws\Shaka\Support\Packager;
 
 class Packager
 {
-    protected ShakaPackagerDriver $driver;
+    protected ShakaPackager $driver;
     protected ?MediaCollection $mediaCollection;
     protected ?CommandBuilder $builder;
 
@@ -152,7 +152,7 @@ class Shaka
                  │
                  v
 ┌─────────────────────────────────────────────┐
-│      ShakaPackagerDriver (Binary)           │
+│      ShakaPackager (Binary)           │
 │  - Binary execution                         │
 │  - Process management                       │
 │  - Error handling                           │
@@ -223,16 +223,16 @@ The package uses Laravel's service container for dependency injection:
 // ShakaServiceProvider.php
 
 // Register driver
-$this->app->singleton(ShakaPackagerDriver::class, function ($app) {
+$this->app->singleton(ShakaPackager::class, function ($app) {
     $logger = $app->make('laravel-shaka-logger');
     $config = $app->make('laravel-shaka-configuration');
 
-    return ShakaPackagerDriver::create($logger, $config);
+    return ShakaPackager::create($logger, $config);
 });
 
 // Register packager
 $this->app->singleton(Packager::class, function ($app) {
-    $driver = $app->make(ShakaPackagerDriver::class);
+    $driver = $app->make(ShakaPackager::class);
     $logger = $app->make('laravel-shaka-logger');
 
     return new Packager($driver, $logger);
@@ -261,7 +261,7 @@ The architecture enables easy testing:
 
 ```php
 // Mock the driver
-$driver = Mockery::mock(ShakaPackagerDriver::class);
+$driver = Mockery::mock(ShakaPackager::class);
 $driver->shouldReceive('command')->andReturn('success');
 
 $packager = new Packager($driver);
@@ -275,7 +275,7 @@ $result = $packager->open($collection)->export();
 Extend the driver for custom behavior:
 
 ```php
-class CustomPackagerDriver extends ShakaPackagerDriver
+class CustomPackagerDriver extends ShakaPackager
 {
     public function customOperation(array $options): string
     {

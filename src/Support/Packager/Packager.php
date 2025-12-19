@@ -12,7 +12,7 @@ class Packager
 {
     use ForwardsCalls;
 
-    protected ShakaPackagerDriver $driver;
+    protected ShakaPackager $packager;
 
     protected ?MediaCollection $mediaCollection = null;
 
@@ -21,10 +21,10 @@ class Packager
     protected ?CommandBuilder $builder = null;
 
     public function __construct(
-        ShakaPackagerDriver $driver,
+        ShakaPackager $packager,
         ?LoggerInterface $logger = null
     ) {
-        $this->driver = $driver;
+        $this->packager = $packager;
         $this->logger = $logger;
     }
 
@@ -32,24 +32,24 @@ class Packager
         ?LoggerInterface $logger = null,
         ?array $configuration = null
     ): self {
-        $driver = ShakaPackagerDriver::create($logger, $configuration);
+        $packager = ShakaPackager::create($logger, $configuration);
 
-        return new self($driver, $logger);
+        return new self($packager, $logger);
     }
 
     public function fresh(): self
     {
-        return new self($this->driver, $this->logger);
+        return new self($this->packager, $this->logger);
     }
 
-    public function getDriver(): ShakaPackagerDriver
+    public function getPackager(): ShakaPackager
     {
-        return $this->driver;
+        return $this->packager;
     }
 
-    public function setDriver(ShakaPackagerDriver $driver): self
+    public function setPackager(ShakaPackager $packager): self
     {
-        $this->driver = $driver;
+        $this->packager = $packager;
 
         return $this;
     }
@@ -201,7 +201,7 @@ class Packager
             ]);
         }
 
-        $result = $this->driver->command($command);
+        $result = $this->packager->command($command);
 
         if ($this->logger) {
             $this->logger->info('Packaging operation completed');
@@ -224,7 +224,7 @@ class Packager
             ]);
         }
 
-        $result = $this->driver->command($command);
+        $result = $this->packager->command($command);
 
         if ($this->logger) {
             $this->logger->info('Packaging operation completed');
@@ -248,8 +248,8 @@ class Packager
             ]);
         }
 
-        // Export via driver
-        $result = $this->driver->command($arguments);
+        // Export via packager
+        $result = $this->packager->command($arguments);
 
         if ($this->logger) {
             $this->logger->info('Packaging operation completed', [

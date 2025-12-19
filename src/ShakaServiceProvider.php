@@ -7,6 +7,7 @@ namespace Foxws\Shaka;
 use Foxws\Shaka\Support\Filesystem\MediaOpenerFactory;
 use Foxws\Shaka\Support\Filesystem\TemporaryDirectories;
 use Foxws\Shaka\Support\Packager\Packager;
+use Foxws\Shaka\Support\Packager\ShakaPackager;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -53,16 +54,16 @@ class ShakaServiceProvider extends PackageServiceProvider
         });
 
         // Register the Shaka Packager Driver
-        $this->app->singleton(\Foxws\Shaka\Support\Packager\ShakaPackagerDriver::class, function ($app) {
+        $this->app->singleton(ShakaPackager::class, function ($app) {
             $logger = $app->make('laravel-shaka-logger');
             $config = $app->make('laravel-shaka-configuration');
 
-            return \Foxws\Shaka\Support\Packager\ShakaPackagerDriver::create($logger, $config);
+            return ShakaPackager::create($logger, $config);
         });
 
         // Register the Packager
         $this->app->singleton(Packager::class, function ($app) {
-            $driver = $app->make(\Foxws\Shaka\Support\Packager\ShakaPackagerDriver::class);
+            $driver = $app->make(ShakaPackager::class);
             $logger = $app->make('laravel-shaka-logger');
 
             return new Packager($driver, $logger);

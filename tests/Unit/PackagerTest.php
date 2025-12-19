@@ -3,10 +3,10 @@
 declare(strict_types=1);
 
 use Foxws\Shaka\Support\Packager\Packager;
-use Foxws\Shaka\Support\Packager\ShakaPackagerDriver;
+use Foxws\Shaka\Support\Packager\ShakaPackager;
 
 it('can create packager instance', function () {
-    $driver = mock(ShakaPackagerDriver::class);
+    $driver = mock(ShakaPackager::class);
 
     $packager = new Packager($driver);
 
@@ -15,8 +15,8 @@ it('can create packager instance', function () {
 });
 
 it('can set and get driver', function () {
-    $driver1 = mock(ShakaPackagerDriver::class);
-    $driver2 = mock(ShakaPackagerDriver::class);
+    $driver1 = mock(ShakaPackager::class);
+    $driver2 = mock(ShakaPackager::class);
 
     $packager = new Packager($driver1);
 
@@ -28,7 +28,7 @@ it('can set and get driver', function () {
 });
 
 it('can create fresh instance', function () {
-    $driver = mock(ShakaPackagerDriver::class);
+    $driver = mock(ShakaPackager::class);
 
     $packager1 = new Packager($driver);
     $packager2 = $packager1->fresh();
@@ -45,5 +45,5 @@ it('can create packager using static create method', function () {
     $packager = Packager::create();
 
     expect($packager)->toBeInstanceOf(Packager::class);
-    expect($packager->getDriver())->toBeInstanceOf(ShakaPackagerDriver::class);
+    expect($packager->getDriver())->toBeInstanceOf(ShakaPackager::class);
 })->skip('Requires actual binary to be present');

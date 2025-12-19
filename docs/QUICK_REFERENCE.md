@@ -161,9 +161,9 @@ php artisan shaka:verify
 ## Direct Driver Usage
 
 ```php
-use Foxws\Shaka\Support\Packager\ShakaPackagerDriver;
+use Foxws\Shaka\Support\Packager\ShakaPackager;
 
-$driver = ShakaPackagerDriver::create();
+$driver = ShakaPackager::create();
 $version = $driver->getVersion();
 $driver->setTimeout(7200);
 ```
@@ -210,7 +210,7 @@ $commandString = $videoStream->toCommandString();
 
 ```php
 // Unit tests
-vendor/bin/pest tests/Unit/ShakaPackagerDriverTest.php
+vendor/bin/pest tests/Unit/ShakaPackagerTest.php
 vendor/bin/pest tests/Unit/PackagerTest.php
 vendor/bin/pest tests/Unit/FromDiskTest.php
 ```

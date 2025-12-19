@@ -115,7 +115,7 @@ $result = Shaka::open('input.mp4')
 
 Laravel Shaka follows a clean driver-based architecture similar to PHP-FFmpeg:
 
-- **Driver Layer** (`ShakaPackagerDriver`) - Handles binary interaction
+- **Driver Layer** (`ShakaPackager`) - Handles binary interaction
 - **Business Logic Layer** (`Packager`) - Provides high-level API
 - **Facade Layer** (`Shaka`) - Laravel-style fluent interface
 

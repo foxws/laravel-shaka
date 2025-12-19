@@ -70,24 +70,32 @@ class ShakaPackager
 
     public function command(string $command, array $options = []): string
     {
-        $commandLine = sprintf('%s %s', $this->binaryPath, $command);
+        // Parse the command string into an array of arguments to prevent shell injection
+        // This avoids using a shell and prevents command injection attacks
+        $arguments = $this->parseCommandToArray($command);
+        
+        // Prepend the binary path as the first argument
+        array_unshift($arguments, $this->binaryPath);
 
         if ($this->logger) {
             $this->logger->debug('Executing packager command', [
-                'command' => $commandLine,
+                'binary' => $this->binaryPath,
+                'arguments' => $arguments,
                 'options' => $options,
             ]);
         }
 
+        // Use array format to avoid shell execution and prevent command injection
         $result = Process::timeout($this->timeout)
-            ->run($commandLine);
+            ->run($arguments);
 
         if ($result->failed()) {
             $errorMessage = "Packager command failed: {$result->errorOutput()}";
 
             if ($this->logger) {
                 $this->logger->error($errorMessage, [
-                    'command' => $commandLine,
+                    'binary' => $this->binaryPath,
+                    'arguments' => $arguments,
                     'exit_code' => $result->exitCode(),
                     'output' => $result->output(),
                 ]);
@@ -103,6 +111,53 @@ class ShakaPackager
         }
 
         return $result->output();
+    }
+
+    /**
+     * Parse a command string into an array of arguments.
+     * Handles quoted arguments and special characters properly.
+     */
+    protected function parseCommandToArray(string $command): array
+    {
+        $arguments = [];
+        $length = strlen($command);
+        $current = '';
+        $inQuote = false;
+        $quoteChar = null;
+
+        for ($i = 0; $i < $length; $i++) {
+            $char = $command[$i];
+
+            if (($char === '"' || $char === "'") && ($i === 0 || $command[$i - 1] !== '\\')) {
+                if ($inQuote && $char === $quoteChar) {
+                    // End of quoted string
+                    $inQuote = false;
+                    $quoteChar = null;
+                } elseif (! $inQuote) {
+                    // Start of quoted string
+                    $inQuote = true;
+                    $quoteChar = $char;
+                } else {
+                    // Different quote character inside quotes
+                    $current .= $char;
+                }
+            } elseif ($char === ' ' && ! $inQuote) {
+                // Space outside quotes - end of argument
+                if ($current !== '') {
+                    $arguments[] = $current;
+                    $current = '';
+                }
+            } else {
+                $current .= $char;
+            }
+        }
+
+        // Add the last argument if any
+        if ($current !== '') {
+            $arguments[] = $current;
+        }
+
+        return $arguments;
     }
 
     public function getBinaryPath(): string

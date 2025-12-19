@@ -119,16 +119,6 @@ class MediaOpener
     }
 
     /**
-     * Set custom output path for exports (must be called before export())
-     */
-    public function inPath(string $path): self
-    {
-        $this->packager->setOutputPath(rtrim($path, '/').'/');
-
-        return $this;
-    }
-
-    /**
      * Returns an instance of MediaExporter with the packager.
      */
     public function export(): Exporters\MediaExporter

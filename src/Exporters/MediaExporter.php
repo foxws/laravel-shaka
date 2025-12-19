@@ -51,9 +51,12 @@ class MediaExporter
         return $this;
     }
 
-    public function inPath(string $path): self
+    public function outputPath(string $path): self
     {
         $this->outputPath = rtrim($path, '/').'/';
+
+        // Set on packager immediately so it's available for stream methods
+        $this->packager->setOutputPath($this->outputPath);
 
         return $this;
     }
@@ -109,11 +112,6 @@ class MediaExporter
 
     public function save(?string $path = null): MediaOpener
     {
-        // Set custom output path in packager if specified
-        if ($this->outputPath) {
-            $this->packager->setOutputPath($this->outputPath);
-        }
-
         // Execute the packaging operation (writes to temporary directory)
         $result = $this->packager->export();
 

@@ -72,26 +72,29 @@ class PackagerResult
             throw new \RuntimeException('Cannot copy files: temporary directory not set');
         }
 
-        // Get relative output paths from metadata
-        $relativePaths = $this->collectOutputPaths();
+        // Get the target directory from the first media (if available)
+        $targetDirectory = $this->getTargetDirectory();
 
-        foreach ($relativePaths as $relativePath) {
-            // Full path in temporary directory
-            $tempFilePath = $temporaryDirectory.DIRECTORY_SEPARATOR.basename($relativePath);
+        // Scan the temporary directory for all files (including generated segments)
+        $files = $this->getAllFilesInTemporaryDirectory($temporaryDirectory);
 
-            if (file_exists($tempFilePath)) {
-                $stream = fopen($tempFilePath, 'r');
-                $targetDisk->writeStream($relativePath, $stream);
-                fclose($stream);
+        foreach ($files as $file) {
+            $filename = basename($file);
 
-                if ($visibility) {
-                    $targetDisk->setVisibility($relativePath, $visibility);
-                }
+            // Determine target path (preserve directory structure if needed)
+            $targetPath = $targetDirectory ? $targetDirectory.$filename : $filename;
 
-                // Clean up temporary file after copying
-                if ($cleanupSource) {
-                    unlink($tempFilePath);
-                }
+            $stream = fopen($file, 'r');
+            $targetDisk->writeStream($targetPath, $stream);
+            fclose($stream);
+
+            if ($visibility) {
+                $targetDisk->setVisibility($targetPath, $visibility);
+            }
+
+            // Clean up temporary file after copying
+            if ($cleanupSource) {
+                unlink($file);
             }
         }
 
@@ -101,6 +104,53 @@ class PackagerResult
         }
 
         return $this;
+    }
+
+    /**
+     * Get all files in the temporary directory
+     */
+    protected function getAllFilesInTemporaryDirectory(string $directory): array
+    {
+        if (! is_dir($directory)) {
+            return [];
+        }
+
+        $files = [];
+        $items = scandir($directory);
+
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+
+            $path = $directory.DIRECTORY_SEPARATOR.$item;
+
+            if (is_file($path)) {
+                $files[] = $path;
+            }
+        }
+
+        return $files;
+    }
+
+    /**
+     * Get the target directory from metadata
+     */
+    protected function getTargetDirectory(): ?string
+    {
+        // Check if we have explicit output paths that contain directories
+        $relativePaths = $this->collectOutputPaths();
+
+        if (! empty($relativePaths)) {
+            $firstPath = $relativePaths[0];
+            $directory = dirname($firstPath);
+
+            if ($directory && $directory !== '.') {
+                return rtrim($directory, '/').'/';
+            }
+        }
+
+        return null;
     }
 
     /**

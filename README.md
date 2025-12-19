@@ -105,14 +105,24 @@ $result = Shaka::fromDisk('s3')
 ### HLS with Encryption
 
 ```php
+// For browser-compatible AES-128 encryption, use .ts segments (not .mp4)
+// fMP4 segments use SAMPLE-AES-CTR which is NOT supported by browsers/HLS.js
 $result = Shaka::open('input.mp4')
-    ->addVideoStream('input.mp4', 'video.m3u8')
-    ->addAudioStream('input.mp4', 'audio.m3u8')
+    ->addVideoStream('input.mp4', 'video.ts')  // Use .ts for encryption
+    ->addAudioStream('input.mp4', 'audio.ts')  // Use .ts for encryption
     ->withHlsMasterPlaylist('master.m3u8')
     ->withEncryption([
         'keys' => 'label=:key_id=abc:key=def',
-        'key_server_url' => 'https://example.com/license',
+        'hls_key_uri' => 'encryption.key',
+        // Do NOT set protection_scheme for HLS - it forces SAMPLE-AES which browsers don't support
     ])
+    ->export();
+
+// For unencrypted streams, .mp4 (fMP4) offers better performance
+$result = Shaka::open('input.mp4')
+    ->addVideoStream('input.mp4', 'video.mp4')  // .mp4 OK without encryption
+    ->addAudioStream('input.mp4', 'audio.mp4')
+    ->withHlsMasterPlaylist('master.m3u8')
     ->export();
 ```
 

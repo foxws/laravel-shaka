@@ -195,9 +195,15 @@ class DynamicHLSPlaylist implements Responsable
     /**
      * Returns a boolean whether the line contains a .M3U8 playlist filename,
      * a .TS segment filename, or a media filename (.mp4, .m4s, .m4a, .m4v, .aac, .vtt).
+     * Returns false if the line is already a full URL.
      */
     private static function lineHasMediaFilename(string $line): bool
     {
+        // Skip lines that are already full URLs
+        if (Str::startsWith($line, ['http://', 'https://'])) {
+            return false;
+        }
+
         return ! Str::startsWith($line, '#') && Str::endsWith($line, [
             '.m3u8',  // Playlist files
             '.ts',    // Transport stream segments
@@ -226,6 +232,20 @@ class DynamicHLSPlaylist implements Responsable
     private static function extractPlaylistFromExtMediaLine(string $line): ?string
     {
         if (! Str::startsWith($line, '#EXT-X-MEDIA:')) {
+            return null;
+        }
+
+        preg_match('/URI="([^"]+)"/', $line, $matches);
+
+        return $matches[1] ?? null;
+    }
+
+    /**
+     * Extract media URI from EXT-X-MAP line.
+     */
+    private static function extractMediaFromExtMapLine(string $line): ?string
+    {
+        if (! Str::startsWith($line, '#EXT-X-MAP:')) {
             return null;
         }
 
@@ -289,6 +309,16 @@ class DynamicHLSPlaylist implements Responsable
                 return str_replace(
                     'URI="'.$playlistUri.'"',
                     'URI="'.$this->resolvePlaylistUrl($playlistUri).'"',
+                    $line
+                );
+            }
+
+            // Handle #EXT-X-MAP lines with URI attribute (initialization segments)
+            $mapUri = static::extractMediaFromExtMapLine($line);
+            if ($mapUri) {
+                return str_replace(
+                    'URI="'.$mapUri.'"',
+                    'URI="'.$this->resolveMediaUrl($mapUri).'"',
                     $line
                 );
             }

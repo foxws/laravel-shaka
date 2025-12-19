@@ -121,7 +121,10 @@ class Packager
         // Resolve input to full local path
         $inputPath = $this->resolveInputPath($input);
 
-        $this->builder()->addVideoStream($inputPath, $output, $options);
+        // Resolve output to full local path
+        $outputPath = $this->resolveOutputPath($output);
+
+        $this->builder()->addVideoStream($inputPath, $outputPath, $options);
 
         return $this;
     }
@@ -134,7 +137,10 @@ class Packager
         // Resolve input to full local path
         $inputPath = $this->resolveInputPath($input);
 
-        $this->builder()->addAudioStream($inputPath, $output, $options);
+        // Resolve output to full local path
+        $outputPath = $this->resolveOutputPath($output);
+
+        $this->builder()->addAudioStream($inputPath, $outputPath, $options);
 
         return $this;
     }
@@ -168,11 +174,38 @@ class Packager
     }
 
     /**
+     * Resolve output path to full local path using source disk
+     */
+    protected function resolveOutputPath(string $output): string
+    {
+        // Get the first media's disk to determine where outputs should go
+        if ($this->mediaCollection && $this->mediaCollection->count() > 0) {
+            $firstMedia = $this->mediaCollection->collection()->first();
+
+            $disk = $firstMedia->getDisk();
+
+            // Get the directory of the first media file
+            $directory = $firstMedia->getDirectory();
+
+            // Combine directory with output filename
+            $outputWithDir = $directory . $output;
+
+            // Get full local path
+            return $disk->path($outputWithDir);
+        }
+
+        // If not found, assume it's already a full path
+        return $output;
+    }
+
+    /**
      * Set MPD output
      */
     public function withMpdOutput(string $path): self
     {
-        $this->builder()->withMpdOutput($path);
+        $fullPath = $this->resolveOutputPath($path);
+
+        $this->builder()->withMpdOutput($fullPath);
 
         return $this;
     }
@@ -182,7 +215,9 @@ class Packager
      */
     public function withHlsMasterPlaylist(string $path): self
     {
-        $this->builder()->withHlsMasterPlaylist($path);
+        $fullPath = $this->resolveOutputPath($path);
+
+        $this->builder()->withHlsMasterPlaylist($fullPath);
 
         return $this;
     }

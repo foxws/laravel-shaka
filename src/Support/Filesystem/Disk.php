@@ -6,7 +6,11 @@ namespace Foxws\Shaka\Support\Filesystem;
 
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Filesystem\FilesystemAdapter;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Traits\ForwardsCalls;
+use League\Flysystem\Filesystem as LeagueFilesystem;
+use League\Flysystem\FilesystemAdapter as FlysystemFilesystemAdapter;
+use League\Flysystem\Local\LocalFilesystemAdapter;
 
 class Disk
 {
@@ -51,5 +55,78 @@ class Disk
         }
 
         return $this->temporaryDirectory = app(TemporaryDirectories::class)->create();
+    }
+
+    public function makeMedia(string $path): Media
+    {
+        return Media::make($this, $path);
+    }
+
+    /**
+     * Returns the name of the disk. It generates a name if the disk
+     * is an instance of Flysystem.
+     */
+    public function getName(): string
+    {
+        if (is_string($this->disk)) {
+            return $this->disk;
+        }
+
+        return get_class($this->getFlysystemAdapter()).'_'.md5((string) spl_object_id($this->getFlysystemAdapter()));
+    }
+
+    public function getFilesystemAdapter(): FilesystemAdapter
+    {
+        if ($this->filesystemAdapter) {
+            return $this->filesystemAdapter;
+        }
+
+        if ($this->disk instanceof Filesystem) {
+            return $this->filesystemAdapter = $this->disk;
+        }
+
+        return $this->filesystemAdapter = Storage::disk($this->disk);
+    }
+
+    private function getFlysystemDriver(): LeagueFilesystem
+    {
+        return $this->getFilesystemAdapter()->getDriver();
+    }
+
+    private function getFlysystemAdapter(): FlysystemFilesystemAdapter
+    {
+        return $this->getFilesystemAdapter()->getAdapter();
+    }
+
+    public function isLocalDisk(): bool
+    {
+        return $this->getFlysystemAdapter() instanceof LocalFilesystemAdapter;
+    }
+
+    /**
+     * Replaces backward slashes into forward slashes.
+     */
+    public static function normalizePath(string $path): string
+    {
+        return str_replace('\\', '/', $path);
+    }
+
+    /**
+     * Get the full path for the file at the given "short" path.
+     */
+    public function path(string $path): string
+    {
+        $path = $this->getFilesystemAdapter()->path($path);
+
+        return $this->isLocalDisk() ? static::normalizePath($path) : $path;
+    }
+
+    /**
+     * Forwards all calls to Laravel's FilesystemAdapter which will pass
+     * dynamic methods call onto Flysystem.
+     */
+    public function __call($method, $parameters)
+    {
+        return $this->forwardCallTo($this->getFilesystemAdapter(), $method, $parameters);
     }
 }

@@ -62,7 +62,7 @@ class PackagerResult
     /**
      * Copy exported files to a different disk
      */
-    public function toDisk(Disk|Filesystem|string $disk, ?string $visibility = null): self
+    public function toDisk(Disk|Filesystem|string $disk, ?string $visibility = null, bool $cleanupSource = true): self
     {
         $targetDisk = Disk::make($disk);
 
@@ -79,6 +79,11 @@ class PackagerResult
 
                 if ($visibility) {
                     $targetDisk->setVisibility($path, $visibility);
+                }
+
+                // Clean up source file after copying if requested
+                if ($cleanupSource) {
+                    $this->sourceDisk->delete($path);
                 }
             }
         }

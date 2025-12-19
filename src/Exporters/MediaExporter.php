@@ -111,9 +111,9 @@ class MediaExporter
         // Execute the packaging operation
         $result = $this->packager->export();
 
-        // If toDisk is set, copy outputs to target disk
+        // If toDisk is set, copy outputs to target disk and clean up source
         if ($this->toDisk) {
-            $result->toDisk($this->toDisk, $this->visibility);
+            $result->toDisk($this->toDisk, $this->visibility, true);
         }
 
         $this->runAfterSavingCallbacks($result);

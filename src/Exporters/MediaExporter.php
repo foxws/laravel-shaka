@@ -108,13 +108,14 @@ class MediaExporter
 
     public function save(?string $path = null): MediaOpener
     {
-        // Execute the packaging operation
+        // Execute the packaging operation (writes to temporary directory)
         $result = $this->packager->export();
 
-        // If toDisk is set, copy outputs to target disk and clean up source
-        if ($this->toDisk) {
-            $result->toDisk($this->toDisk, $this->visibility, true);
-        }
+        // Determine target disk
+        $targetDisk = $this->toDisk ?: $this->getDisk();
+
+        // Copy outputs from temporary directory to target disk and cleanup
+        $result->toDisk($targetDisk, $this->visibility);
 
         $this->runAfterSavingCallbacks($result);
 

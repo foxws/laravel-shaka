@@ -60,32 +60,44 @@ class PackagerResult
     }
 
     /**
-     * Copy exported files to a different disk
+     * Copy exported files from temporary directory to target disk
      */
     public function toDisk(Disk|Filesystem|string $disk, ?string $visibility = null, bool $cleanupSource = true): self
     {
         $targetDisk = Disk::make($disk);
 
-        if (! $this->sourceDisk) {
-            throw new \RuntimeException('Cannot copy files: source disk not set');
+        $temporaryDirectory = $this->getMetadataValue('temporary_directory');
+
+        if (! $temporaryDirectory) {
+            throw new \RuntimeException('Cannot copy files: temporary directory not set');
         }
 
-        // Get output paths from metadata
-        $outputPaths = $this->collectOutputPaths();
+        // Get relative output paths from metadata
+        $relativePaths = $this->collectOutputPaths();
 
-        foreach ($outputPaths as $path) {
-            if ($this->sourceDisk->exists($path)) {
-                $targetDisk->writeStream($path, $this->sourceDisk->readStream($path));
+        foreach ($relativePaths as $relativePath) {
+            // Full path in temporary directory
+            $tempFilePath = $temporaryDirectory.DIRECTORY_SEPARATOR.basename($relativePath);
+
+            if (file_exists($tempFilePath)) {
+                $stream = fopen($tempFilePath, 'r');
+                $targetDisk->writeStream($relativePath, $stream);
+                fclose($stream);
 
                 if ($visibility) {
-                    $targetDisk->setVisibility($path, $visibility);
+                    $targetDisk->setVisibility($relativePath, $visibility);
                 }
 
-                // Clean up source file after copying if requested
+                // Clean up temporary file after copying
                 if ($cleanupSource) {
-                    $this->sourceDisk->delete($path);
+                    unlink($tempFilePath);
                 }
             }
+        }
+
+        // Clean up temporary directory if empty
+        if ($cleanupSource && is_dir($temporaryDirectory)) {
+            @rmdir($temporaryDirectory);
         }
 
         return $this;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Foxws\Shaka\Support;
 
 use Foxws\Shaka\Filesystem\MediaCollection;
+use Foxws\Shaka\Filesystem\TemporaryDirectories;
 use Illuminate\Support\Traits\ForwardsCalls;
 use Psr\Log\LoggerInterface;
 
@@ -19,6 +20,8 @@ class Packager
     protected ?LoggerInterface $logger;
 
     protected ?CommandBuilder $builder = null;
+
+    protected ?string $temporaryDirectory = null;
 
     public function __construct(
         ShakaPackager $packager,
@@ -180,28 +183,15 @@ class Packager
     }
 
     /**
-     * Resolve output path to full local path using source disk
+     * Resolve output path to temporary directory for Shaka Packager processing
      */
     protected function resolveOutputPath(string $output): string
     {
-        // Get the first media's disk to determine where outputs should go
-        if ($this->mediaCollection && $this->mediaCollection->count() > 0) {
-            $firstMedia = $this->mediaCollection->collection()->first();
+        // Get or create temporary directory
+        $tempDir = $this->getTemporaryDirectory();
 
-            $disk = $firstMedia->getDisk();
-
-            // Get the directory of the first media file
-            $directory = $firstMedia->getDirectory();
-
-            // Combine directory with output filename
-            $outputWithDir = $directory.$output;
-
-            // Get full local path
-            return $disk->path($outputWithDir);
-        }
-
-        // If not found, assume it's already a full path
-        return $output;
+        // Combine with output filename (without source directory)
+        return $tempDir.DIRECTORY_SEPARATOR.$output;
     }
 
     /**
@@ -217,6 +207,21 @@ class Packager
         }
 
         return $output;
+    }
+
+    /**
+     * Get or create temporary directory for this export
+     */
+    protected function getTemporaryDirectory(): string
+    {
+        if ($this->temporaryDirectory) {
+            return $this->temporaryDirectory;
+        }
+
+        // Use the registered TemporaryDirectories service
+        $this->temporaryDirectory = app(TemporaryDirectories::class)->create();
+
+        return $this->temporaryDirectory;
     }
 
     /**
@@ -305,6 +310,7 @@ class Packager
             'relative_outputs' => $metadata['relative_output'] ?? [],
             'relative_mpd_output' => $metadata['relative_mpd_output'] ?? null,
             'relative_hls_output' => $metadata['relative_hls_output'] ?? null,
+            'temporary_directory' => $this->temporaryDirectory,
         ], $sourceDisk);
     }
 

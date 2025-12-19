@@ -22,8 +22,12 @@ class Disk
 
     protected ?FilesystemAdapter $filesystemAdapter = null;
 
-    public static function make(Filesystem $disk): self
+    public static function make(Filesystem|string $disk): self
     {
+        if ($disk instanceof self) {
+            return $disk;
+        }
+
         return new static($disk);
     }
 

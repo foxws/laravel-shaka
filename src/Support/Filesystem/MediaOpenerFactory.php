@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Foxws\Shaka\Support\Filesystem;
 
 use Closure;
+use Foxws\Shaka\Shaka;
 use Foxws\Shaka\Support\Packager\Packager;
 use Illuminate\Support\Traits\ForwardsCalls;
 
@@ -29,13 +30,13 @@ class MediaOpenerFactory
         return $this->packager = $resolver();
     }
 
-    public function new(): MediaOpener
+    public function new(): Shaka
     {
-        return new MediaOpener($this->defaultDisk, $this->packager());
+        return new Shaka($this->defaultDisk, $this->packager());
     }
 
     /**
-     * Handle dynamic method calls into the MediaOpener.
+     * Handle dynamic method calls into Shaka.
      *
      * @param  string  $method
      * @param  array  $parameters

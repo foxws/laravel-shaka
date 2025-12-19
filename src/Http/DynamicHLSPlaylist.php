@@ -221,9 +221,9 @@ class DynamicHLSPlaylist implements Responsable
      */
     private static function extractKeyFromExtLine(string $line): ?string
     {
-        preg_match_all('/#EXT-X-KEY:METHOD=AES-128,URI="([a-zA-Z0-9-_\/:]+.key)",IV=[a-z0-9]+/', $line, $matches);
+        preg_match('/#EXT-X-KEY:METHOD=AES-128,URI="([^"]+)"/', $line, $matches);
 
-        return $matches[1][0] ?? null;
+        return $matches[1] ?? null;
     }
 
     /**

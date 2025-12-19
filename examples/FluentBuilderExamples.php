@@ -250,7 +250,43 @@ class FluentBuilderExamples
     }
 
     /**
-     * Example 12: Reusing the packager with different configurations
+     * Example 12: Configuring segment duration for streaming
+     */
+    public function configuringSegmentDuration(): void
+    {
+        // Shorter segments (2s) - better for live streaming, more seeking precision
+        $liveResult = Shaka::open('input.mp4')
+            ->export()
+            ->addVideoStream('input.mp4', 'video.mp4')
+            ->addAudioStream('input.mp4', 'audio.mp4')
+            ->withHlsMasterPlaylist('live.m3u8')
+            ->withSegmentDuration(2)  // 2 second segments
+            ->toDisk('export')
+            ->save();
+
+        // Longer segments (10s) - better for VOD, reduces overhead
+        $vodResult = Shaka::open('input.mp4')
+            ->export()
+            ->addVideoStream('input.mp4', 'video.mp4')
+            ->addAudioStream('input.mp4', 'audio.mp4')
+            ->withHlsMasterPlaylist('vod.m3u8')
+            ->withSegmentDuration(10)  // 10 second segments
+            ->toDisk('export')
+            ->save();
+
+        // Default (6s) - balanced for most use cases
+        $balancedResult = Shaka::open('input.mp4')
+            ->export()
+            ->addVideoStream('input.mp4', 'video.mp4')
+            ->addAudioStream('input.mp4', 'audio.mp4')
+            ->withHlsMasterPlaylist('balanced.m3u8')
+            ->withSegmentDuration(6)  // Default: 6 second segments
+            ->toDisk('export')
+            ->save();
+    }
+
+    /**
+     * Example 13: Reusing the packager with different configurations
      */
     public function reusingPackager(Packager $packager): void
     {

@@ -128,7 +128,7 @@ try {
         ->withMpdOutput('manifest.mpd')
         ->export();
 
-    logger()->info('Success', $result->toArray());
+    logger()->info('Success', $result->getOutput());
 } catch (\Foxws\Shaka\Exceptions\RuntimeException $e) {
     logger()->error('Packaging failed', ['error' => $e->getMessage()]);
 } catch (\InvalidArgumentException $e) {

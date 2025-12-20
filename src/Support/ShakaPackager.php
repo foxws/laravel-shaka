@@ -112,15 +112,15 @@ class ShakaPackager
         foreach ($sensitiveOptions as $option) {
             // Redact --option=value format
             $redacted = preg_replace(
-                '/--' . preg_quote($option, '/') . '=([^\s]+)/',
-                '--' . $option . '=[REDACTED]',
+                '/--'.preg_quote($option, '/').'=([^\s]+)/',
+                '--'.$option.'=[REDACTED]',
                 $redacted
             );
 
             // Redact --option value format
             $redacted = preg_replace(
-                '/--' . preg_quote($option, '/') . '\s+(?!--)(\S+)/',
-                '--' . $option . ' [REDACTED]',
+                '/--'.preg_quote($option, '/').'\s+(?!--)(\S+)/',
+                '--'.$option.' [REDACTED]',
                 $redacted
             );
         }

@@ -14,7 +14,7 @@ it('filters sensitive encryption keys from logs', function () {
     // Mock the driver to return a successful result
     $driver->shouldReceive('command')
         ->once()
-        ->andReturn(['exit_code' => 0, 'output' => 'success']);
+        ->andReturn('success');
 
     $packager = new Packager($driver, $logger);
 
@@ -55,7 +55,7 @@ it('does not log sensitive keys in export method', function () {
     // Mock the driver to return a successful result
     $driver->shouldReceive('command')
         ->once()
-        ->andReturn(['exit_code' => 0, 'output' => 'success']);
+        ->andReturn('success');
 
     $packager = new Packager($driver, $logger);
 

@@ -126,9 +126,19 @@ class Media
      */
     public function getSafeInputPath(): string
     {
+        // If force_generic_input is disabled, return the original path
+        if (! config('laravel-shaka.force_generic_input', false)) {
+            return $this->getLocalPath();
+        }
+
+        // Return cached generic alias if already created
+        if ($this->genericAlias) {
+            return $this->genericAlias;
+        }
+
         $extension = pathinfo($this->getPath(), PATHINFO_EXTENSION);
 
-        $name = 'input.'.($extension ?: 'tmp');
+        $name = 'input'.($extension ? '.'.$extension : '.tmp');
 
         $disk = $this->getDisk();
         $temporaryDirectoryDisk = $this->temporaryDirectoryDisk();
@@ -151,7 +161,10 @@ class Media
             }
         }
 
-        return $name;
+        // Cache and return the full absolute path
+        $this->genericAlias = $temporaryDirectoryDisk->path($name);
+
+        return $this->genericAlias;
     }
 
     public function copyAllFromTemporaryDirectory(?string $visibility = null)

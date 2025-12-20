@@ -223,7 +223,7 @@ class CommandBuilder
         $v = str_replace(',', '-', $v);
 
         // Remove surrounding quotes if present
-        $v = trim($v, "\"'\"");
+        $v = trim($v, "\"'");
 
         // If value starts with a dash, prefix with ./ for safety
         if (str_starts_with($v, '-')) {

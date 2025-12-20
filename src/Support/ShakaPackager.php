@@ -74,7 +74,7 @@ class ShakaPackager
 
         if ($this->logger) {
             $this->logger->debug('Executing packager command', [
-                'command' => $this->redactSensitiveData(is_array($command) ? implode(' ', $arguments) : (string) $command),
+                'command' => $this->redactSensitiveData(implode(' ', $arguments)),
                 'options' => $options,
             ]);
         }
@@ -87,7 +87,7 @@ class ShakaPackager
 
             if ($this->logger) {
                 $this->logger->error($errorMessage, [
-                    'command' => $this->redactSensitiveData(is_array($command) ? implode(' ', $arguments) : (string) $command),
+                    'command' => $this->redactSensitiveData(implode(' ', $arguments)),
                 ]);
             }
 

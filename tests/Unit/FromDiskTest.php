@@ -62,7 +62,6 @@ it('can accept Disk instance in fromDisk', function () {
 });
 
 it('can accept Filesystem instance in fromDisk', function () {
-    Storage::fake('test-disk');
     $filesystem = Storage::disk('test-disk');
     $opener = new MediaOpener;
 

@@ -22,7 +22,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         php: [8.4, 8.3]
-        laravel: [12.*, 11.*]
+        laravel: [12.*, 11.*, 10.*]
         stability: [prefer-lowest, prefer-stable]
         include:
           - laravel: 12.*
@@ -35,6 +35,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+
+      - name: Setup Shaka Packager
+        run: |
+          wget -q https://github.com/shaka-project/shaka-packager/releases/download/v3.4.2/packager-linux-x64 -O /tmp/packager
+          sudo mv /tmp/packager /usr/local/bin/packager
+          sudo chmod +x /usr/local/bin/packager
+          packager --version
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2

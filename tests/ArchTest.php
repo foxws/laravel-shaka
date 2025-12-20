@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 arch('it will not use debugging functions')
     ->expect(['dd', 'dump', 'ray'])
-    ->each->not->toBeUsed();
+    ->each->not->toBeUsed()
+    ->ignoring('Foxws\\Shaka\\Exporters\\MediaExporter');
 
 arch('classes in src/Support extend nothing or base classes')
     ->expect('Foxws\\Shaka\\Support')

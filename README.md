@@ -42,7 +42,7 @@ $result = Shaka::fromDisk('s3')
 ## Requirements
 
 - PHP 8.1 or higher
-- Laravel 10.x or higher
+- Laravel 11.x or higher
 - Shaka Packager binary installed on your system or Docker container
 
 ## Installation

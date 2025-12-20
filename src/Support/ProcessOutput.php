@@ -6,18 +6,11 @@ namespace Foxws\Shaka\Support;
 
 class ProcessOutput
 {
-    private $all;
-
-    private $errors;
-
-    private $out;
-
-    public function __construct(array $all, array $errors, array $out)
-    {
-        $this->all = $all;
-        $this->errors = $errors;
-        $this->out = $out;
-    }
+    public function __construct(
+        private array $all = [],
+        private array $errors = [],
+        private array $out = [],
+    ) {}
 
     public function all(): array
     {

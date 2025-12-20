@@ -13,8 +13,7 @@ class PackagerResult
         protected string $output,
         protected ?Disk $sourceDisk = null,
         protected ?string $temporaryDirectory = null
-    )
-    {}
+    ) {}
 
     public function getOutput(): string
     {

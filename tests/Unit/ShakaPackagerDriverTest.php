@@ -1,0 +1,74 @@
+<?php
+
+declare(strict_types=1);
+
+use Foxws\Shaka\Exceptions\ExecutableNotFoundException;
+use Foxws\Shaka\Support\ShakaPackager;
+use Illuminate\Support\Facades\Config;
+
+beforeEach(function () {
+    Config::set('laravel-shaka.packager.binaries', '/usr/local/bin/packager');
+    Config::set('laravel-shaka.timeout', 3600);
+});
+
+it('throws exception when binary not found', function () {
+    Config::set('laravel-shaka.packager.binaries', '/nonexistent/packager');
+
+    ShakaPackager::create();
+})->throws(ExecutableNotFoundException::class);
+
+it('can create driver with valid configuration', function () {
+    // Skip if packager binary doesn't exist
+    $binary = Config::string('laravel-shaka.packager.binaries');
+
+    if (! file_exists($binary)) {
+        $this->markTestSkipped('Packager binary not found at '.$binary);
+    }
+
+    $driver = ShakaPackager::create();
+
+    expect($driver)->toBeInstanceOf(ShakaPackager::class);
+    expect($driver->getName())->toBe('packager');
+});
+
+it('can get and set timeout', function () {
+    // Skip if packager binary doesn't exist
+    $binary = Config::string('laravel-shaka.packager.binaries');
+
+    if (! file_exists($binary)) {
+        $this->markTestSkipped('Packager binary not found at '.$binary);
+    }
+
+    $driver = ShakaPackager::create();
+
+    expect($driver->getTimeout())->toBe(3600);
+
+    $driver->setTimeout(7200);
+
+    expect($driver->getTimeout())->toBe(7200);
+});
+
+it('can get binary path from config', function () {
+    // Skip if packager binary doesn't exist
+    $binary = Config::string('laravel-shaka.packager.binaries');
+
+    if (! file_exists($binary)) {
+        $this->markTestSkipped('Packager binary not found at '.$binary);
+    }
+
+    $driver = ShakaPackager::create();
+
+    expect($driver->getBinaryPath())->toBe('/usr/local/bin/packager');
+});
+
+it('respects custom binary path configuration', function () {
+    $customPath = '/custom/path/to/packager';
+
+    Config::set('laravel-shaka.packager.binaries', $customPath);
+
+    try {
+        ShakaPackager::create();
+    } catch (ExecutableNotFoundException $e) {
+        expect($e->getMessage())->toContain($customPath);
+    }
+});

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Foxws\Shaka\Tests;
 
 use Foxws\Shaka\ShakaServiceProvider;
@@ -12,9 +14,9 @@ class TestCase extends Orchestra
     {
         parent::setUp();
 
-        Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'Foxws\\Shaka\\Database\\Factories\\'.class_basename($modelName).'Factory'
-        );
+        // Factory::guessFactoryNamesUsing(
+        //     fn (string $modelName) => 'Foxws\\Shaka\\Database\\Factories\\'.class_basename($modelName).'Factory'
+        // );
     }
 
     protected function getPackageProviders($app)
@@ -28,10 +30,8 @@ class TestCase extends Orchestra
     {
         config()->set('database.default', 'testing');
 
-        /*
-         foreach (\Illuminate\Support\Facades\File::allFiles(__DIR__ . '/../database/migrations') as $migration) {
-            (include $migration->getRealPath())->up();
-         }
-         */
+        // foreach (\Illuminate\Support\Facades\File::allFiles(__DIR__ . '/../database/migrations') as $migration) {
+        // (include $migration->getRealPath())->up();
+        // }
     }
 }

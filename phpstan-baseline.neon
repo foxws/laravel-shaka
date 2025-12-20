@@ -1,3 +1,13 @@
 # PHPStan baseline file
 # Run `vendor/bin/phpstan analyse --generate-baseline` to regenerate
 parameters:
+    ignoreErrors:
+        # ForwardsCalls trait forwards method calls to FilesystemAdapter
+        -
+            message: '#Call to an undefined method Foxws\\Shaka\\Filesystem\\Disk::(has|exists|get|readStream|writeStream|makeDirectory|setVisibility|allFiles)\(\)\.#'
+            path: src/
+
+        # Service provider closures using $this->app is acceptable Laravel pattern
+        -
+            message: '#Consider using bind method instead or pass a closure\.#'
+            path: src/ShakaServiceProvider.php

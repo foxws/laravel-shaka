@@ -8,6 +8,7 @@ use Foxws\Shaka\Filesystem\MediaOpenerFactory;
 use Foxws\Shaka\Filesystem\TemporaryDirectories;
 use Foxws\Shaka\Support\Packager;
 use Foxws\Shaka\Support\ShakaPackager;
+use Illuminate\Support\Facades\Config;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -23,24 +24,22 @@ class ShakaServiceProvider extends PackageServiceProvider
     public function packageRegistered(): void
     {
         $this->app->singleton('laravel-shaka-logger', function () {
-            $logChannel = $this->app['config']->get('laravel-shaka.log_channel');
+            $logChannel = Config::get('laravel-shaka.log_channel');
 
             if ($logChannel === false) {
                 return null;
             }
 
-            return $this->app['log']->channel($logChannel ?: $this->app['config']->get('logging.default'));
+            return app('log')->channel($logChannel ?: Config::get('logging.default'));
         });
 
         $this->app->singleton('laravel-shaka-configuration', function () {
-            $config = $this->app['config'];
-
             $baseConfig = [
-                'packager.binaries' => $config->get('laravel-shaka.packager.binaries'),
-                'timeout' => $config->get('laravel-shaka.timeout'),
+                'packager.binaries' => Config::string('laravel-shaka.packager.binaries'),
+                'timeout' => Config::integer('laravel-shaka.timeout'),
             ];
 
-            if ($configuredTemporaryRoot = $config->get('laravel-shaka.temporary_files_root')) {
+            if ($configuredTemporaryRoot = Config::string('laravel-shaka.temporary_files_root')) {
                 $baseConfig['temporary_directory'] = $configuredTemporaryRoot;
             }
 
@@ -49,7 +48,7 @@ class ShakaServiceProvider extends PackageServiceProvider
 
         $this->app->singleton(TemporaryDirectories::class, function () {
             return new TemporaryDirectories(
-                $this->app['config']->get('laravel-shaka.temporary_files_root', sys_get_temp_dir()),
+                Config::string('laravel-shaka.temporary_files_root', sys_get_temp_dir()),
             );
         });
 
@@ -72,9 +71,9 @@ class ShakaServiceProvider extends PackageServiceProvider
         // Register the main class to use with the facade
         $this->app->singleton('laravel-shaka', function () {
             return new MediaOpenerFactory(
-                $this->app['config']->get('filesystems.default'),
+                Config::string('filesystems.default'),
                 null,
-                fn () => $this->app->make(Packager::class)
+                fn () => app(Packager::class)
             );
         });
     }

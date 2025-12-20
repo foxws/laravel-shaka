@@ -74,7 +74,7 @@ class ShakaPackager
 
         if ($this->logger) {
             $this->logger->debug('Executing packager command', [
-                'command' => $commandLine,
+                'command' => $this->redactSensitiveData($commandLine),
                 'options' => $options,
             ]);
         }
@@ -87,9 +87,7 @@ class ShakaPackager
 
             if ($this->logger) {
                 $this->logger->error($errorMessage, [
-                    'command' => $commandLine,
-                    'exit_code' => $result->exitCode(),
-                    'output' => $result->output(),
+                    'command' => $this->redactSensitiveData($commandLine),
                 ]);
             }
 
@@ -103,6 +101,31 @@ class ShakaPackager
         }
 
         return $result->output();
+    }
+
+    protected function redactSensitiveData(string $commandLine): string
+    {
+        $sensitiveOptions = ['keys', 'key', 'key_id', 'pssh', 'protection_systems', 'raw_key', 'iv'];
+
+        $redacted = $commandLine;
+
+        foreach ($sensitiveOptions as $option) {
+            // Redact --option=value format
+            $redacted = preg_replace(
+                '/--' . preg_quote($option, '/') . '=([^\s]+)/',
+                '--' . $option . '=[REDACTED]',
+                $redacted
+            );
+
+            // Redact --option value format
+            $redacted = preg_replace(
+                '/--' . preg_quote($option, '/') . '\s+(?!--)(\S+)/',
+                '--' . $option . ' [REDACTED]',
+                $redacted
+            );
+        }
+
+        return $redacted;
     }
 
     public function getBinaryPath(): string

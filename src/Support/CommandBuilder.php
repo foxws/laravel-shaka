@@ -110,11 +110,12 @@ class CommandBuilder
         // Add stream definitions
         $this->streams->each(function (array $stream) use ($parts) {
             $streamParts = Collection::make($stream)
-                ->map(fn ($value, $key) => sprintf(
-                    '%s=%s',
-                    $this->escapeKey($key),
-                    $this->escapeValue($value)
-                ))
+                ->map(function ($value, $key) {
+                    $escapedKey = $this->escapeKey($key);
+                    $sanitizedValue = $this->sanitizeDescriptorValue($value);
+
+                    return sprintf('%s=%s', $escapedKey, $sanitizedValue);
+                })
                 ->values();
 
             $parts->push($streamParts->implode(','));
@@ -147,7 +148,12 @@ class CommandBuilder
         // Add stream definitions
         $this->streams->each(function (array $stream) use (&$arguments) {
             $streamParts = Collection::make($stream)
-                ->map(fn ($value, $key) => sprintf('%s=%s', $key, $value))
+                ->map(function ($value, $key) {
+                    $escapedKey = $this->escapeKey($key);
+                    $sanitizedValue = $this->sanitizeDescriptorValue($value);
+
+                    return sprintf('%s=%s', $escapedKey, $sanitizedValue);
+                })
                 ->values();
 
             $arguments[] = $streamParts->implode(',');
@@ -199,6 +205,34 @@ class CommandBuilder
         return $key;
     }
 
+    /**
+     * Sanitize descriptor values to avoid Shaka stream parser issues.
+     * - Normalize smart quotes to ASCII
+     * - Replace commas (Shaka field separators) with hyphens
+     * - Trim surrounding quotes
+     * - Prefix leading dashes with ./ to avoid option-like confusion
+     */
+    protected function sanitizeDescriptorValue(mixed $value): string
+    {
+        $v = (string) $value;
+
+        // Normalize typographic quotes
+        $v = str_replace(['’', '‘', '“', '”'], ["'", "'", '"', '"'], $v);
+
+        // Commas separate fields in Shaka descriptors; avoid them in values
+        $v = str_replace(',', '-', $v);
+
+        // Remove surrounding quotes if present
+        $v = trim($v, "\"'");
+
+        // If value starts with a dash, prefix with ./ for safety
+        if (str_starts_with($v, '-')) {
+            $v = './'.$v;
+        }
+
+        return $v;
+    }
+
     protected function escapeValue(mixed $value): string
     {
         if (is_bool($value)) {
@@ -209,7 +243,8 @@ class CommandBuilder
             return (string) $value;
         }
 
-        // Use escapeshellarg for string values to handle special characters
-        return escapeshellarg((string) $value);
+        // Return raw string; Shaka Packager parses stream descriptors itself and
+        // quotes can break field detection (e.g., filenames with leading dashes/parentheses).
+        return (string) $value;
     }
 }

@@ -168,7 +168,7 @@ class Packager
             $media = $this->mediaCollection->findByPath($input);
 
             if ($media) {
-                return $media->getLocalPath();
+                return $media->getSafeInputPath();
             }
         }
 
@@ -295,7 +295,7 @@ class Packager
             throw new \RuntimeException('No streams configured. Use addVideoStream() or addAudioStream() first.');
         }
 
-        $command = $this->builder->build();
+        $command = $this->builder->buildArray();
 
         if ($this->logger) {
             $this->logger->info('Starting packaging operation', [
@@ -318,7 +318,7 @@ class Packager
 
     public function packageWithBuilder(CommandBuilder $builder): PackagerResult
     {
-        $command = $builder->build();
+        $command = $builder->buildArray();
 
         if ($this->logger) {
             $this->logger->info('Starting packaging operation with builder', [

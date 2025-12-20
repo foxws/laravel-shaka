@@ -228,10 +228,13 @@ Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
 Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
 
-## Credits
+## Acknowledgments
 
-- [francoism90](https://github.com/foxws)
-- [All Contributors](../../contributors)
+This package was inspired by and learned from:
+- [Laravel FFmpeg](https://github.com/protonemedia/laravel-ffmpeg) - Architecture patterns and Laravel integration approach.
+- [quasarstream/shaka-php](https://github.com/quasarstream/shaka-php) - Shaka Packager wrapper implementation and command building logic.
+
+Much of the existing logic and design patterns from these excellent packages helped shape this implementation. Many thanks to their authors and contributors!
 
 ## License
 

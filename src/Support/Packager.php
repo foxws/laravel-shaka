@@ -372,14 +372,66 @@ class Packager
             if (is_array($stream)) {
                 $streamParts = [];
                 foreach ($stream as $key => $value) {
-                    $streamParts[] = "{$key}={$value}";
+                    $streamParts[] = sprintf(
+                        '%s=%s',
+                        $this->escapeKey($key),
+                        $this->escapeValue($value)
+                    );
                 }
                 $parts[] = implode(',', $streamParts);
             } else {
+                // For pre-formatted strings, validate they don't contain shell metacharacters
+                $this->validatePreformattedStream($stream);
                 $parts[] = $stream;
             }
         }
 
         return implode(' ', $parts);
+    }
+
+    /**
+     * Escape stream key to prevent command injection
+     */
+    protected function escapeKey(string $key): string
+    {
+        // Keys should only contain alphanumeric characters, underscores, and hyphens
+        // This prevents command injection while allowing all valid Shaka Packager options
+        if (! preg_match('/^[a-z0-9_-]+$/i', $key)) {
+            throw new \InvalidArgumentException(
+                "Invalid key format: {$key}. Keys must contain only alphanumeric characters, underscores, and hyphens."
+            );
+        }
+
+        return $key;
+    }
+
+    /**
+     * Escape stream value to prevent command injection
+     */
+    protected function escapeValue(mixed $value): string
+    {
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        if (is_numeric($value)) {
+            return (string) $value;
+        }
+
+        // Use escapeshellarg for string values to handle special characters
+        return escapeshellarg((string) $value);
+    }
+
+    /**
+     * Validate pre-formatted stream strings for potential command injection
+     */
+    protected function validatePreformattedStream(string $stream): void
+    {
+        // Check for shell metacharacters that could be used for command injection
+        if (preg_match('/[;&|`$()<>]/', $stream)) {
+            throw new \InvalidArgumentException(
+                'Pre-formatted stream string contains shell metacharacters that could lead to command injection. Use array format instead.'
+            );
+        }
     }
 }

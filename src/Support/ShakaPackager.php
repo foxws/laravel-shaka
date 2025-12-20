@@ -124,15 +124,18 @@ class ShakaPackager
         $redacted = $commandLine;
 
         foreach ($sensitiveOptions as $option) {
-            // Match patterns like --option=value or --option value
-            // Redact the value part while keeping the option name visible
+            // Match --option=value format (handles quoted and unquoted values)
+            // Matches: --option=value, --option="value", --option='value'
             $redacted = preg_replace(
-                '/--' . preg_quote($option, '/') . '=\S+/',
+                '/--' . preg_quote($option, '/') . '=((["\'])(?:\\\\.|(?!\2).)*\2|[^\s]+)/',
                 '--' . $option . '=[REDACTED]',
                 $redacted
             );
+
+            // Match --option value format (handles quoted and unquoted values)
+            // Matches: --option value, --option "value", --option 'value'
             $redacted = preg_replace(
-                '/--' . preg_quote($option, '/') . '\s+\S+/',
+                '/--' . preg_quote($option, '/') . '\s+((["\'])(?:\\\\.|(?!\2).)*\2|[^\s-][^\s]*)/',
                 '--' . $option . ' [REDACTED]',
                 $redacted
             );

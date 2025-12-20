@@ -22,7 +22,10 @@ it('redacts sensitive encryption keys from debug logs', function () {
     ]);
 
     // Create a command with sensitive encryption options
-    $command = 'in=input.mp4,stream=video,output=output.mp4 --enable_raw_key_encryption --keys=label=:key_id=abcdef0123456789abcdef0123456789:key=0123456789abcdef0123456789abcdef --key_server_url=https://example.com/license';
+    $command = 'in=input.mp4,stream=video,output=output.mp4 '
+        .'--enable_raw_key_encryption '
+        .'--keys=label=:key_id=abcdef0123456789abcdef0123456789:key=0123456789abcdef0123456789abcdef '
+        .'--key_server_url=https://example.com/license';
 
     // Expect the logger to be called with redacted sensitive data
     $logger->shouldReceive('debug')

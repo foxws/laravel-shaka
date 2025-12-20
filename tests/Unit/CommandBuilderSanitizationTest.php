@@ -6,23 +6,23 @@ use Foxws\Shaka\Support\CommandBuilder;
 
 it('sanitizes leading dashes in input path', function () {
     $builder = CommandBuilder::make()
-        ->addVideoStream('-Foo-Bar-(Foo-Bar-bla).mp4', 'out.m4v');
+        ->addVideoStream('-Foo-Bar-(Foo-Bar-Foo).mp4', 'out.m4v');
 
     $args = $builder->buildArray();
 
     expect($args)->toHaveCount(1)
-        ->and($args[0])->toContain('in=./-Foo-Bar-(Foo-Bar-bla).mp4')
+        ->and($args[0])->toContain('in=./-Foo-Bar-(Foo-Bar-Foo).mp4')
         ->and($args[0])->toContain('stream=video')
         ->and($args[0])->toContain('output=out.m4v');
 });
 
 it('normalizes smart quotes in input path', function () {
     $builder = CommandBuilder::make()
-        ->addVideoStream('-fpp-bar-how-dww-i’m-dw-_1.m4v', 'out.m4v');
+        ->addVideoStream('-foo-bar-foo-bar-i’m-foo-_1.m4v', 'out.m4v');
 
     $args = $builder->buildArray();
 
-    expect($args[0])->toContain("in=./-fpp-bar-how-dww-i'm-dw-_1.m4v");
+    expect($args[0])->toContain("in=./-foo-bar-foo-bar-i'm-foo-_1.m4v");
 });
 
 it('replaces commas with hyphens in input path', function () {

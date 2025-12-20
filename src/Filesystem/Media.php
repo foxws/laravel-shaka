@@ -14,19 +14,19 @@ class Media
 
     protected ?string $temporaryDirectory = null;
 
-    public function __construct(Disk $disk, string $path, bool $createTemporary = true)
+    public function __construct(Disk $disk, string $path, bool $createTemp = true)
     {
         $this->disk = $disk;
         $this->path = $path;
 
-        if ($createTemporary) {
+        if ($createTemp) {
             $this->makeDirectory();
         }
     }
 
-    public static function make($disk, string $path, bool $createTemporary = true): self
+    public static function make($disk, string $path, bool $createTemp = true): self
     {
-        return new static(Disk::make($disk), $path, $createTemporary);
+        return new static(Disk::make($disk), $path, $createTemp);
     }
 
     public function getDisk(): Disk

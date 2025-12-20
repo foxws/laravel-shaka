@@ -58,7 +58,7 @@ class DynamicDASHManifest implements Responsable
      */
     public function open(string $path): self
     {
-        $this->media = Media::make($this->disk, $path);
+        $this->media = Media::make($this->disk, $path, false);
 
         $this->mediaCache = [];
         $this->initCache = [];

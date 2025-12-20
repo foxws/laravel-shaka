@@ -134,8 +134,9 @@ class ShakaPackager
 
             // Match --option value format (handles quoted and unquoted values)
             // Matches: --option value, --option "value", --option 'value'
+            // Uses negative lookahead to avoid matching the next option flag
             $redacted = preg_replace(
-                '/--' . preg_quote($option, '/') . '\s+((["\'])(?:\\\\.|(?!\2).)*\2|[^\s-][^\s]*)/',
+                '/--' . preg_quote($option, '/') . '\s+((["\'])(?:\\\\.|(?!\2).)*\2|(?!--)[^\s]+)/',
                 '--' . $option . ' [REDACTED]',
                 $redacted
             );

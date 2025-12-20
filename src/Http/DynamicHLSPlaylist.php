@@ -197,7 +197,7 @@ class DynamicHLSPlaylist implements Responsable
      * a .TS segment filename, or a media filename (.mp4, .m4s, .m4a, .m4v, .aac, .vtt).
      * Returns false if the line is already a full URL.
      */
-    private static function lineHasMediaFilename(string $line): bool
+    protected static function lineHasMediaFilename(string $line): bool
     {
         // Skip lines that are already full URLs
         if (Str::startsWith($line, ['http://', 'https://'])) {
@@ -219,7 +219,7 @@ class DynamicHLSPlaylist implements Responsable
     /**
      * Returns the filename of the encryption key.
      */
-    private static function extractKeyFromExtLine(string $line): ?string
+    protected static function extractKeyFromExtLine(string $line): ?string
     {
         preg_match('/#EXT-X-KEY:METHOD=[^,]+,URI="([^"]+)"/', $line, $matches);
 
@@ -229,7 +229,7 @@ class DynamicHLSPlaylist implements Responsable
     /**
      * Extract playlist URI from EXT-X-MEDIA line.
      */
-    private static function extractPlaylistFromExtMediaLine(string $line): ?string
+    protected static function extractPlaylistFromExtMediaLine(string $line): ?string
     {
         if (! Str::startsWith($line, '#EXT-X-MEDIA:')) {
             return null;
@@ -243,7 +243,7 @@ class DynamicHLSPlaylist implements Responsable
     /**
      * Extract media URI from EXT-X-MAP line.
      */
-    private static function extractMediaFromExtMapLine(string $line): ?string
+    protected static function extractMediaFromExtMapLine(string $line): ?string
     {
         if (! Str::startsWith($line, '#EXT-X-MAP:')) {
             return null;

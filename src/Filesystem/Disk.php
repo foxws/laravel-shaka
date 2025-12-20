@@ -33,7 +33,7 @@ class Disk
             return $disk;
         }
 
-        return new static($disk);
+        return new self($disk);
     }
 
     public static function makeTemporaryDisk(): self
@@ -42,7 +42,7 @@ class Disk
             'root' => app(TemporaryDirectories::class)->create(),
         ]);
 
-        return new static($filesystemAdapter);
+        return new self($filesystemAdapter);
     }
 
     /**
@@ -84,24 +84,27 @@ class Disk
         return get_class($this->getFlysystemAdapter()).'_'.md5((string) spl_object_id($this->getFlysystemAdapter()));
     }
 
-    public function getFilesystemAdapter(): FilesystemAdapter
+    /**
+     * @return FilesystemAdapter
+     */
+    public function getFilesystemAdapter(): Filesystem|FilesystemAdapter
     {
         if ($this->filesystemAdapter) {
             return $this->filesystemAdapter;
         }
 
         if ($this->disk instanceof Filesystem) {
-            return $this->filesystemAdapter = $this->disk;
+            /** @var FilesystemAdapter $adapter */
+            $adapter = $this->disk;
+            return $this->filesystemAdapter = $adapter;
         }
 
         return $this->filesystemAdapter = Storage::disk($this->disk);
     }
 
-    private function getFlysystemDriver(): LeagueFilesystem
-    {
-        return $this->getFilesystemAdapter()->getDriver();
-    }
-
+    /**
+     * @phpstan-return FlysystemFilesystemAdapter
+     */
     private function getFlysystemAdapter(): FlysystemFilesystemAdapter
     {
         return $this->getFilesystemAdapter()->getAdapter();

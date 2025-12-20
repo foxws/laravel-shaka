@@ -20,7 +20,7 @@ class MediaCollection
 
     public static function make(array $items = []): self
     {
-        return new static($items);
+        return new self($items);
     }
 
     /**
@@ -39,6 +39,32 @@ class MediaCollection
         return $this->items->first(function (Media $media) use ($path) {
             return $media->getPath() === $path;
         });
+    }
+
+    /**
+     * Get the first item from the collection.
+     */
+    public function first(?callable $callback = null, mixed $default = null): mixed
+    {
+        return $this->items->first($callback, $default);
+    }
+
+    /**
+     * Get the last item from the collection.
+     */
+    public function last(?callable $callback = null, mixed $default = null): mixed
+    {
+        return $this->items->last($callback, $default);
+    }
+
+    /**
+     * Push an item onto the end of the collection.
+     */
+    public function push(mixed $value): self
+    {
+        $this->items->push($value);
+
+        return $this;
     }
 
     public function collection(): Collection

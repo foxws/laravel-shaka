@@ -27,7 +27,7 @@ class MediaOpener
     protected ?MediaCollection $collection = null;
 
     public function __construct(
-        ?string $disk = null,
+        Disk|string|null $disk = null,
         ?Packager $packager = null,
         ?MediaCollection $mediaCollection = null
     ) {
@@ -59,7 +59,7 @@ class MediaOpener
         return $this->disk;
     }
 
-    private static function makeLocalDiskFromPath(string $path): Disk
+    protected static function makeLocalDiskFromPath(string $path): Disk
     {
         $adapter = (new FilesystemManager(app()))->createLocalDriver([
             'root' => $path,

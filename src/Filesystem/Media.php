@@ -26,7 +26,7 @@ class Media
 
     public static function make($disk, string $path, bool $createTemp = true): self
     {
-        return new static(Disk::make($disk), $path, $createTemp);
+        return new self(Disk::make($disk), $path, $createTemp);
     }
 
     public function getDisk(): Disk
@@ -86,15 +86,21 @@ class Media
         return Disk::make($this->temporaryDirectoryAdapter());
     }
 
+    /**
+     * @return FilesystemAdapter
+     */
     private function temporaryDirectoryAdapter(): FilesystemAdapter
     {
         if (! $this->temporaryDirectory) {
             $this->temporaryDirectory = $this->getDisk()->getTemporaryDirectory();
         }
 
-        return app('filesystem')->createLocalDriver(
+        /** @var FilesystemAdapter $adapter */
+        $adapter = app('filesystem')->createLocalDriver(
             ['root' => $this->temporaryDirectory]
         );
+
+        return $adapter;
     }
 
     public function getLocalPath(): string

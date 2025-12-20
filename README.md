@@ -17,7 +17,8 @@ $result = Shaka::fromDisk('s3')
     ->addAudioStream('videos/input.mp4', 'audio.mp4')
     ->withMpdOutput('manifest.mpd')
     ->withSegmentDuration(6)
-    ->export();
+    ->export()
+    ->save();
 ```
 
 ## Features
@@ -69,7 +70,8 @@ $result = Shaka::open('input.mp4')
     ->addVideoStream('input.mp4', 'video.mp4')
     ->addAudioStream('input.mp4', 'audio.mp4')
     ->withMpdOutput('manifest.mpd')
-    ->export();
+    ->export()
+    ->save();
 ```
 
 ### Adaptive Bitrate Streaming
@@ -82,7 +84,8 @@ $result = Shaka::open('input.mp4')
     ->addAudioStream('input.mp4', 'audio.mp4')
     ->withMpdOutput('manifest.mpd')
     ->withSegmentDuration(6)
-    ->export();
+    ->export()
+    ->save();
 ```
 
 ### Working with Different Disks
@@ -93,7 +96,8 @@ $result = Shaka::fromDisk('s3')
     ->addVideoStream('videos/input.mp4', 'video.mp4')
     ->addAudioStream('videos/input.mp4', 'audio.mp4')
     ->withMpdOutput('manifest.mpd')
-    ->export();
+    ->export()
+    ->save();
 ```
 
 ### HLS with Encryption
@@ -110,14 +114,16 @@ $result = Shaka::open('input.mp4')
         'hls_key_uri' => 'encryption.key',
         // Do NOT set protection_scheme for HLS - it forces SAMPLE-AES which browsers don't support
     ])
-    ->export();
+    ->export()
+    ->save();
 
 // For unencrypted streams, .mp4 (fMP4) offers better performance
 $result = Shaka::open('input.mp4')
     ->addVideoStream('input.mp4', 'video.mp4')  // .mp4 OK without encryption
     ->addAudioStream('input.mp4', 'audio.mp4')
     ->withHlsMasterPlaylist('master.m3u8')
-    ->export();
+    ->export()
+    ->save();
 ```
 
 ### Dynamic URL Resolvers (HLS & DASH)

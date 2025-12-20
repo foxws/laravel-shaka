@@ -18,13 +18,6 @@ it('throws exception when binary not found', function () {
 })->throws(ExecutableNotFoundException::class);
 
 it('can create driver with valid configuration', function () {
-    // Skip if packager binary doesn't exist
-    $binary = Config::string('laravel-shaka.packager.binaries');
-
-    if (! file_exists($binary)) {
-        $this->markTestSkipped('Packager binary not found at '.$binary);
-    }
-
     $driver = ShakaPackager::create();
 
     expect($driver)->toBeInstanceOf(ShakaPackager::class);
@@ -32,13 +25,6 @@ it('can create driver with valid configuration', function () {
 });
 
 it('can get and set timeout', function () {
-    // Skip if packager binary doesn't exist
-    $binary = Config::string('laravel-shaka.packager.binaries');
-
-    if (! file_exists($binary)) {
-        $this->markTestSkipped('Packager binary not found at '.$binary);
-    }
-
     $driver = ShakaPackager::create();
 
     expect($driver->getTimeout())->toBe(3600);
@@ -49,13 +35,6 @@ it('can get and set timeout', function () {
 });
 
 it('can get binary path from config', function () {
-    // Skip if packager binary doesn't exist
-    $binary = Config::string('laravel-shaka.packager.binaries');
-
-    if (! file_exists($binary)) {
-        $this->markTestSkipped('Packager binary not found at '.$binary);
-    }
-
     $driver = ShakaPackager::create();
 
     expect($driver->getBinaryPath())->toBe('/usr/local/bin/packager');

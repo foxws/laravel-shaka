@@ -15,7 +15,7 @@ $result = Shaka::fromDisk('s3')
     ->addVideoStream('videos/input.mp4', 'video_1080p.mp4', ['bandwidth' => '5000000'])
     ->addVideoStream('videos/input.mp4', 'video_720p.mp4', ['bandwidth' => '3000000'])
     ->addAudioStream('videos/input.mp4', 'audio.mp4')
-    ->withMpdOutput('manifest.mpd')
+    ->withHlsMasterPlaylist('master.m3u8')
     ->withSegmentDuration(6)
     ->export()
     ->save();
@@ -27,7 +27,7 @@ $result = Shaka::fromDisk('s3')
 - 📁 **Multiple Disks** - Works with local, S3, and custom filesystems
 - 🎯 **Adaptive Bitrate** - Create multi-quality streams easily
 - 🔒 **Encryption & DRM** - Built-in support for content protection
-- 📺 **DASH & HLS** - Support for both streaming protocols
+- 📺 **HLS & DASH** - Support for both streaming protocols
 - 🧪 **Testable** - Clean architecture with mockable components
 - 📝 **Type-Safe** - Full PHP 8.1+ type declarations
 
@@ -42,7 +42,7 @@ $result = Shaka::fromDisk('s3')
 ## Requirements
 
 - PHP 8.1 or higher
-- Laravel 10.x or higher
+- Laravel 11.x or higher
 - Shaka Packager binary installed on your system or Docker container
 
 ## Installation
@@ -69,7 +69,7 @@ use Foxws\Shaka\Facades\Shaka;
 $result = Shaka::open('input.mp4')
     ->addVideoStream('input.mp4', 'video.mp4')
     ->addAudioStream('input.mp4', 'audio.mp4')
-    ->withMpdOutput('manifest.mpd')
+    ->withHlsMasterPlaylist('master.m3u8')
     ->export()
     ->save();
 ```
@@ -82,7 +82,7 @@ $result = Shaka::open('input.mp4')
     ->addVideoStream('input.mp4', 'video_720p.mp4', ['bandwidth' => '3000000'])
     ->addVideoStream('input.mp4', 'video_480p.mp4', ['bandwidth' => '1500000'])
     ->addAudioStream('input.mp4', 'audio.mp4')
-    ->withMpdOutput('manifest.mpd')
+    ->withHlsMasterPlaylist('master.m3u8')
     ->withSegmentDuration(6)
     ->export()
     ->save();
@@ -95,7 +95,7 @@ $result = Shaka::fromDisk('s3')
     ->open('videos/input.mp4')
     ->addVideoStream('videos/input.mp4', 'video.mp4')
     ->addAudioStream('videos/input.mp4', 'audio.mp4')
-    ->withMpdOutput('manifest.mpd')
+    ->withHlsMasterPlaylist('master.m3u8')
     ->export()
     ->save();
 ```
@@ -200,8 +200,8 @@ See [URL Resolver Examples](examples/UrlResolverExamples.php) and [Documentation
 
 ### Output Configuration
 
-- `withMpdOutput(string $path)` - Set DASH manifest output
 - `withHlsMasterPlaylist(string $path)` - Set HLS master playlist output
+- `withMpdOutput(string $path)` - Set DASH manifest output
 - `withSegmentDuration(int $seconds)` - Set segment duration
 - `withEncryption(array $config)` - Enable encryption
 

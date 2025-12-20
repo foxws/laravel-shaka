@@ -11,6 +11,16 @@ use Illuminate\Support\Traits\ForwardsCalls;
 use League\Flysystem\FilesystemAdapter as FlysystemFilesystemAdapter;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 
+/**
+ * @method bool has(string $path)
+ * @method bool exists(string $path)
+ * @method string|null get(string $path)
+ * @method resource|null readStream(string $path)
+ * @method bool writeStream(string $path, resource $resource, array $options = [])
+ * @method bool makeDirectory(string $path)
+ * @method bool setVisibility(string $path, string $visibility)
+ * @method array allFiles(string|null $directory = null)
+ */
 class Disk
 {
     use ForwardsCalls;

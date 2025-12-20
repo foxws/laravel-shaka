@@ -8,7 +8,6 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Traits\ForwardsCalls;
-use League\Flysystem\Filesystem as LeagueFilesystem;
 use League\Flysystem\FilesystemAdapter as FlysystemFilesystemAdapter;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 
@@ -96,6 +95,7 @@ class Disk
         if ($this->disk instanceof Filesystem) {
             /** @var FilesystemAdapter $adapter */
             $adapter = $this->disk;
+
             return $this->filesystemAdapter = $adapter;
         }
 

@@ -86,9 +86,6 @@ class Media
         return Disk::make($this->temporaryDirectoryAdapter());
     }
 
-    /**
-     * @return FilesystemAdapter
-     */
     private function temporaryDirectoryAdapter(): FilesystemAdapter
     {
         if (! $this->temporaryDirectory) {

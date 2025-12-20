@@ -7,9 +7,3 @@ parameters:
             message: "#Called 'env' outside of the config directory#"
             paths:
                 - config/laravel-shaka.php
-
-        # ForwardsCalls trait forwards method calls to FilesystemAdapter
-        -
-            message: '#Call to an undefined method Foxws\\Shaka\\Filesystem\\Disk::(has|exists|get|readStream|writeStream|makeDirectory|setVisibility|allFiles)\(\)\.#'
-            paths:
-                - src/Filesystem/Disk.php

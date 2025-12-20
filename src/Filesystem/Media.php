@@ -14,6 +14,8 @@ class Media
 
     protected ?string $temporaryDirectory = null;
 
+    protected ?string $genericAlias = null;
+
     public function __construct(Disk $disk, string $path, bool $createTemp = true)
     {
         $this->disk = $disk;
@@ -116,6 +118,45 @@ class Media
         }
 
         return $temporaryDirectoryDisk->path($path);
+    }
+
+    /**
+     * Get a safe path for Shaka Packager by creating a generic alias if configured.
+     * This prevents issues with special characters in filenames.
+     */
+    public function getSafeInputPath(): string
+    {
+        if (! config('laravel-shaka.force_generic_input', false)) {
+            return $this->getPath();
+        }
+
+        if ($this->genericAlias) {
+            return $this->genericAlias;
+        }
+
+        $extension = pathinfo($this->getPath(), PATHINFO_EXTENSION);
+        $this->genericAlias = 'input.' . ($extension ?: 'tmp');
+
+        $disk = $this->getDisk();
+        $temporaryDirectoryDisk = $this->temporaryDirectoryDisk();
+
+        // Copy or link the source to a generic name in temp directory
+        if (! $temporaryDirectoryDisk->exists($this->genericAlias)) {
+            if ($disk->isLocalDisk() && function_exists('symlink')) {
+                // Use symlink for local files (faster)
+                $sourcePath = $disk->path($this->getPath());
+                $targetPath = $temporaryDirectoryDisk->path($this->genericAlias);
+                @symlink($sourcePath, $targetPath);
+            } else {
+                // Copy for remote disks or when symlink unavailable
+                $temporaryDirectoryDisk->writeStream(
+                    $this->genericAlias,
+                    $disk->readStream($this->getPath())
+                );
+            }
+        }
+
+        return $this->genericAlias;
     }
 
     public function copyAllFromTemporaryDirectory(?string $visibility = null)

@@ -15,6 +15,11 @@ All notable changes to `laravel-shaka` will be documented in this file.
   - Trim surrounding quotes
   - Prefix leading dashes with `./` to avoid option confusion
 - Unit tests covering descriptor sanitization for leading dashes, smart quotes, commas, and output filenames.
+- `force_generic_input` config option to automatically create safe generic aliases for input files.
+  - When enabled, creates a temporary copy/symlink with a generic name (e.g., `input.mp4`).
+  - Prevents issues with any special characters in filenames (parentheses, brackets, smart quotes, etc.).
+  - Uses symlinks for local disks (fast) and copies for remote disks (compatible).
+  - Set `PACKAGER_FORCE_GENERIC_INPUT=true` in `.env` to enable.
 
 ### Internal
 - Switch `Foxws\\Shaka\\Support\\Packager` to pass arguments using `buildArray()`.

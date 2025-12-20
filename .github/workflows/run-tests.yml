@@ -37,6 +37,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Setup Shaka Packager
+        if: runner.os == 'Linux'
         run: |
           wget -q https://github.com/shaka-project/shaka-packager/releases/download/v3.4.2/packager-linux-x64 -O /tmp/packager
           sudo mv /tmp/packager /usr/local/bin/packager

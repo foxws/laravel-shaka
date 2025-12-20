@@ -18,6 +18,8 @@ it('throws exception when binary not found', function () {
 })->throws(ExecutableNotFoundException::class);
 
 it('can create driver with valid configuration', function () {
+    skipIfNoPackager();
+
     $driver = ShakaPackager::create();
 
     expect($driver)->toBeInstanceOf(ShakaPackager::class);
@@ -25,6 +27,8 @@ it('can create driver with valid configuration', function () {
 });
 
 it('can get and set timeout', function () {
+    skipIfNoPackager();
+
     $driver = ShakaPackager::create();
 
     expect($driver->getTimeout())->toBe(3600);
@@ -35,6 +39,8 @@ it('can get and set timeout', function () {
 });
 
 it('can get binary path from config', function () {
+    skipIfNoPackager();
+
     $driver = ShakaPackager::create();
 
     expect($driver->getBinaryPath())->toBe('/usr/local/bin/packager');

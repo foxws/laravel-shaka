@@ -11,7 +11,7 @@ it('can create packager instance', function () {
     $packager = new Packager($driver);
 
     expect($packager)->toBeInstanceOf(Packager::class);
-    expect($packager->getDriver())->toBe($driver);
+    expect($packager->getPackager())->toBe($driver);
 });
 
 it('can set and get driver', function () {
@@ -20,11 +20,11 @@ it('can set and get driver', function () {
 
     $packager = new Packager($driver1);
 
-    expect($packager->getDriver())->toBe($driver1);
+    expect($packager->getPackager())->toBe($driver1);
 
-    $packager->setDriver($driver2);
+    $packager->setPackager($driver2);
 
-    expect($packager->getDriver())->toBe($driver2);
+    expect($packager->getPackager())->toBe($driver2);
 });
 
 it('can create fresh instance', function () {
@@ -35,7 +35,7 @@ it('can create fresh instance', function () {
 
     expect($packager2)->toBeInstanceOf(Packager::class);
     expect($packager2)->not->toBe($packager1);
-    expect($packager2->getDriver())->toBe($driver);
+    expect($packager2->getPackager())->toBe($driver);
 });
 
 it('fresh instance has same driver', function () {
@@ -44,5 +44,5 @@ it('fresh instance has same driver', function () {
     $packager1 = new Packager($driver);
     $packager2 = $packager1->fresh();
 
-    expect($packager2->getDriver())->toBe($packager1->getDriver());
+    expect($packager2->getPackager())->toBe($packager1->getPackager());
 });

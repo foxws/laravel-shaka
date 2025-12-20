@@ -15,8 +15,6 @@ class CommandBuilder
 
     protected array $options = [];
 
-    protected array $metadata = [];
-
     public function __construct()
     {
         $this->streams = new Collection;
@@ -117,21 +115,5 @@ class CommandBuilder
     public function getOptions(): array
     {
         return $this->options;
-    }
-
-    public function addMetadata(string $key, mixed $value): self
-    {
-        if (! isset($this->metadata[$key])) {
-            $this->metadata[$key] = [];
-        }
-
-        $this->metadata[$key][] = $value;
-
-        return $this;
-    }
-
-    public function getMetadata(): array
-    {
-        return $this->metadata;
     }
 }

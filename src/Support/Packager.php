@@ -23,8 +23,6 @@ class Packager
 
     protected ?string $temporaryDirectory = null;
 
-    protected ?string $customOutputPath = null;
-
     public function __construct(
         ShakaPackager $packager,
         ?LoggerInterface $logger = null
@@ -131,9 +129,6 @@ class Packager
 
         $this->builder()->addVideoStream($inputPath, $outputPath, $options);
 
-        // Store the relative output path for later copying
-        $this->builder()->addMetadata('relative_output', $this->getRelativeOutputPath($output));
-
         return $this;
     }
 
@@ -149,9 +144,6 @@ class Packager
         $outputPath = $this->resolveOutputPath($output);
 
         $this->builder()->addAudioStream($inputPath, $outputPath, $options);
-
-        // Store the relative output path for later copying
-        $this->builder()->addMetadata('relative_output', $this->getRelativeOutputPath($output));
 
         return $this;
     }
@@ -197,37 +189,6 @@ class Packager
     }
 
     /**
-     * Set custom output path (overrides source directory structure)
-     */
-    public function setOutputPath(string $path): self
-    {
-        $this->customOutputPath = rtrim($path, '/').'/';
-
-        return $this;
-    }
-
-    /**
-     * Get relative output path (with directory from first media or custom path)
-     */
-    protected function getRelativeOutputPath(string $output): string
-    {
-        // Use custom output path if set
-        if ($this->customOutputPath) {
-            return $this->customOutputPath.$output;
-        }
-
-        // Otherwise preserve source directory structure
-        if ($this->mediaCollection && $this->mediaCollection->count() > 0) {
-            $firstMedia = $this->mediaCollection->collection()->first();
-            $directory = $firstMedia->getDirectory();
-
-            return $directory.$output;
-        }
-
-        return $output;
-    }
-
-    /**
      * Get or create temporary directory for this export
      */
     protected function getTemporaryDirectory(): string
@@ -251,9 +212,6 @@ class Packager
 
         $this->builder()->withMpdOutput($fullPath);
 
-        // Store relative path for copying
-        $this->builder()->addMetadata('relative_mpd_output', $this->getRelativeOutputPath($path));
-
         return $this;
     }
 
@@ -265,9 +223,6 @@ class Packager
         $fullPath = $this->resolveOutputPath($path);
 
         $this->builder()->withHlsMasterPlaylist($fullPath);
-
-        // Store relative path for copying
-        $this->builder()->addMetadata('relative_hls_output', $this->getRelativeOutputPath($path));
 
         return $this;
     }
@@ -358,17 +313,7 @@ class Packager
         // Get the first media's disk as the source disk
         $sourceDisk = $this->mediaCollection->collection()->first()?->getDisk();
 
-        // Collect relative output paths from builder metadata
-        $metadata = $this->builder->getMetadata();
-
-        return new PackagerResult($result, [
-            'streams' => $this->builder->getStreams()->toArray(),
-            'options' => $this->filterSensitiveOptions($this->builder->getOptions()),
-            'relative_outputs' => $metadata['relative_output'] ?? [],
-            'relative_mpd_output' => $metadata['relative_mpd_output'] ?? null,
-            'relative_hls_output' => $metadata['relative_hls_output'] ?? null,
-            'temporary_directory' => $this->temporaryDirectory,
-        ], $sourceDisk);
+        return new PackagerResult($result, $sourceDisk, $this->temporaryDirectory);
     }
 
     public function packageWithBuilder(CommandBuilder $builder): PackagerResult
@@ -388,10 +333,7 @@ class Packager
             $this->logger->info('Packaging operation completed');
         }
 
-        return new PackagerResult($result, [
-            'streams' => $builder->getStreams()->toArray(),
-            'options' => $this->filterSensitiveOptions($builder->getOptions()),
-        ]);
+        return new PackagerResult($result);
     }
 
     public function package(array $streams, string $output): PackagerResult
@@ -415,10 +357,7 @@ class Packager
             ]);
         }
 
-        return new PackagerResult($result, [
-            'output_path' => $output,
-            'streams' => $streams,
-        ]);
+        return new PackagerResult($result);
     }
 
     protected function buildPackageCommand(array $streams, string $output): string

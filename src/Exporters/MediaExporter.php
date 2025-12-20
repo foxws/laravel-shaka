@@ -21,7 +21,7 @@ class MediaExporter
 
     protected ?string $visibility = null;
 
-    protected ?string $outputPath = null;
+    protected ?string $toPath = null;
 
     protected ?array $afterSavingCallbacks = [];
 
@@ -51,12 +51,9 @@ class MediaExporter
         return $this;
     }
 
-    public function outputPath(string $path): self
+    public function toPath(string $path): self
     {
-        $this->outputPath = rtrim($path, '/').'/';
-
-        // Set on packager immediately so it's available for stream methods
-        $this->packager->setOutputPath($this->outputPath);
+        $this->toPath = rtrim($path, '/').'/';
 
         return $this;
     }
@@ -119,7 +116,7 @@ class MediaExporter
         $targetDisk = $this->toDisk ?: $this->getDisk();
 
         // Copy outputs from temporary directory to target disk and cleanup
-        $result->toDisk($targetDisk, $this->visibility);
+        $result->toDisk($targetDisk, $this->visibility, true, $this->toPath);
 
         $this->runAfterSavingCallbacks($result);
 

@@ -9,79 +9,39 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 
 class PackagerResult
 {
-    protected string $output;
-
-    protected array $metadata = [];
-
-    protected ?Disk $sourceDisk = null;
-
-    public function __construct(string $output, array $metadata = [], ?Disk $sourceDisk = null)
-    {
-        $this->output = $output;
-        $this->metadata = $metadata;
-        $this->sourceDisk = $sourceDisk;
-    }
+    public function __construct(
+        protected string $output,
+        protected ?Disk $sourceDisk = null,
+        protected ?string $temporaryDirectory = null
+    )
+    {}
 
     public function getOutput(): string
     {
         return $this->output;
     }
 
-    public function getMetadata(): array
-    {
-        return $this->metadata;
-    }
-
-    public function setMetadata(array $metadata): self
-    {
-        $this->metadata = $metadata;
-
-        return $this;
-    }
-
-    public function addMetadata(string $key, mixed $value): self
-    {
-        $this->metadata[$key] = $value;
-
-        return $this;
-    }
-
-    public function getMetadataValue(string $key, mixed $default = null): mixed
-    {
-        return $this->metadata[$key] ?? $default;
-    }
-
-    public function toArray(): array
-    {
-        return [
-            'output' => $this->output,
-            'metadata' => $this->metadata,
-        ];
-    }
-
     /**
      * Copy exported files from temporary directory to target disk
      */
-    public function toDisk(Disk|Filesystem|string $disk, ?string $visibility = null, bool $cleanupSource = true): self
+    public function toDisk(Disk|Filesystem|string $disk, ?string $visibility = null, bool $cleanup = true, ?string $outputPath = null): self
     {
         $targetDisk = Disk::make($disk);
 
-        $temporaryDirectory = $this->getMetadataValue('temporary_directory');
-
-        if (! $temporaryDirectory) {
+        if (! $this->temporaryDirectory) {
             throw new \RuntimeException('Cannot copy files: temporary directory not set');
         }
 
-        // Get the target directory from the first media (if available)
-        $targetDirectory = $this->getTargetDirectory();
+        // Get the target directory from outputPath parameter or preserve source structure
+        $targetDirectory = $outputPath ?: $this->getSourceDirectory();
 
         // Scan the temporary directory for all files (including generated segments)
-        $files = $this->getAllFilesInTemporaryDirectory($temporaryDirectory);
+        $files = $this->getAllFilesInTemporaryDirectory($this->temporaryDirectory);
 
         foreach ($files as $file) {
             $filename = basename($file);
 
-            // Determine target path (preserve directory structure if needed)
+            // Determine target path
             $targetPath = $targetDirectory ? $targetDirectory.$filename : $filename;
 
             $stream = fopen($file, 'r');
@@ -93,14 +53,14 @@ class PackagerResult
             }
 
             // Clean up temporary file after copying
-            if ($cleanupSource) {
+            if ($cleanup) {
                 unlink($file);
             }
         }
 
         // Clean up temporary directory if empty
-        if ($cleanupSource && is_dir($temporaryDirectory)) {
-            @rmdir($temporaryDirectory);
+        if ($cleanup && is_dir($this->temporaryDirectory)) {
+            @rmdir($this->temporaryDirectory);
         }
 
         return $this;
@@ -134,16 +94,13 @@ class PackagerResult
     }
 
     /**
-     * Get the target directory from metadata
+     * Get the source directory to preserve directory structure if no output path specified
      */
-    protected function getTargetDirectory(): ?string
+    protected function getSourceDirectory(): ?string
     {
-        // Check if we have explicit output paths that contain directories
-        $relativePaths = $this->collectOutputPaths();
-
-        if (! empty($relativePaths)) {
-            $firstPath = $relativePaths[0];
-            $directory = dirname($firstPath);
+        // If we have a source disk with media, preserve its directory structure
+        if ($this->sourceDisk && method_exists($this->sourceDisk, 'getDirectory')) {
+            $directory = $this->sourceDisk->getDirectory();
 
             if ($directory && $directory !== '.') {
                 return rtrim($directory, '/').'/';
@@ -151,28 +108,5 @@ class PackagerResult
         }
 
         return null;
-    }
-
-    /**
-     * Collect all output file paths from metadata (using relative paths)
-     */
-    protected function collectOutputPaths(): array
-    {
-        $paths = [];
-
-        // Collect relative stream outputs
-        $relativeOutputs = $this->getMetadataValue('relative_outputs', []);
-        $paths = array_merge($paths, $relativeOutputs);
-
-        // Collect manifest outputs (these are stored as arrays with single values)
-        if ($relativeMpd = $this->getMetadataValue('relative_mpd_output')) {
-            $paths[] = is_array($relativeMpd) ? $relativeMpd[0] : $relativeMpd;
-        }
-
-        if ($relativeHls = $this->getMetadataValue('relative_hls_output')) {
-            $paths[] = is_array($relativeHls) ? $relativeHls[0] : $relativeHls;
-        }
-
-        return array_unique($paths);
     }
 }

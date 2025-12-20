@@ -126,7 +126,7 @@ class Media
     {
         $extension = pathinfo($this->getPath(), PATHINFO_EXTENSION);
 
-        $name = 'input.' . ($extension ?: 'tmp');
+        $name = 'input.'.($extension ?: 'tmp');
 
         $disk = $this->getDisk();
         $temporaryDirectoryDisk = $this->temporaryDirectoryDisk();

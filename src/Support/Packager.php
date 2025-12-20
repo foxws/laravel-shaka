@@ -174,6 +174,7 @@ class Packager
                 // If a safe path was used, resolve to local path in temp directory
                 if ($safePath !== $media->getPath()) {
                     $tempDir = $this->getTemporaryDirectory();
+
                     return $tempDir.DIRECTORY_SEPARATOR.$safePath;
                 }
 

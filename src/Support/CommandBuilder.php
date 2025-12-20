@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Foxws\Shaka\Support;
 
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
 
 /**
  * Builder for constructing Shaka Packager command arguments
@@ -17,7 +18,7 @@ class CommandBuilder
 
     public function __construct()
     {
-        $this->streams = new Collection;
+        $this->streams = Collection::make();
     }
 
     public static function make(): self
@@ -50,6 +51,15 @@ class CommandBuilder
         ], $options));
     }
 
+    public function addTextStream(string $input, string $output, array $options = []): self
+    {
+        return $this->addStream(array_merge([
+            'in' => $input,
+            'stream' => 'text',
+            'output' => $output,
+        ], $options));
+    }
+
     public function withMpdOutput(string $path): self
     {
         $this->options['mpd_output'] = $path;
@@ -66,6 +76,10 @@ class CommandBuilder
 
     public function withSegmentDuration(int $seconds): self
     {
+        if ($seconds < 1) {
+            throw new InvalidArgumentException('Segment duration must be at least 1 second');
+        }
+
         $this->options['segment_duration'] = $seconds;
 
         return $this;
@@ -82,29 +96,84 @@ class CommandBuilder
         return $this;
     }
 
+    public function withOption(string $key, mixed $value): self
+    {
+        $this->options[$key] = $value;
+
+        return $this;
+    }
+
     public function build(): string
     {
-        $parts = [];
+        $parts = Collection::make();
 
         // Add stream definitions
-        foreach ($this->streams as $stream) {
-            $streamParts = [];
-            foreach ($stream as $key => $value) {
-                $streamParts[] = "{$key}={$value}";
-            }
-            $parts[] = implode(',', $streamParts);
-        }
+        $this->streams->each(function (array $stream) use ($parts) {
+            $streamParts = Collection::make($stream)
+                ->map(fn ($value, $key) => sprintf(
+                    '%s=%s',
+                    $this->escapeKey($key),
+                    $this->escapeValue($value)
+                ))
+                ->values();
+
+            $parts->push($streamParts->implode(','));
+        });
 
         // Add global options
-        foreach ($this->options as $key => $value) {
-            if (is_bool($value)) {
-                $parts[] = "--{$key}";
-            } else {
-                $parts[] = "--{$key}={$value}";
-            }
-        }
+        Collection::make($this->options)->each(function ($value, $key) use ($parts) {
+            $escapedKey = $this->escapeKey($key);
 
-        return implode(' ', $parts);
+            if (is_bool($value)) {
+                if ($value) {
+                    $parts->push("--{$escapedKey}");
+                }
+            } elseif ($value !== null && $value !== '') {
+                $parts->push(sprintf(
+                    '--%s=%s',
+                    $escapedKey,
+                    $this->escapeValue($value)
+                ));
+            }
+        });
+
+        return $parts->implode(' ');
+    }
+
+    public function buildArray(): array
+    {
+        $arguments = [];
+
+        // Add stream definitions
+        $this->streams->each(function (array $stream) use (&$arguments) {
+            $streamParts = Collection::make($stream)
+                ->map(fn ($value, $key) => sprintf('%s=%s', $key, $value))
+                ->values();
+
+            $arguments[] = $streamParts->implode(',');
+        });
+
+        // Add global options
+        Collection::make($this->options)->each(function ($value, $key) use (&$arguments) {
+            if (is_bool($value)) {
+                if ($value) {
+                    $arguments[] = "--{$key}";
+                }
+            } elseif ($value !== null && $value !== '') {
+                $arguments[] = "--{$key}";
+                $arguments[] = (string) $value;
+            }
+        });
+
+        return $arguments;
+    }
+
+    public function reset(): self
+    {
+        $this->streams = Collection::make();
+        $this->options = [];
+
+        return $this;
     }
 
     public function getStreams(): Collection
@@ -115,5 +184,32 @@ class CommandBuilder
     public function getOptions(): array
     {
         return $this->options;
+    }
+
+    protected function escapeKey(string $key): string
+    {
+        // Keys should only contain alphanumeric characters, underscores, and hyphens
+        // This prevents command injection while allowing all valid Shaka Packager options
+        if (! preg_match('/^[a-z0-9_-]+$/i', $key)) {
+            throw new InvalidArgumentException(
+                "Invalid key format: {$key}. Keys must contain only alphanumeric characters, underscores, and hyphens."
+            );
+        }
+
+        return $key;
+    }
+
+    protected function escapeValue(mixed $value): string
+    {
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        if (is_numeric($value)) {
+            return (string) $value;
+        }
+
+        // Use escapeshellarg for string values to handle special characters
+        return escapeshellarg((string) $value);
     }
 }

@@ -68,26 +68,26 @@ class ShakaPackager
         throw new RuntimeException('Cannot parse packager version');
     }
 
-    public function command(string $command, array $options = []): string
+    public function command(string|array $command, array $options = []): string
     {
-        $commandLine = sprintf('%s %s', $this->binaryPath, $command);
+        $arguments = is_array($command) ? $command : [$command];
 
         if ($this->logger) {
             $this->logger->debug('Executing packager command', [
-                'command' => $this->redactSensitiveData($commandLine),
+                'command' => $this->redactSensitiveData(is_array($command) ? implode(' ', $arguments) : (string) $command),
                 'options' => $options,
             ]);
         }
 
         $result = Process::timeout($this->timeout)
-            ->run($commandLine);
+            ->run([$this->binaryPath, ...$arguments]);
 
         if ($result->failed()) {
             $errorMessage = "Packager command failed: {$result->errorOutput()}";
 
             if ($this->logger) {
                 $this->logger->error($errorMessage, [
-                    'command' => $this->redactSensitiveData($commandLine),
+                    'command' => $this->redactSensitiveData(is_array($command) ? implode(' ', $arguments) : (string) $command),
                 ]);
             }
 

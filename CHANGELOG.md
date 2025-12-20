@@ -2,6 +2,24 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
+## [0.1.1] - 2025-12-20
+
+### Fixed
+- Prevent Shaka Packager "Unknown field in stream descriptor" errors when filenames include smart quotes, commas, parentheses, or start with a dash.
+- Use array-based process execution to avoid shell quoting issues with special characters.
+
+### Added
+- Descriptor sanitization in `Foxws\\Shaka\\Support\\CommandBuilder`:
+  - Normalize smart quotes to ASCII
+  - Replace commas with hyphens (commas are field separators in Shaka descriptors)
+  - Trim surrounding quotes
+  - Prefix leading dashes with `./` to avoid option confusion
+- Unit tests covering descriptor sanitization for leading dashes, smart quotes, commas, and output filenames.
+
+### Internal
+- Switch `Foxws\\Shaka\\Support\\Packager` to pass arguments using `buildArray()`.
+- Update `Foxws\\Shaka\\Support\\ShakaPackager::command()` to accept `string|array` and run via `Process::run([$binary, ...$args])`.
+
 ## [0.1.0] - 2025-12-20
 
 ### Added

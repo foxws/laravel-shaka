@@ -74,7 +74,7 @@ class ShakaPackager
 
         if ($this->logger) {
             $this->logger->debug('Executing packager command', [
-                'command' => $commandLine,
+                'command' => $this->redactSensitiveData($commandLine),
                 'options' => $options,
             ]);
         }
@@ -87,7 +87,7 @@ class ShakaPackager
 
             if ($this->logger) {
                 $this->logger->error($errorMessage, [
-                    'command' => $commandLine,
+                    'command' => $this->redactSensitiveData($commandLine),
                     'exit_code' => $result->exitCode(),
                     'output' => $result->output(),
                 ]);
@@ -103,6 +103,42 @@ class ShakaPackager
         }
 
         return $result->output();
+    }
+
+    /**
+     * Redact sensitive encryption data from command line strings for safe logging
+     */
+    protected function redactSensitiveData(string $commandLine): string
+    {
+        // List of sensitive command-line options that should be redacted
+        $sensitiveOptions = [
+            'keys',
+            'key',
+            'key_id',
+            'pssh',
+            'protection_systems',
+            'raw_key',
+            'iv',
+        ];
+
+        $redacted = $commandLine;
+
+        foreach ($sensitiveOptions as $option) {
+            // Match patterns like --option=value or --option value
+            // Redact the value part while keeping the option name visible
+            $redacted = preg_replace(
+                '/--' . preg_quote($option, '/') . '=\S+/',
+                '--' . $option . '=[REDACTED]',
+                $redacted
+            );
+            $redacted = preg_replace(
+                '/--' . preg_quote($option, '/') . '\s+\S+/',
+                '--' . $option . ' [REDACTED]',
+                $redacted
+            );
+        }
+
+        return $redacted;
     }
 
     public function getBinaryPath(): string

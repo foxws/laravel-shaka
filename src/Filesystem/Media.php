@@ -14,6 +14,8 @@ class Media
 
     protected ?string $temporaryDirectory = null;
 
+    protected ?string $genericAlias = null;
+
     public function __construct(Disk $disk, string $path, bool $createTemp = true)
     {
         $this->disk = $disk;

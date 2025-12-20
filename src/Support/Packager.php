@@ -168,17 +168,7 @@ class Packager
             $media = $this->mediaCollection->findByPath($input);
 
             if ($media) {
-                // Use safe input path if force_generic_input is enabled
-                $safePath = $media->getSafeInputPath();
-
-                // If a safe path was used, resolve to local path in temp directory
-                if ($safePath !== $media->getPath()) {
-                    $tempDir = $this->getTemporaryDirectory();
-
-                    return $tempDir.DIRECTORY_SEPARATOR.$safePath;
-                }
-
-                return $media->getLocalPath();
+                return $media->getSafeInputPath();
             }
         }
 

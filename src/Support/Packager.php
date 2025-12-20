@@ -101,7 +101,7 @@ class Packager
     /**
      * Create streams from the media collection
      *
-     * @return \Illuminate\Support\Collection<Stream>
+     * @return \Illuminate\Support\Collection<int, Stream>
      */
     public function streams(): \Illuminate\Support\Collection
     {

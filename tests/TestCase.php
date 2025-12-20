@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Foxws\Shaka\Tests;
 
 use Foxws\Shaka\ShakaServiceProvider;

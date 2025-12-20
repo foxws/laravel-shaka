@@ -126,11 +126,6 @@ class Media
      */
     public function getSafeInputPath(): string
     {
-        // If force_generic_input is disabled, return the original path
-        if (! config('laravel-shaka.force_generic_input', false)) {
-            return $this->getLocalPath();
-        }
-
         // Return cached generic alias if already created
         if ($this->genericAlias) {
             return $this->genericAlias;

@@ -2,7 +2,7 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
-## [0.1.0-alpha] - 2025-12-20
+## [0.1.0] - 2025-12-20
 
 ### Added
 - Initial alpha release

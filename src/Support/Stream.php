@@ -38,6 +38,11 @@ class Stream implements Arrayable
         return new self($media, 'audio');
     }
 
+    public static function text(Media $media): self
+    {
+        return new self($media, 'text');
+    }
+
     public function getMedia(): Media
     {
         return $this->media;

@@ -111,6 +111,7 @@ class Packager
             // You can create multiple streams per media (video, audio, etc.)
             $streams->push(Stream::video($media));
             $streams->push(Stream::audio($media));
+            $streams->push(Stream::text($media));
         }
 
         return $streams;

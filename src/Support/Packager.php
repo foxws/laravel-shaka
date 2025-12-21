@@ -149,6 +149,22 @@ class Packager
     }
 
     /**
+     * Add an text stream to the builder
+     */
+    public function addTextStream(string $input, string $output, array $options = []): self
+    {
+        // Resolve input to full local path for Shaka Packager
+        $inputPath = $this->resolveInputPath($input);
+
+        // Resolve output to full local path for Shaka Packager
+        $outputPath = $this->resolveOutputPath($output);
+
+        $this->builder()->addTextStream($inputPath, $outputPath, $options);
+
+        return $this;
+    }
+
+    /**
      * Add a stream to the builder
      */
     public function addStream(array $stream): self

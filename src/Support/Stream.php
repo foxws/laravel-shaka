@@ -102,6 +102,7 @@ class Stream implements Arrayable
         $parts = array_merge($parts, $this->options);
 
         $commandParts = [];
+
         foreach ($parts as $key => $value) {
             if (is_bool($value)) {
                 if ($value) {

@@ -38,6 +38,11 @@ class Stream implements Arrayable
         return new self($media, 'audio');
     }
 
+    public static function text(Media $media): self
+    {
+        return new self($media, 'text');
+    }
+
     public function getMedia(): Media
     {
         return $this->media;
@@ -97,6 +102,7 @@ class Stream implements Arrayable
         $parts = array_merge($parts, $this->options);
 
         $commandParts = [];
+
         foreach ($parts as $key => $value) {
             if (is_bool($value)) {
                 if ($value) {

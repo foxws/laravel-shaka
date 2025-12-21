@@ -111,6 +111,7 @@ class Packager
             // You can create multiple streams per media (video, audio, etc.)
             $streams->push(Stream::video($media));
             $streams->push(Stream::audio($media));
+            $streams->push(Stream::text($media));
         }
 
         return $streams;
@@ -144,6 +145,22 @@ class Packager
         $outputPath = $this->resolveOutputPath($output);
 
         $this->builder()->addAudioStream($inputPath, $outputPath, $options);
+
+        return $this;
+    }
+
+    /**
+     * Add an text stream to the builder
+     */
+    public function addTextStream(string $input, string $output, array $options = []): self
+    {
+        // Resolve input to full local path for Shaka Packager
+        $inputPath = $this->resolveInputPath($input);
+
+        // Resolve output to full local path for Shaka Packager
+        $outputPath = $this->resolveOutputPath($output);
+
+        $this->builder()->addTextStream($inputPath, $outputPath, $options);
 
         return $this;
     }

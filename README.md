@@ -137,14 +137,11 @@ Customize how URLs are generated for your streaming manifests:
 ```php
 use Foxws\Shaka\Http\DynamicHLSPlaylist;
 
-$playlist = (new DynamicHLSPlaylist('videos'))
+return (new DynamicHLSPlaylist('videos'))
     ->open('master.m3u8')
     ->setKeyUrlResolver(fn ($key) => route('video.key', ['key' => $key]))
     ->setMediaUrlResolver(fn ($file) => Storage::disk('cdn')->url($file))
-    ->setPlaylistUrlResolver(fn ($playlist) => route('video.playlist', ['playlist' => $playlist]))
-
-
-return $playlist->toResponse($request);
+    ->setPlaylistUrlResolver(fn ($playlist) => route('video.playlist', ['playlist' => $playlist]));
 ```
 
 **DASH Example:**
@@ -152,12 +149,10 @@ return $playlist->toResponse($request);
 ```php
 use Foxws\Shaka\Http\DynamicDASHManifest;
 
-$manifest = (new DynamicDASHManifest('videos'))
+return (new DynamicDASHManifest('videos'))
     ->open('manifest.mpd')
     ->setMediaUrlResolver(fn ($file) => Storage::disk('cdn')->url($file))
     ->setInitUrlResolver(fn ($file) => Storage::disk('cdn')->url("init/{$file}"));
-
-return $manifest->toResponse($request);
 ```
 
 **Use cases for URL resolvers:**

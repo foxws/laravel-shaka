@@ -5,7 +5,7 @@
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/foxws/laravel-shaka/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/foxws/laravel-shaka/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/foxws/laravel-shaka.svg?style=flat-square)](https://packagist.org/packages/foxws/laravel-shaka)
 
-A Laravel integration for Google's Shaka Packager, enabling you to create adaptive streaming content (DASH, HLS) with a fluent, Laravel-style API.
+A Laravel integration for [Google's Shaka Packager](https://github.com/shaka-project/shaka-packager), enabling you to create adaptive streaming content (DASH, HLS) with a fluent, Laravel-style API.
 
 ```php
 use Foxws\Shaka\Facades\Shaka;
@@ -18,6 +18,7 @@ $result = Shaka::fromDisk('s3')
     ->withHlsMasterPlaylist('master.m3u8')
     ->withSegmentDuration(6)
     ->export()
+    ->toDisk('export')
     ->save();
 ```
 
@@ -132,31 +133,35 @@ $result = Shaka::open('input.mp4')
 Customize how URLs are generated for your streaming manifests:
 
 **HLS Example:**
+
 ```php
 use Foxws\Shaka\Http\DynamicHLSPlaylist;
 
 $playlist = (new DynamicHLSPlaylist('videos'))
+    ->open('master.m3u8')
     ->setKeyUrlResolver(fn ($key) => route('video.key', ['key' => $key]))
     ->setMediaUrlResolver(fn ($file) => Storage::disk('cdn')->url($file))
-    ->setPlaylistUrlResolver(fn ($pl) => route('video.playlist', ['playlist' => $pl]))
-    ->open('master.m3u8');
+    ->setPlaylistUrlResolver(fn ($playlist) => route('video.playlist', ['playlist' => $playlist]))
+
 
 return $playlist->toResponse($request);
 ```
 
 **DASH Example:**
+
 ```php
 use Foxws\Shaka\Http\DynamicDASHManifest;
 
 $manifest = (new DynamicDASHManifest('videos'))
+    ->open('manifest.mpd')
     ->setMediaUrlResolver(fn ($file) => Storage::disk('cdn')->url($file))
-    ->setInitUrlResolver(fn ($file) => Storage::disk('cdn')->url("init/{$file}"))
-    ->open('manifest.mpd');
+    ->setInitUrlResolver(fn ($file) => Storage::disk('cdn')->url("init/{$file}"));
 
 return $manifest->toResponse($request);
 ```
 
 **Use cases for URL resolvers:**
+
 - 🔐 Generate signed URLs for secure content delivery
 - 🌐 Integrate with CDN services
 - 🏢 Support multi-tenant applications
@@ -175,6 +180,7 @@ See [URL Resolver Examples](examples/UrlResolverExamples.php) and [Documentation
 ### Dynamic URL Resolvers
 
 **DynamicHLSPlaylist:**
+
 - `new DynamicHLSPlaylist(?string $disk)` - Create HLS playlist processor
 - `open(string $path)` - Open a playlist file
 - `setKeyUrlResolver(callable $resolver)` - Set resolver for encryption key URLs
@@ -185,6 +191,7 @@ See [URL Resolver Examples](examples/UrlResolverExamples.php) and [Documentation
 - `toResponse($request)` - Return as HTTP response
 
 **DynamicDASHManifest:**
+
 - `new DynamicDASHManifest(?string $disk)` - Create DASH manifest processor
 - `open(string $path)` - Open a manifest file
 - `setMediaUrlResolver(callable $resolver)` - Set resolver for media segment URLs
@@ -232,6 +239,7 @@ Please review [our security policy](../../security/policy) on how to report secu
 ## Acknowledgments
 
 This package was inspired by and learned from:
+
 - [Laravel FFmpeg](https://github.com/protonemedia/laravel-ffmpeg) - Architecture patterns and Laravel integration approach.
 - [quasarstream/shaka-php](https://github.com/quasarstream/shaka-php) - Shaka Packager wrapper implementation and command building logic.
 

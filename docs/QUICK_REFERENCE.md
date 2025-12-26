@@ -18,17 +18,21 @@ $result = Shaka::open('input.mp4')
 ### Using Different Disks
 
 ```php
-// From S3
+// From S3, save to a different disk (e.g., local, s3, etc.)
 $result = Shaka::fromDisk('s3')
     ->open('videos/input.mp4')
     ->addVideoStream('videos/input.mp4', 'video.mp4')
     ->withMpdOutput('manifest.mpd')
-    ->export();
+    ->export()
+    ->toDisk('export')
+    ->save();
 
 // Helper method
 $result = Shaka::openFromDisk('s3', 'videos/input.mp4')
     ->addVideoStream('videos/input.mp4', 'video.mp4')
-    ->export();
+    ->export()
+    ->toDisk('export')
+    ->save();
 ```
 
 ## Available Methods
@@ -93,6 +97,23 @@ $result = Shaka::openFromDisk('s3', 'videos/input.mp4')
 - `toResponse($request)` - Return as HTTP response
 
 ## Common Patterns
+
+### Adding Captions/Subtitles (WebVTT)
+
+```php
+Shaka::fromDisk('s3')
+    ->open('videos/source.mp4')
+    ->addVideoStream('videos/source.mp4', 'video_1080p.mp4', [
+        'bandwidth' => '5000000',
+    ])
+    ->addAudioStream('videos/source.mp4', 'audio.mp4')
+    ->addTextStream('captions/english.vtt', 'english.vtt', [
+        'language' => 'en',
+    ])
+    ->withMpdOutput('manifest.mpd')
+    ->withSegmentDuration(6)
+    ->export();
+```
 
 ### Adaptive Bitrate Streaming
 

@@ -98,6 +98,8 @@ $result = Shaka::fromDisk('s3')
     ->addAudioStream('videos/input.mp4', 'audio.mp4')
     ->withHlsMasterPlaylist('master.m3u8')
     ->export()
+    ->toDisk('export') // Save output to a different disk (e.g., local, s3, etc.)
+    ->toPath('exports/') // (Optional) Save to a subdirectory on the target disk
     ->save();
 ```
 
@@ -244,7 +246,7 @@ Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
 ## Security Vulnerabilities
 
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
+If you discover a security vulnerability, please report it via a private channel (e.g., email or GitHub issues) rather than publicly disclosing it.
 
 ## Acknowledgments
 

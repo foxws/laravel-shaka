@@ -5,7 +5,7 @@
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/foxws/laravel-shaka/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/foxws/laravel-shaka/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/foxws/laravel-shaka.svg?style=flat-square)](https://packagist.org/packages/foxws/laravel-shaka)
 
-A Laravel integration for [Google's Shaka Packager](https://github.com/shaka-project/shaka-packager), enabling you to create adaptive streaming content (DASH, HLS) with a fluent, Laravel-style API.
+A Laravel integration for [Google's Shaka Packager](https://github.com/shaka-project/shaka-packager), enabling you to create adaptive streaming content (HLS, DASH) with a fluent, Laravel-style API.
 
 ```php
 use Foxws\Shaka\Facades\Shaka;
@@ -254,6 +254,10 @@ This package was inspired by and learned from:
 - [quasarstream/shaka-php](https://github.com/quasarstream/shaka-php) - Shaka Packager wrapper implementation and command building logic.
 
 Much of the existing logic and design patterns from these excellent packages helped shape this implementation. Many thanks to their authors and contributors!
+
+## Projects Built on Laravel Shaka Packager
+
+- [Stry](https://github.com/francoism90/stry) - A modern streaming platform built on top of Laravel Shaka Packager.
 
 ## License
 

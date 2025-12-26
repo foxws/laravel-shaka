@@ -171,6 +171,38 @@ See [URL Resolver Examples](examples/UrlResolverExamples.php) and [Documentation
 
 - `fromDisk(string $disk)` - Set the disk to use
 - `openFromDisk(string $disk, $paths)` - Set disk and open files in one call
+- `getDisk()` - Get the current disk instance
+
+### Media Management
+
+- `open($paths)` - Open one or more media files
+- `get()` - Get the MediaCollection
+- `streams()` - Get auto-generated Stream objects
+
+### Stream Configuration
+
+- `addVideoStream(string $input, string $output, array $options = [])` - Add video stream
+- `addAudioStream(string $input, string $output, array $options = [])` - Add audio stream
+- `addTextStream(string $input, string $output, array $options = [])` - Add text/caption/subtitle stream
+- `addStream(array $stream)` - Add custom stream
+
+### Output Configuration
+
+- `withHlsMasterPlaylist(string $path)` - Set HLS master playlist output
+- `withMpdOutput(string $path)` - Set DASH manifest output
+- `withSegmentDuration(int $seconds)` - Set segment duration
+- `withEncryption(array $config)` - Enable encryption
+- `toDisk(string $disk)` - Set the target disk for output
+- `toPath(string $path)` - Set the target output path (subdirectory)
+- `withVisibility(string $visibility)` - Set file visibility (e.g., 'public', 'private')
+
+### Execution & Utilities
+
+- `export()` - Execute the packaging operation (returns result object)
+- `save(?string $path = null)` - Save outputs to disk (optionally to a specific path)
+- `getCommand()` - Get the final command string (for debugging)
+- `dd()` - Dump the final command and end the script
+- `afterSaving(callable $callback)` - Register a callback to run after saving
 
 ### Dynamic URL Resolvers
 
@@ -193,23 +225,6 @@ See [URL Resolver Examples](examples/UrlResolverExamples.php) and [Documentation
 - `setInitUrlResolver(callable $resolver)` - Set resolver for initialization segment URLs
 - `get()` - Get processed manifest content
 - `toResponse($request)` - Return as HTTP response
-
-### Stream Configuration
-
-- `addVideoStream(string $input, string $output, array $options = [])` - Add video stream
-- `addAudioStream(string $input, string $output, array $options = [])` - Add audio stream
-- `addStream(array $stream)` - Add custom stream
-
-### Output Configuration
-
-- `withHlsMasterPlaylist(string $path)` - Set HLS master playlist output
-- `withMpdOutput(string $path)` - Set DASH manifest output
-- `withSegmentDuration(int $seconds)` - Set segment duration
-- `withEncryption(array $config)` - Enable encryption
-
-### Execution
-
-- `export()` - Execute the packaging operation
 
 See the [Quick Reference](docs/QUICK_REFERENCE.md) for complete API documentation.
 

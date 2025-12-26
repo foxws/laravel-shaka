@@ -76,7 +76,10 @@ $result = Shaka::open('input.mp4')
     ->addVideoStream('input.mp4', 'video.mp4')
     ->addAudioStream('input.mp4', 'audio.mp4')
     ->withMpdOutput('manifest.mpd')
-    ->export();
+    ->export()
+    ->toDisk('export')
+    ->toPath('custom/subdir')
+    ->save();
 ```
 
 ### Using Different Disks
@@ -87,7 +90,9 @@ $result = Shaka::fromDisk('s3')
     ->addVideoStream('videos/input.mp4', 'video.mp4')
     ->addAudioStream('videos/input.mp4', 'audio.mp4')
     ->withMpdOutput('manifest.mpd')
-    ->export();
+    ->export()
+    ->toDisk('export')
+    ->save();
 ```
 
 ### Adaptive Bitrate Streaming
@@ -106,7 +111,9 @@ $result = Shaka::open('input.mp4')
     ->addAudioStream('input.mp4', 'audio.mp4')
     ->withMpdOutput('manifest.mpd')
     ->withSegmentDuration(6)
-    ->export();
+    ->export()
+    ->toDisk('export')
+    ->save();
 ```
 
 ## Basic Concepts

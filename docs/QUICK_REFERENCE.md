@@ -49,6 +49,7 @@ $result = Shaka::openFromDisk('s3', 'videos/input.mp4')
 
 - `addVideoStream(string $input, string $output, array $options = [])` - Add video stream
 - `addAudioStream(string $input, string $output, array $options = [])` - Add audio stream
+- `addTextStream(string $input, string $output, array $options = [])` - Add text/caption/subtitle stream
 - `addStream(array $stream)` - Add custom stream with full control
 
 ### Output Configuration
@@ -57,17 +58,39 @@ $result = Shaka::openFromDisk('s3', 'videos/input.mp4')
 - `withHlsMasterPlaylist(string $path)` - Set HLS master playlist output
 - `withSegmentDuration(int $seconds)` - Set segment duration
 - `withEncryption(array $config)` - Enable encryption
+- `toDisk(string $disk)` - Set the target disk for output
+- `toPath(string $path)` - Set the target output path (subdirectory)
+- `withVisibility(string $visibility)` - Set file visibility (e.g., 'public', 'private')
 
-### Execution
+### Execution & Utilities
 
-- `export()` - Export the packaging operation
-- `builder()` - Get the CommandBuilder instance for advanced use
+- `export()` - Export the packaging operation (returns result object)
+- `save(?string $path = null)` - Save outputs to disk (optionally to a specific path)
+- `getCommand()` - Get the final command string (for debugging)
+- `dd()` - Dump the final command and end the script
+- `afterSaving(callable $callback)` - Register a callback to run after saving
 
-### Utilities
+### Dynamic URL Resolvers
 
-- `cleanupTemporaryFiles()` - Clean up temporary files
-- `clone()` - Create a copy of the instance
-- `fresh()` - Get a fresh Packager instance
+**DynamicHLSPlaylist:**
+
+- `new DynamicHLSPlaylist(?string $disk)` - Create HLS playlist processor
+- `open(string $path)` - Open a playlist file
+- `setKeyUrlResolver(callable $resolver)` - Set resolver for encryption key URLs
+- `setMediaUrlResolver(callable $resolver)` - Set resolver for media segment URLs
+- `setPlaylistUrlResolver(callable $resolver)` - Set resolver for sub-playlist URLs
+- `get()` - Get processed playlist content
+- `all()` - Get all processed playlists (master + segments)
+- `toResponse($request)` - Return as HTTP response
+
+**DynamicDASHManifest:**
+
+- `new DynamicDASHManifest(?string $disk)` - Create DASH manifest processor
+- `open(string $path)` - Open a manifest file
+- `setMediaUrlResolver(callable $resolver)` - Set resolver for media segment URLs
+- `setInitUrlResolver(callable $resolver)` - Set resolver for initialization segment URLs
+- `get()` - Get processed manifest content
+- `toResponse($request)` - Return as HTTP response
 
 ## Common Patterns
 

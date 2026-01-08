@@ -6,6 +6,7 @@ namespace Foxws\Shaka\Support;
 
 use Foxws\Shaka\Exceptions\ExecutableNotFoundException;
 use Foxws\Shaka\Exceptions\RuntimeException;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Process;
 use Psr\Log\LoggerInterface;
 
@@ -31,7 +32,7 @@ class ShakaPackager
         ?LoggerInterface $logger = null,
         ?array $configuration = null
     ): self {
-        $config = $configuration ?? config('laravel-shaka');
+        $config = $configuration ?? Config::string('laravel-shaka');
 
         $binaryPath = $config['packager']['binaries'] ?? '/usr/local/bin/packager';
 

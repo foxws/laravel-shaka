@@ -18,6 +18,9 @@ Welcome to the Laravel Shaka Packager documentation. This package provides a Lar
 
 ### Guides
 
+- **[Queue Integration](QUEUE_INTEGRATION.md)** - Process media in background queues
+- **[Troubleshooting](TROUBLESHOOTING.md)** - Common issues and solutions
+- **[URL Resolvers](URL_RESOLVERS.md)** - Dynamic URL customization for CDN/signed URLs
 - **[Working with Different Disks](guides/WORKING_WITH_DISKS.md)** - Using local, S3, and custom filesystems
 - **[Adaptive Bitrate Streaming](guides/ADAPTIVE_BITRATE.md)** - Creating multi-quality streams
 - **[Encryption & DRM](guides/ENCRYPTION.md)** - Securing your content

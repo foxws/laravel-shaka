@@ -14,6 +14,7 @@ use Illuminate\Filesystem\FilesystemManager;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Traits\ForwardsCalls;
 
 class MediaOpener
@@ -31,7 +32,7 @@ class MediaOpener
         ?Packager $packager = null,
         ?MediaCollection $mediaCollection = null
     ) {
-        $this->fromDisk($disk ?: config('filesystems.default'));
+        $this->fromDisk($disk ?: Config::string('filesystems.default'));
 
         $this->packager = $packager ?: app(Packager::class)->fresh();
 

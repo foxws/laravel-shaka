@@ -7,6 +7,7 @@ namespace Foxws\Shaka\Http;
 use Foxws\Shaka\Filesystem\Disk;
 use Foxws\Shaka\Filesystem\Media;
 use Illuminate\Contracts\Support\Responsable;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Response;
 
 class DynamicDASHManifest implements Responsable
@@ -40,7 +41,7 @@ class DynamicDASHManifest implements Responsable
      */
     public function __construct(?string $disk = null)
     {
-        $this->fromDisk($disk ?: config('filesystems.default'));
+        $this->fromDisk($disk ?: Config::string('filesystems.default'));
     }
 
     /**

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Foxws\Shaka\Filesystem;
 
 use Illuminate\Filesystem\FilesystemAdapter;
+use Illuminate\Support\Facades\Config;
 
 class Media
 {
@@ -126,6 +127,11 @@ class Media
      */
     public function getSafeInputPath(): string
     {
+        // If force_generic_input is disabled, just return the regular local path
+        if (! Config::boolean('laravel-shaka.force_generic_input', false)) {
+            return $this->getLocalPath();
+        }
+
         // Return cached generic alias if already created
         if ($this->genericAlias) {
             return $this->genericAlias;

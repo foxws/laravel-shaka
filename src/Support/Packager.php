@@ -202,7 +202,7 @@ class Packager
         $tempDir = $this->getTemporaryDirectory();
 
         // Combine with output filename (without source directory)
-        return $tempDir . DIRECTORY_SEPARATOR . $output;
+        return $tempDir.DIRECTORY_SEPARATOR.$output;
     }
 
     /**

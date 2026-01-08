@@ -202,7 +202,7 @@ class Packager
         $tempDir = $this->getTemporaryDirectory();
 
         // Combine with output filename (without source directory)
-        return $tempDir.DIRECTORY_SEPARATOR.$output;
+        return $tempDir . DIRECTORY_SEPARATOR . $output;
     }
 
     /**
@@ -260,6 +260,16 @@ class Packager
     public function withEncryption(array $encryptionConfig): self
     {
         $this->builder()->withEncryption($encryptionConfig);
+
+        return $this;
+    }
+
+    /**
+     * Add a custom option to the builder
+     */
+    public function withOption(string $key, mixed $value): self
+    {
+        $this->builder()->withOption($key, $value);
 
         return $this;
     }

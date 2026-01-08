@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
+## 0.4.0 - 2026-01-08
+
+### What's Changed
+
+* build(deps): bump dependabot/fetch-metadata from 2.4.0 to 2.5.0 by @dependabot[bot] in https://github.com/foxws/laravel-shaka/pull/20
+
+**Full Changelog**: https://github.com/foxws/laravel-shaka/compare/0.3.0...0.4.0
+
 ## [0.4.0] - 2026-01-08
 
 ### Added
@@ -22,6 +30,7 @@ All notable changes to `laravel-shaka` will be documented in this file.
 - Add missing text stream methods to fluent API
   - `addTextStream()` method now properly documented and tested
   - Ensures parity with video and audio stream methods
+  
 
 ### Contributors
 
@@ -35,16 +44,19 @@ All notable changes to `laravel-shaka` will be documented in this file.
   - `php artisan shaka:verify` - Verify Shaka Packager installation and configuration
   - `php artisan shaka:info` - Display package information, system details, and configuration
   - Commands built with Laravel Prompts for modern, beautiful console output
+  
 - **Security Policy** (`SECURITY.md`) - Vulnerability disclosure guidelines and best practices
 - **Enhanced Exception Types**
   - `InvalidStreamConfigurationException` - For stream configuration errors
   - `MediaNotFoundException` - For missing media files
   - `PackagingException` - For packaging operation errors
+  
 - **Stream Validation** - `StreamValidator` class for input validation and error prevention
 - **Event System** for packaging lifecycle tracking:
   - `PackagingStarted` event - Fired when packaging begins
   - `PackagingCompleted` event - Fired on successful completion with execution time
   - `PackagingFailed` event - Fired on packaging failure
+  
 - **Progress Monitor Contract** (`ProgressMonitor`) - Interface for custom progress tracking implementations
 - **Media Helper Utilities** (`MediaHelper` class):
   - Suggested bitrate calculations based on resolution
@@ -55,14 +67,17 @@ All notable changes to `laravel-shaka` will be documented in this file.
   - Processing time estimation
   - Filename sanitization
   - Bandwidth parsing utilities
+  
 - **Comprehensive Documentation**
   - Queue Integration Guide (`docs/QUEUE_INTEGRATION.md`) - Background processing with Laravel queues
   - Troubleshooting Guide (`docs/TROUBLESHOOTING.md`) - Common issues and solutions
   - Updated main documentation index
+  
 - **Feature Tests Structure** - Foundation for integration testing framework
 - **Implementation Fixes**
   - Fixed `force_generic_input` config check in `Media::getSafeInputPath()`
   - Properly respect config option for generic input aliases
+  
 
 ### Changed
 
@@ -74,6 +89,7 @@ All notable changes to `laravel-shaka` will be documented in this file.
   - `src/MediaOpener.php`
   - `src/Filesystem/Media.php`
   - Provides better type safety and IDE support
+  
 
 ### Fixed
 
@@ -100,12 +116,14 @@ All notable changes to `laravel-shaka` will be documented in this file.
   - Replace commas with hyphens (commas are field separators in Shaka descriptors)
   - Trim surrounding quotes
   - Prefix leading dashes with `./` to avoid option confusion
+  
 - Unit tests covering descriptor sanitization for leading dashes, smart quotes, commas, and output filenames.
 - `force_generic_input` config option to automatically create safe generic aliases for input files.
   - When enabled, creates a temporary copy/symlink with a generic name (e.g., `input.mp4`).
   - Prevents issues with any special characters in filenames (parentheses, brackets, smart quotes, etc.).
   - Uses symlinks for local disks (fast) and copies for remote disks (compatible).
   - Set `PACKAGER_FORCE_GENERIC_INPUT=true` in `.env` to enable.
+  
 
 ### Internal
 
@@ -126,12 +144,14 @@ All notable changes to `laravel-shaka` will be documented in this file.
   - Replace commas with hyphens (commas are field separators in Shaka descriptors)
   - Trim surrounding quotes
   - Prefix leading dashes with `./` to avoid option confusion
+  
 - Unit tests covering descriptor sanitization for leading dashes, smart quotes, commas, and output filenames.
 - `force_generic_input` config option to automatically create safe generic aliases for input files.
   - When enabled, creates a temporary copy/symlink with a generic name (e.g., `input.mp4`).
   - Prevents issues with any special characters in filenames (parentheses, brackets, smart quotes, etc.).
   - Uses symlinks for local disks (fast) and copies for remote disks (compatible).
   - Set `PACKAGER_FORCE_GENERIC_INPUT=true` in `.env` to enable.
+  
 
 ### Internal
 
@@ -172,6 +192,7 @@ All notable changes to `laravel-shaka` will be documented in this file.
   - Return as HTTP response with correct content type
   - Automatic URL caching for performance
   - **No temporary directory creation** - Only reads existing files
+  
 - **DynamicDASHManifest** class for processing and customizing DASH manifests
   - `setMediaUrlResolver()` - Generate URLs for media segments
   - `setInitUrlResolver()` - Generate URLs for initialization segments
@@ -179,10 +200,12 @@ All notable changes to `laravel-shaka` will be documented in this file.
   - Return as HTTP response with correct content type
   - Automatic URL caching for performance
   - **No temporary directory creation** - Only reads existing files
+  
 - **Media class improvements**
   - Optional `$createTemporary` parameter to control temporary directory creation
   - Prevents unnecessary temp directories when only reading files
   - Backward compatible - defaults to `true` for packaging operations
+  
 - Support for CDN integration, signed URLs, and multi-tenant applications
 
 ### Encryption
@@ -192,6 +215,7 @@ All notable changes to `laravel-shaka` will be documented in this file.
   - Use `.ts` segments (not `.mp4`) for encrypted content
   - Set `clear_lead: 0` to encrypt all segments from the start
   - Default (no protection_scheme) produces SAMPLE-AES which only works on native iOS/tvOS
+  
 - Comprehensive encryption documentation in README
 
 ### Testing

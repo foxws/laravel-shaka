@@ -32,7 +32,7 @@ class ShakaPackager
         ?LoggerInterface $logger = null,
         ?array $configuration = null
     ): self {
-        $config = $configuration ?? Config::string('laravel-shaka');
+        $config = $configuration ?? Config::get('laravel-shaka');
 
         $binaryPath = $config['packager']['binaries'] ?? '/usr/local/bin/packager';
 

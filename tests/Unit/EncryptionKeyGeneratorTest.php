@@ -66,7 +66,7 @@ it('writes key to temporary storage when cache is available', function () {
         sys_get_temp_dir().'/test-cache'
     );
 
-    $this->app->instance(TemporaryDirectories::class, $tempDirs);
+    app()->instance(TemporaryDirectories::class, $tempDirs);
 
     $key = EncryptionKeyGenerator::generateKey();
     $filePath = EncryptionKeyGenerator::writeKeyToTemporary($key, 'test.key');
@@ -82,7 +82,7 @@ it('writes key to temporary storage when cache is available', function () {
 it('writes key to regular temp when cache is not available', function () {
     $tempDirs = new TemporaryDirectories(sys_get_temp_dir().'/test-temp');
 
-    $this->app->instance(TemporaryDirectories::class, $tempDirs);
+    app()->instance(TemporaryDirectories::class, $tempDirs);
 
     $key = EncryptionKeyGenerator::generateKey();
     $filePath = EncryptionKeyGenerator::writeKeyToTemporary($key, 'test.key');
@@ -100,7 +100,7 @@ it('generates and writes key in one call', function () {
         sys_get_temp_dir().'/test-cache'
     );
 
-    $this->app->instance(TemporaryDirectories::class, $tempDirs);
+    app()->instance(TemporaryDirectories::class, $tempDirs);
 
     $keyData = EncryptionKeyGenerator::generateAndWrite('my-key.key');
 

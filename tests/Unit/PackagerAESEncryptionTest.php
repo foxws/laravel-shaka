@@ -24,7 +24,7 @@ it('generates AES encryption with default settings', function () {
         sys_get_temp_dir().'/test-cache'
     );
 
-    $this->app->instance(TemporaryDirectories::class, $tempDirs);
+    app()->instance(TemporaryDirectories::class, $tempDirs);
 
     $driver = mock(ShakaPackager::class);
     $logger = mock(LoggerInterface::class);
@@ -55,7 +55,7 @@ it('copies encryption key to temp directory for export', function () {
         sys_get_temp_dir().'/test-cache'
     );
 
-    $this->app->instance(TemporaryDirectories::class, $tempDirs);
+    app()->instance(TemporaryDirectories::class, $tempDirs);
 
     $driver = mock(ShakaPackager::class);
     $logger = mock(LoggerInterface::class);
@@ -89,7 +89,7 @@ it('configures encryption with cbc1 protection scheme by default', function () {
         sys_get_temp_dir().'/test-cache'
     );
 
-    $this->app->instance(TemporaryDirectories::class, $tempDirs);
+    app()->instance(TemporaryDirectories::class, $tempDirs);
 
     $driver = mock(ShakaPackager::class);
     $logger = mock(LoggerInterface::class);
@@ -122,7 +122,7 @@ it('allows custom protection scheme', function () {
         sys_get_temp_dir().'/test-cache'
     );
 
-    $this->app->instance(TemporaryDirectories::class, $tempDirs);
+    app()->instance(TemporaryDirectories::class, $tempDirs);
 
     $driver = mock(ShakaPackager::class);
     $logger = mock(LoggerInterface::class);
@@ -150,7 +150,7 @@ it('allows omitting protection scheme', function () {
         sys_get_temp_dir().'/test-cache'
     );
 
-    $this->app->instance(TemporaryDirectories::class, $tempDirs);
+    app()->instance(TemporaryDirectories::class, $tempDirs);
 
     $driver = mock(ShakaPackager::class);
     $logger = mock(LoggerInterface::class);
@@ -178,7 +178,7 @@ it('supports custom key filename', function () {
         sys_get_temp_dir().'/test-cache'
     );
 
-    $this->app->instance(TemporaryDirectories::class, $tempDirs);
+    app()->instance(TemporaryDirectories::class, $tempDirs);
 
     $driver = mock(ShakaPackager::class);
     $logger = mock(LoggerInterface::class);

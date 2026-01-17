@@ -18,11 +18,14 @@ it('creates temporary directory in root path', function () {
 });
 
 it('creates cache directory when cache root is configured', function () {
-    $tempDirs = new TemporaryDirectories('/tmp/test-temp', '/dev/shm/test-cache');
+    $tempDirs = new TemporaryDirectories(
+        sys_get_temp_dir().'/test-temp',
+        sys_get_temp_dir().'/test-cache'
+    );
 
     $cacheDir = $tempDirs->createCache();
 
-    expect($cacheDir)->toStartWith('/dev/shm/test-cache/')
+    expect($cacheDir)->toStartWith(sys_get_temp_dir().'/test-cache/')
         ->and(is_dir($cacheDir))->toBeTrue();
 
     // Cleanup
@@ -43,15 +46,21 @@ it('falls back to root when cache root is not configured', function () {
 });
 
 it('reports cache storage availability correctly', function () {
-    $withCache = new TemporaryDirectories('/tmp/test-temp', '/dev/shm');
-    $withoutCache = new TemporaryDirectories('/tmp/test-temp');
+    $withCache = new TemporaryDirectories(
+        sys_get_temp_dir().'/test-temp',
+        sys_get_temp_dir().'/test-cache'
+    );
+    $withoutCache = new TemporaryDirectories(sys_get_temp_dir().'/test-temp');
 
     expect($withCache->hasCacheStorage())->toBeTrue()
         ->and($withoutCache->hasCacheStorage())->toBeFalse();
 });
 
 it('deletes all directories including both temp and cache', function () {
-    $tempDirs = new TemporaryDirectories('/tmp/test-temp', '/dev/shm/test-cache');
+    $tempDirs = new TemporaryDirectories(
+        sys_get_temp_dir().'/test-temp',
+        sys_get_temp_dir().'/test-cache'
+    );
 
     $tempDir = $tempDirs->create();
     $cacheDir = $tempDirs->createCache();
@@ -81,7 +90,10 @@ it('creates unique directories on multiple calls', function () {
 });
 
 it('handles trailing slashes in root paths', function () {
-    $tempDirs = new TemporaryDirectories('/tmp/test-temp/', '/dev/shm/test-cache/');
+    $tempDirs = new TemporaryDirectories(
+        sys_get_temp_dir().'/test-temp/',
+        sys_get_temp_dir().'/test-cache/'
+    );
 
     $tempDir = $tempDirs->create();
     $cacheDir = $tempDirs->createCache();

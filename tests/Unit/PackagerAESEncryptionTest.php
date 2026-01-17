@@ -27,7 +27,7 @@ it('generates AES encryption with default settings', function () {
     app()->instance(TemporaryDirectories::class, $tempDirs);
 
     $driver = mock(ShakaPackager::class);
-    $logger = mock(LoggerInterface::class);
+    $logger = mock(LoggerInterface::class)->shouldIgnoreMissing();
 
     $packager = new Packager($driver, $logger);
 
@@ -58,7 +58,7 @@ it('copies encryption key to temp directory for export', function () {
     app()->instance(TemporaryDirectories::class, $tempDirs);
 
     $driver = mock(ShakaPackager::class);
-    $logger = mock(LoggerInterface::class);
+    $logger = mock(LoggerInterface::class)->shouldIgnoreMissing();
 
     $packager = new Packager($driver, $logger);
 
@@ -92,7 +92,7 @@ it('configures encryption with cbc1 protection scheme by default', function () {
     app()->instance(TemporaryDirectories::class, $tempDirs);
 
     $driver = mock(ShakaPackager::class);
-    $logger = mock(LoggerInterface::class);
+    $logger = mock(LoggerInterface::class)->shouldIgnoreMissing();
 
     $packager = new Packager($driver, $logger);
 
@@ -125,7 +125,7 @@ it('allows custom protection scheme', function () {
     app()->instance(TemporaryDirectories::class, $tempDirs);
 
     $driver = mock(ShakaPackager::class);
-    $logger = mock(LoggerInterface::class);
+    $logger = mock(LoggerInterface::class)->shouldIgnoreMissing();
 
     $packager = new Packager($driver, $logger);
 
@@ -153,7 +153,7 @@ it('allows omitting protection scheme', function () {
     app()->instance(TemporaryDirectories::class, $tempDirs);
 
     $driver = mock(ShakaPackager::class);
-    $logger = mock(LoggerInterface::class);
+    $logger = mock(LoggerInterface::class)->shouldIgnoreMissing();
 
     $packager = new Packager($driver, $logger);
 
@@ -181,7 +181,7 @@ it('supports custom key filename', function () {
     app()->instance(TemporaryDirectories::class, $tempDirs);
 
     $driver = mock(ShakaPackager::class);
-    $logger = mock(LoggerInterface::class);
+    $logger = mock(LoggerInterface::class)->shouldIgnoreMissing();
 
     $packager = new Packager($driver, $logger);
 

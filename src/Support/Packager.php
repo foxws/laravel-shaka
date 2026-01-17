@@ -270,9 +270,9 @@ class Packager
      * Generates encryption key, writes to cache storage, and configures Shaka Packager.
      * Protection schemes: 'cbc1' (default, HLS), 'cbcs', 'cenc', or null (SAMPLE-AES).
      *
-     * @param string $label Optional label for the encryption key
-     * @param string $keyFilename Name of the key file to generate
-     * @param string|null $protectionScheme Protection scheme ('cbc1', 'cbcs', 'cenc', or null)
+     * @param  string  $label  Optional label for the encryption key
+     * @param  string  $keyFilename  Name of the key file to generate
+     * @param  string|null  $protectionScheme  Protection scheme ('cbc1', 'cbcs', 'cenc', or null)
      * @return array{key: string, key_id: string, file_path: string} Encryption key data
      */
     public function withAESEncryption(string $label = '', string $keyFilename = 'encryption.key', ?string $protectionScheme = 'cbc1'): array

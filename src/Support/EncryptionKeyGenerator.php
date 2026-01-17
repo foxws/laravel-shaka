@@ -50,4 +50,39 @@ class EncryptionKeyGenerator
     {
         Storage::disk($disk)->put($path, hex2bin($key));
     }
+
+    /**
+     * Write encryption key to cache storage (RAM disk if available).
+     * Returns the full path to the written key file.
+     */
+    public static function writeKeyToTemporary(string $key, string $filename = 'encryption.key'): string
+    {
+        $tempDirs = app(\Foxws\Shaka\Filesystem\TemporaryDirectories::class);
+
+        $directory = $tempDirs->hasCacheStorage()
+            ? $tempDirs->createCache()
+            : $tempDirs->create();
+
+        $filePath = $directory.DIRECTORY_SEPARATOR.$filename;
+        file_put_contents($filePath, hex2bin($key));
+
+        return $filePath;
+    }
+
+    /**
+     * Generate encryption key and write it to cache storage.
+     * Returns array with key, key_id, and file path.
+     */
+    public static function generateAndWrite(string $filename = 'encryption.key'): array
+    {
+        $key = self::generateKey();
+        $keyId = self::generateKeyId();
+        $filePath = self::writeKeyToTemporary($key, $filename);
+
+        return [
+            'key' => $key,
+            'key_id' => $keyId,
+            'file_path' => $filePath,
+        ];
+    }
 }

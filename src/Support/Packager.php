@@ -265,6 +265,36 @@ class Packager
     }
 
     /**
+     * Enable AES-128 encryption with auto-generated keys written to temporary storage.
+     * Uses browser-compatible cbc1 protection scheme by default.
+     * Returns the encryption configuration with key details.
+     */
+    public function withAESEncryption(string $label = '', string $keyFilename = 'encryption.key', ?string $protectionScheme = 'cbc1'): array
+    {
+        // Generate key and write to cache storage (fast)
+        $keyData = EncryptionKeyGenerator::generateAndWrite($keyFilename);
+
+        // Copy key to export temp directory so it gets included in export to S3
+        $tempDir = $this->getTemporaryDirectory();
+        $exportKeyPath = $tempDir.DIRECTORY_SEPARATOR.$keyFilename;
+        copy($keyData['file_path'], $exportKeyPath);
+
+        $config = [
+            'keys' => EncryptionKeyGenerator::formatForShaka($keyData['key_id'], $keyData['key'], $label),
+            'hls_key_uri' => $keyFilename,
+            'clear_lead' => 0,
+        ];
+
+        if ($protectionScheme !== null) {
+            $config['protection_scheme'] = $protectionScheme;
+        }
+
+        $this->withEncryption($config);
+
+        return $keyData;
+    }
+
+    /**
      * Add a custom option to the builder
      */
     public function withOption(string $key, mixed $value): self

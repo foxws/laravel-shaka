@@ -14,6 +14,11 @@ class TemporaryDirectories
     protected string $root;
 
     /**
+     * Root of the cache temporary directories (e.g., RAM disk like /dev/shm).
+     */
+    protected ?string $cacheRoot = null;
+
+    /**
      * Array of all directories
      */
     protected array $directories = [];
@@ -21,9 +26,10 @@ class TemporaryDirectories
     /**
      * Sets the root and removes the trailing slash.
      */
-    public function __construct(string $root)
+    public function __construct(string $root, ?string $cacheRoot = null)
     {
         $this->root = rtrim($root, '/');
+        $this->cacheRoot = $cacheRoot ? rtrim($cacheRoot, '/') : null;
     }
 
     /**
@@ -36,6 +42,28 @@ class TemporaryDirectories
         mkdir($directory, 0777, true);
 
         return $this->directories[] = $directory;
+    }
+
+    /**
+     * Returns the full path of a new directory in cache storage.
+     * Uses cache storage (e.g., RAM disk) if configured, otherwise falls back to regular temp.
+     */
+    public function createCache(): string
+    {
+        $root = $this->cacheRoot ?? $this->root;
+        $directory = $root.'/'.bin2hex(random_bytes(8));
+
+        mkdir($directory, 0777, true);
+
+        return $this->directories[] = $directory;
+    }
+
+    /**
+     * Check if cache temporary storage is available.
+     */
+    public function hasCacheStorage(): bool
+    {
+        return $this->cacheRoot !== null;
     }
 
     /**

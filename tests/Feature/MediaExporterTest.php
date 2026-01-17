@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Foxws\Shaka\Facades\Shaka;
-use Foxws\Shaka\MediaOpener;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {

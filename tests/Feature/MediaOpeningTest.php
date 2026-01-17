@@ -14,7 +14,7 @@ beforeEach(function () {
 });
 
 it('can open media file using fixture', function () {
-    $opener = new MediaOpener();
+    $opener = new MediaOpener;
 
     // Copy fixture to fake storage
     Storage::disk('local')->put('test-video.mp4', file_get_contents(fixture('sample.mp4')));
@@ -31,7 +31,7 @@ it('can open multiple media files', function () {
     Storage::disk('local')->put('video1.mp4', file_get_contents(fixture('sample.mp4')));
     Storage::disk('local')->put('video2.mp4', file_get_contents(fixture('sample.mp4')));
 
-    $opener = new MediaOpener();
+    $opener = new MediaOpener;
     $result = $opener->open(['video1.mp4', 'video2.mp4']);
 
     expect($result->get()->count())->toBe(2);
@@ -66,7 +66,7 @@ it('can chain disk and open operations', function () {
 });
 
 it('can get packager instance from opener', function () {
-    $opener = new MediaOpener();
+    $opener = new MediaOpener;
 
     expect($opener->getPackager())->toBeInstanceOf(\Foxws\Shaka\Support\Packager::class);
 });

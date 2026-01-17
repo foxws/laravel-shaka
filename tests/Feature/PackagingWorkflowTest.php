@@ -12,7 +12,7 @@ beforeEach(function () {
 });
 
 it('can create media opener instance', function () {
-    $opener = new MediaOpener();
+    $opener = new MediaOpener;
 
     expect($opener)->toBeInstanceOf(MediaOpener::class);
 });
@@ -57,7 +57,7 @@ it('can create dynamic playlists with specific disk', function () {
 });
 
 it('can cleanup temporary files', function () {
-    $opener = new MediaOpener();
+    $opener = new MediaOpener;
 
     $result = $opener->cleanupTemporaryFiles();
 

@@ -73,7 +73,10 @@ it('copies encryption key to temp directory for export', function () {
     expect($keyData['file_path'])->toStartWith(sys_get_temp_dir().'/test-cache/');
 
     // Key should also be copied to temp directory
-    $tempDir = (new ReflectionClass($packager))->getMethod('getTemporaryDirectory')->invoke($packager);
+    $reflection = new ReflectionClass($packager);
+    $method = $reflection->getMethod('getTemporaryDirectory');
+    $method->setAccessible(true);
+    $tempDir = $method->invoke($packager);
     $exportKeyPath = $tempDir.DIRECTORY_SEPARATOR.'my-encryption.key';
 
     expect(file_exists($exportKeyPath))->toBeTrue()

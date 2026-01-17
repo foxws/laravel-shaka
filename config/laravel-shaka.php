@@ -32,8 +32,11 @@ return [
     'temporary_files_root' => env('PACKAGER_TEMPORARY_FILES_ROOT', storage_path('app/packager/temp')),
 
     /**
-     * Directory for encrypted temporary files (e.g., in-memory storage).
+     * Cache storage directory for small files (e.g., RAM disk like /dev/shm).
+     * Used for encryption keys, manifests, and other small files that benefit from faster I/O.
+     * NOT used for large video files - those use temporary_files_root to avoid consuming RAM.
+     * Set to null to disable and use temporary_files_root for all operations.
      */
-    'temporary_files_encrypted' => env('PACKAGER_TEMPORARY_ENCRYPTED', '/dev/shm'),
+    'cache_files_root' => env('PACKAGER_CACHE_FILES_ROOT', '/dev/shm'),
 
 ];

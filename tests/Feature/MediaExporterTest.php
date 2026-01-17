@@ -11,7 +11,7 @@ beforeEach(function () {
 });
 
 it('can create exporter from media opener', function () {
-    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $exporter = Shaka::open('video.mp4')->export();
 
@@ -19,7 +19,7 @@ it('can create exporter from media opener', function () {
 });
 
 it('can specify target disk for export', function () {
-    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $exporter = Shaka::open('video.mp4')
         ->export()
@@ -29,7 +29,7 @@ it('can specify target disk for export', function () {
 });
 
 it('can specify path for export', function () {
-    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $exporter = Shaka::open('video.mp4')
         ->export()
@@ -39,7 +39,7 @@ it('can specify path for export', function () {
 });
 
 it('can set file visibility for export', function () {
-    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $exporter = Shaka::open('video.mp4')
         ->export()
@@ -49,7 +49,7 @@ it('can set file visibility for export', function () {
 });
 
 it('can chain path and disk methods', function () {
-    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $exporter = Shaka::open('video.mp4')
         ->export()
@@ -61,7 +61,7 @@ it('can chain path and disk methods', function () {
 });
 
 it('can get command for debugging', function () {
-    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $command = Shaka::open('video.mp4')
         ->export()
@@ -71,7 +71,7 @@ it('can get command for debugging', function () {
 });
 
 it('can add after saving callbacks', function () {
-    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $callbackExecuted = false;
 
@@ -85,7 +85,7 @@ it('can add after saving callbacks', function () {
 });
 
 it('can handle multiple export destinations', function () {
-    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $exporter1 = Shaka::open('video.mp4')->export()->toDisk('local');
     $exporter2 = Shaka::open('video.mp4')->export()->toDisk('export');

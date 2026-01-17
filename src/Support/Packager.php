@@ -265,6 +265,42 @@ class Packager
     }
 
     /**
+     * Enable AES-128 encryption with auto-generated keys.
+     *
+     * Generates encryption key, writes to cache storage, and configures Shaka Packager.
+     * Protection schemes: 'cbc1' (default, HLS), 'cbcs', 'cenc', or null (SAMPLE-AES).
+     *
+     * @param  string  $label  Optional label for the encryption key
+     * @param  string  $keyFilename  Name of the key file to generate
+     * @param  string|null  $protectionScheme  Protection scheme ('cbc1', 'cbcs', 'cenc', or null)
+     * @return array{key: string, key_id: string, file_path: string} Encryption key data
+     */
+    public function withAESEncryption(string $label = '', string $keyFilename = 'encryption.key', ?string $protectionScheme = 'cbc1'): array
+    {
+        // Generate key and write to cache storage (fast)
+        $keyData = EncryptionKeyGenerator::generateAndWrite($keyFilename);
+
+        // Copy key to export temp directory so it gets included in export to S3
+        $tempDir = $this->getTemporaryDirectory();
+        $exportKeyPath = $tempDir.DIRECTORY_SEPARATOR.$keyFilename;
+        copy($keyData['file_path'], $exportKeyPath);
+
+        $config = [
+            'keys' => EncryptionKeyGenerator::formatForShaka($keyData['key_id'], $keyData['key'], $label),
+            'hls_key_uri' => $keyFilename,
+            'clear_lead' => 0,
+        ];
+
+        if ($protectionScheme !== null) {
+            $config['protection_scheme'] = $protectionScheme;
+        }
+
+        $this->withEncryption($config);
+
+        return $keyData;
+    }
+
+    /**
      * Add a custom option to the builder
      */
     public function withOption(string $key, mixed $value): self

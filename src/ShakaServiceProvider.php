@@ -53,6 +53,7 @@ class ShakaServiceProvider extends PackageServiceProvider
         $this->app->singleton(TemporaryDirectories::class, function () {
             return new TemporaryDirectories(
                 Config::string('laravel-shaka.temporary_files_root', sys_get_temp_dir()),
+                Config::string('laravel-shaka.cache_files_root') ?: null,
             );
         });
 

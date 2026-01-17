@@ -36,6 +36,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Setup FFmpeg
+        uses: FedericoCarboni/setup-ffmpeg@v3
+        with:
+          ffmpeg-version: release
+          architecture: x64
+          github-token: ${{ github.server_url == 'https://github.com' && github.token || '' }}
+
       - name: Setup Shaka Packager
         if: runner.os == 'Linux'
         run: |

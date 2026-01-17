@@ -18,8 +18,8 @@ it('can create media opener instance', function () {
 });
 
 it('can switch between disks during packaging', function () {
-    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample.mp4')));
-    Storage::disk('export')->put('video.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample_h264.mp4')));
+    Storage::disk('export')->put('video.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $opener1 = Shaka::fromDisk('local')->open('video.mp4');
     $opener2 = Shaka::fromDisk('export')->open('video.mp4');
@@ -29,7 +29,7 @@ it('can switch between disks during packaging', function () {
 });
 
 it('can handle workflow from open to export', function () {
-    Storage::disk('local')->put('input.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('input.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $exporter = Shaka::open('input.mp4')->export();
 

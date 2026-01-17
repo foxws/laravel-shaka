@@ -7,20 +7,6 @@ use Foxws\Shaka\Tests\TestCase;
 uses(TestCase::class)->in(__DIR__);
 
 /**
- * Get the path to a test fixture file
- */
-function fixture(string $file): string
-{
-    $path = __DIR__.'/fixtures/'.$file;
-
-    if (! file_exists($path)) {
-        throw new InvalidArgumentException("The fixture file [{$path}] does not exist.");
-    }
-
-    return $path;
-}
-
-/**
  * Check if Shaka Packager binary is available for testing
  */
 function hasPackager(): bool

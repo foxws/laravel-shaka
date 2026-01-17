@@ -17,7 +17,7 @@ it('can open media file using fixture', function () {
     $opener = new MediaOpener;
 
     // Copy fixture to fake storage
-    Storage::disk('local')->put('test-video.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('test-video.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $result = $opener->open('test-video.mp4');
 
@@ -28,8 +28,8 @@ it('can open media file using fixture', function () {
 });
 
 it('can open multiple media files', function () {
-    Storage::disk('local')->put('video1.mp4', file_get_contents(fixture('sample.mp4')));
-    Storage::disk('local')->put('video2.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('video1.mp4', file_get_contents(fixture('sample_h264.mp4')));
+    Storage::disk('local')->put('video2.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $opener = new MediaOpener;
     $result = $opener->open(['video1.mp4', 'video2.mp4']);
@@ -38,7 +38,7 @@ it('can open multiple media files', function () {
 });
 
 it('can use facade to open media', function () {
-    Storage::disk('local')->put('test-video.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('test-video.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $opener = Shaka::open('test-video.mp4');
 
@@ -47,7 +47,7 @@ it('can use facade to open media', function () {
 });
 
 it('can open media from specific disk', function () {
-    Storage::disk('export')->put('video.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('export')->put('video.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $opener = Shaka::fromDisk('export')->open('video.mp4');
 
@@ -56,7 +56,7 @@ it('can open media from specific disk', function () {
 });
 
 it('can chain disk and open operations', function () {
-    Storage::disk('local')->put('test.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('test.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $result = Shaka::fromDisk('local')
         ->open('test.mp4');
@@ -72,7 +72,7 @@ it('can get packager instance from opener', function () {
 });
 
 it('can export from media opener', function () {
-    Storage::disk('local')->put('test.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('test.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $opener = Shaka::open('test.mp4');
     $exporter = $opener->export();
@@ -88,7 +88,7 @@ it('validates that media collection is not empty before opening', function () {
 })->throws(InvalidArgumentException::class, 'MediaCollection cannot be empty');
 
 it('can clone media opener instance', function () {
-    Storage::disk('local')->put('test.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('test.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $opener1 = Shaka::fromDisk('local')->open('test.mp4');
     $opener2 = $opener1->clone();

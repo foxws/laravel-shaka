@@ -28,7 +28,7 @@ it('can resolve media opener via container', function () {
 });
 
 it('facade resolves to media opener instance', function () {
-    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $opener = Shaka::open('video.mp4');
 
@@ -36,7 +36,7 @@ it('facade resolves to media opener instance', function () {
 });
 
 it('can access facade methods statically', function () {
-    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $opener = Shaka::fromDisk('local')->open('video.mp4');
 
@@ -44,8 +44,8 @@ it('can access facade methods statically', function () {
 });
 
 it('can instantiate multiple independent packagers', function () {
-    Storage::disk('local')->put('video1.mp4', file_get_contents(fixture('sample.mp4')));
-    Storage::disk('local')->put('video2.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('video1.mp4', file_get_contents(fixture('sample_h264.mp4')));
+    Storage::disk('local')->put('video2.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $packager1 = Shaka::open('video1.mp4');
     $packager2 = Shaka::open('video2.mp4');
@@ -55,8 +55,8 @@ it('can instantiate multiple independent packagers', function () {
 });
 
 it('facade methods return independent state', function () {
-    Storage::disk('local')->put('video1.mp4', file_get_contents(fixture('sample.mp4')));
-    Storage::disk('local')->put('video2.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('video1.mp4', file_get_contents(fixture('sample_h264.mp4')));
+    Storage::disk('local')->put('video2.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     // Resolve fresh instances for independent state
     $opener1 = app(MediaOpener::class)->open('video1.mp4');
@@ -67,7 +67,7 @@ it('facade methods return independent state', function () {
 });
 
 it('can chain facade methods with instance methods', function () {
-    Storage::disk('local')->put('test.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('test.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $result = Shaka::fromDisk('local')
         ->open('test.mp4');
@@ -77,7 +77,7 @@ it('can chain facade methods with instance methods', function () {
 });
 
 it('can export from facade chain', function () {
-    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample_h264.mp4')));
 
     $exporter = Shaka::open('video.mp4')->export();
 

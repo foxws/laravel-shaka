@@ -3,37 +3,63 @@
 declare(strict_types=1);
 
 use Foxws\Shaka\Facades\Shaka;
+use Foxws\Shaka\MediaOpener;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
-    // Setup test fixtures
-    Storage::fake('test');
+    Storage::fake('local');
     Storage::fake('export');
 });
 
-it('can package media with HLS output', function () {
-    // This test requires actual media files and Shaka Packager to be installed
-    // Mark as skipped if packager is not available
-    if (! file_exists(config('laravel-shaka.packager.binaries'))) {
-        $this->markTestSkipped('Shaka Packager binary not found');
-    }
+it('can create media opener instance', function () {
+    $opener = new MediaOpener();
 
-    // Test implementation would go here
-    expect(true)->toBeTrue();
-})->skip('Requires actual media files and packager binary');
-
-it('can package media with DASH output', function () {
-    if (! file_exists(config('laravel-shaka.packager.binaries'))) {
-        $this->markTestSkipped('Shaka Packager binary not found');
-    }
-
-    expect(true)->toBeTrue();
-})->skip('Requires actual media files and packager binary');
+    expect($opener)->toBeInstanceOf(MediaOpener::class);
+});
 
 it('can switch between disks during packaging', function () {
-    if (! file_exists(config('laravel-shaka.packager.binaries'))) {
-        $this->markTestSkipped('Shaka Packager binary not found');
-    }
+    Storage::disk('local')->put('video.mp4', file_get_contents(fixture('sample.mp4')));
+    Storage::disk('export')->put('video.mp4', file_get_contents(fixture('sample.mp4')));
 
-    expect(true)->toBeTrue();
-})->skip('Requires actual media files and packager binary');
+    $opener1 = Shaka::fromDisk('local')->open('video.mp4');
+    $opener2 = Shaka::fromDisk('export')->open('video.mp4');
+
+    expect($opener1->getDisk()->getName())->toBe('local');
+    expect($opener2->getDisk()->getName())->toBe('export');
+});
+
+it('can handle workflow from open to export', function () {
+    Storage::disk('local')->put('input.mp4', file_get_contents(fixture('sample.mp4')));
+
+    $exporter = Shaka::open('input.mp4')->export();
+
+    expect($exporter)->toBeInstanceOf(\Foxws\Shaka\Exporters\MediaExporter::class);
+});
+
+it('can create dynamic HLS playlist', function () {
+    $playlist = MediaOpener::dynamicHLSPlaylist();
+
+    expect($playlist)->toBeInstanceOf(\Foxws\Shaka\Http\DynamicHLSPlaylist::class);
+});
+
+it('can create dynamic DASH manifest', function () {
+    $manifest = MediaOpener::dynamicDASHManifest();
+
+    expect($manifest)->toBeInstanceOf(\Foxws\Shaka\Http\DynamicDASHManifest::class);
+});
+
+it('can create dynamic playlists with specific disk', function () {
+    $playlist = MediaOpener::dynamicHLSPlaylist('export');
+    $manifest = MediaOpener::dynamicDASHManifest('local');
+
+    expect($playlist)->toBeInstanceOf(\Foxws\Shaka\Http\DynamicHLSPlaylist::class);
+    expect($manifest)->toBeInstanceOf(\Foxws\Shaka\Http\DynamicDASHManifest::class);
+});
+
+it('can cleanup temporary files', function () {
+    $opener = new MediaOpener();
+
+    $result = $opener->cleanupTemporaryFiles();
+
+    expect($result)->toBe($opener);
+});

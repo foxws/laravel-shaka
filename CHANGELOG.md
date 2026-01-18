@@ -2,6 +2,15 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
+## 0.5.0 - 2026-01-18
+
+### What's Changed
+
+* feat: implement cache storage for temporary files by @francoism90 in https://github.com/foxws/laravel-shaka/pull/21
+* feat: add support for key rotation in AES encryption by @francoism90 in https://github.com/foxws/laravel-shaka/pull/22
+
+**Full Changelog**: https://github.com/foxws/laravel-shaka/compare/0.4.0...0.5.0
+
 ## 0.4.0 - 2026-01-08
 
 ### What's Changed
@@ -41,24 +50,31 @@ All notable changes to `laravel-shaka` will be documented in this file.
 ### Added
 
 - **Artisan Commands**
+  
   - `php artisan shaka:verify` - Verify Shaka Packager installation and configuration
   - `php artisan shaka:info` - Display package information, system details, and configuration
   - Commands built with Laravel Prompts for modern, beautiful console output
   
 - **Security Policy** (`SECURITY.md`) - Vulnerability disclosure guidelines and best practices
+  
 - **Enhanced Exception Types**
+  
   - `InvalidStreamConfigurationException` - For stream configuration errors
   - `MediaNotFoundException` - For missing media files
   - `PackagingException` - For packaging operation errors
   
 - **Stream Validation** - `StreamValidator` class for input validation and error prevention
+  
 - **Event System** for packaging lifecycle tracking:
+  
   - `PackagingStarted` event - Fired when packaging begins
   - `PackagingCompleted` event - Fired on successful completion with execution time
   - `PackagingFailed` event - Fired on packaging failure
   
 - **Progress Monitor Contract** (`ProgressMonitor`) - Interface for custom progress tracking implementations
+  
 - **Media Helper Utilities** (`MediaHelper` class):
+  
   - Suggested bitrate calculations based on resolution
   - Standard ABR (Adaptive Bitrate) ladder generation
   - File size formatting
@@ -69,12 +85,15 @@ All notable changes to `laravel-shaka` will be documented in this file.
   - Bandwidth parsing utilities
   
 - **Comprehensive Documentation**
+  
   - Queue Integration Guide (`docs/QUEUE_INTEGRATION.md`) - Background processing with Laravel queues
   - Troubleshooting Guide (`docs/TROUBLESHOOTING.md`) - Common issues and solutions
   - Updated main documentation index
   
 - **Feature Tests Structure** - Foundation for integration testing framework
+  
 - **Implementation Fixes**
+  
   - Fixed `force_generic_input` config check in `Media::getSafeInputPath()`
   - Properly respect config option for generic input aliases
   
@@ -112,13 +131,16 @@ All notable changes to `laravel-shaka` will be documented in this file.
 ### Added
 
 - Descriptor sanitization in `Foxws\\Shaka\\Support\\CommandBuilder`:
+  
   - Normalize smart quotes to ASCII
   - Replace commas with hyphens (commas are field separators in Shaka descriptors)
   - Trim surrounding quotes
   - Prefix leading dashes with `./` to avoid option confusion
   
 - Unit tests covering descriptor sanitization for leading dashes, smart quotes, commas, and output filenames.
+  
 - `force_generic_input` config option to automatically create safe generic aliases for input files.
+  
   - When enabled, creates a temporary copy/symlink with a generic name (e.g., `input.mp4`).
   - Prevents issues with any special characters in filenames (parentheses, brackets, smart quotes, etc.).
   - Uses symlinks for local disks (fast) and copies for remote disks (compatible).
@@ -140,13 +162,16 @@ All notable changes to `laravel-shaka` will be documented in this file.
 ### Added
 
 - Descriptor sanitization in `Foxws\\Shaka\\Support\\CommandBuilder`:
+  
   - Normalize smart quotes to ASCII
   - Replace commas with hyphens (commas are field separators in Shaka descriptors)
   - Trim surrounding quotes
   - Prefix leading dashes with `./` to avoid option confusion
   
 - Unit tests covering descriptor sanitization for leading dashes, smart quotes, commas, and output filenames.
+  
 - `force_generic_input` config option to automatically create safe generic aliases for input files.
+  
   - When enabled, creates a temporary copy/symlink with a generic name (e.g., `input.mp4`).
   - Prevents issues with any special characters in filenames (parentheses, brackets, smart quotes, etc.).
   - Uses symlinks for local disks (fast) and copies for remote disks (compatible).
@@ -178,13 +203,21 @@ All notable changes to `laravel-shaka` will be documented in this file.
 ### Features
 
 - `MediaOpener` class with disk switching capabilities
+  
 - `Packager` class for managing packaging operations
+  
 - `Stream` builder for creating video/audio stream configurations
+  
 - `MediaCollection` for handling multiple media files
+  
 - `Disk` abstraction for filesystem operations
+  
 - Facade support for easy access
+  
 - Service provider with Laravel integration
+  
 - **DynamicHLSPlaylist** class for processing and customizing HLS playlists
+  
   - `setKeyUrlResolver()` - Generate URLs for encryption keys
   - `setMediaUrlResolver()` - Generate URLs for media segments
   - `setPlaylistUrlResolver()` - Generate URLs for sub-playlists
@@ -194,6 +227,7 @@ All notable changes to `laravel-shaka` will be documented in this file.
   - **No temporary directory creation** - Only reads existing files
   
 - **DynamicDASHManifest** class for processing and customizing DASH manifests
+  
   - `setMediaUrlResolver()` - Generate URLs for media segments
   - `setInitUrlResolver()` - Generate URLs for initialization segments
   - Process and rewrite MPD manifest files
@@ -202,21 +236,25 @@ All notable changes to `laravel-shaka` will be documented in this file.
   - **No temporary directory creation** - Only reads existing files
   
 - **Media class improvements**
+  
   - Optional `$createTemporary` parameter to control temporary directory creation
   - Prevents unnecessary temp directories when only reading files
   - Backward compatible - defaults to `true` for packaging operations
   
 - Support for CDN integration, signed URLs, and multi-tenant applications
+  
 
 ### Encryption
 
 - Browser-compatible HLS encryption using AES-128-CBC
+  
   - Use `protection_scheme: 'cbc1'` for browser-compatible encryption
   - Use `.ts` segments (not `.mp4`) for encrypted content
   - Set `clear_lead: 0` to encrypt all segments from the start
   - Default (no protection_scheme) produces SAMPLE-AES which only works on native iOS/tvOS
   
 - Comprehensive encryption documentation in README
+  
 
 ### Testing
 

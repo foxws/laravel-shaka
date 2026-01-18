@@ -280,11 +280,6 @@ class Packager
         // Generate key and write to cache storage (fast)
         $keyData = EncryptionKeyGenerator::generateAndWrite($keyFilename);
 
-        // Copy key to export temp directory so it gets included in export to S3
-        $tempDir = $this->getTemporaryDirectory();
-        $exportKeyPath = $tempDir.DIRECTORY_SEPARATOR.$keyFilename;
-        copy($keyData['file_path'], $exportKeyPath);
-
         $config = [
             'keys' => EncryptionKeyGenerator::formatForShaka($keyData['key_id'], $keyData['key'], $label),
             'hls_key_uri' => $keyFilename,

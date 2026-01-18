@@ -38,9 +38,9 @@ class EncryptionKeyGenerator
     /**
      * Format encryption config for Shaka Packager
      */
-    public static function formatForShaka(string $keyId, string $key, ?string $label = ''): string
+    public static function formatForShaka(string $keyId, string $key, ?string $label = null): string
     {
-        return sprintf('label=%s:key_id=%s:key=%s', $label, $keyId, $key);
+        return sprintf('label=%s:key_id=%s:key=%s', $label ?? '', $keyId, $key);
     }
 
     /**

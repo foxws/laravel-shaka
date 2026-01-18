@@ -9,6 +9,8 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 
 class PackagerResult
 {
+    protected array $uploadedEncryptionKeys = [];
+
     public function __construct(
         protected string $output,
         protected ?Disk $sourceDisk = null,
@@ -39,13 +41,28 @@ class PackagerResult
 
         foreach ($files as $file) {
             $filename = basename($file);
+            $isKeyFile = pathinfo($filename, PATHINFO_EXTENSION) === 'key';
 
             // Determine target path
             $targetPath = $targetDirectory ? $targetDirectory.$filename : $filename;
 
-            $stream = fopen($file, 'r');
-            $targetDisk->writeStream($targetPath, $stream);
-            fclose($stream);
+            // For key files (tiny, 16 bytes), read once and upload directly
+            if ($isKeyFile) {
+                $keyContent = file_get_contents($file);
+                $targetDisk->put($targetPath, $keyContent);
+
+                // Track uploaded encryption key
+                $this->uploadedEncryptionKeys[] = [
+                    'filename' => $filename,
+                    'path' => $targetPath,
+                    'content' => bin2hex($keyContent),
+                ];
+            } else {
+                // For large files (segments), stream from disk to avoid memory usage
+                $stream = fopen($file, 'r');
+                $targetDisk->writeStream($targetPath, $stream);
+                fclose($stream);
+            }
 
             if ($visibility) {
                 $targetDisk->setVisibility($targetPath, $visibility);
@@ -107,5 +124,47 @@ class PackagerResult
         }
 
         return null;
+    }
+
+    /**
+     * Get all encryption key files from the temporary directory.
+     *
+     * Useful when using key rotation to collect all generated keys.
+     *
+     * @return array<int, array{path: string, filename: string, content: string}> Array of key files with path, filename, and hex-encoded content
+     */
+    public function getEncryptionKeys(): array
+    {
+        if (! $this->temporaryDirectory || ! is_dir($this->temporaryDirectory)) {
+            return [];
+        }
+
+        $keys = [];
+        $files = $this->getAllFilesInTemporaryDirectory($this->temporaryDirectory);
+
+        foreach ($files as $file) {
+            // Look for .key files (standard encryption key extension)
+            if (pathinfo($file, PATHINFO_EXTENSION) === 'key') {
+                $keys[] = [
+                    'path' => $file,
+                    'filename' => basename($file),
+                    'content' => bin2hex(file_get_contents($file)),
+                ];
+            }
+        }
+
+        return $keys;
+    }
+
+    /**
+     * Get encryption keys that were uploaded during the last toDisk() call.
+     *
+     * Returns keys with their uploaded paths and hex-encoded content, ready for database storage.
+     *
+     * @return array<int, array{filename: string, path: string, content: string}> Array of uploaded keys
+     */
+    public function getUploadedEncryptionKeys(): array
+    {
+        return $this->uploadedEncryptionKeys;
     }
 }

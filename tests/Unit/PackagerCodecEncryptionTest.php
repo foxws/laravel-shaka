@@ -53,7 +53,7 @@ it('supports AES encryption with H.264 codec', function () {
     $packager->open($collection);
 
     // Add H.264 video stream with encryption
-    $keyData = $packager->withAESEncryption('h264', 'h264.key');
+    $keyData = $packager->withAESEncryption('h264.key', 'cbc1', 'h264');
 
     $packager->addStream([
         'in' => $media->getLocalPath(),
@@ -96,7 +96,7 @@ it('supports AES encryption with HEVC/H.265 codec', function () {
     $packager->open($collection);
 
     // Add HEVC video stream with encryption
-    $keyData = $packager->withAESEncryption('hevc', 'hevc.key');
+    $keyData = $packager->withAESEncryption('hevc.key', 'cbc1', 'hevc');
 
     $packager->addStream([
         'in' => $media->getLocalPath(),
@@ -139,7 +139,7 @@ it('supports AES encryption with AV1 codec', function () {
     $packager->open($collection);
 
     // Add AV1 video stream with encryption
-    $keyData = $packager->withAESEncryption('av1', 'av1.key');
+    $keyData = $packager->withAESEncryption('av1.key', 'cbc1', 'av1');
 
     $packager->addStream([
         'in' => $media->getLocalPath(),
@@ -182,7 +182,7 @@ it('supports cbcs protection scheme with H.264', function () {
     $packager->open($collection);
 
     // Use cbcs (for newer devices/platforms)
-    $keyData = $packager->withAESEncryption('h264', 'h264_cbcs.key', 'cbcs');
+    $keyData = $packager->withAESEncryption('h264_cbcs.key', 'cbcs', 'h264');
 
     $packager->addStream([
         'in' => $media->getLocalPath(),
@@ -218,7 +218,7 @@ it('supports cenc protection scheme with HEVC', function () {
     $packager->open($collection);
 
     // Use cenc (Common Encryption)
-    $keyData = $packager->withAESEncryption('hevc', 'hevc_cenc.key', 'cenc');
+    $keyData = $packager->withAESEncryption('hevc_cenc.key', 'cenc', 'hevc');
 
     $packager->addStream([
         'in' => $media->getLocalPath(),
@@ -254,7 +254,7 @@ it('supports SAMPLE-AES with AV1 for HLS', function () {
     $packager->open($collection);
 
     // Use null protection scheme for SAMPLE-AES (HLS-specific)
-    $keyData = $packager->withAESEncryption('av1', 'av1_sample_aes.key', null);
+    $keyData = $packager->withAESEncryption('av1_sample_aes.key', null, 'av1');
 
     $packager->addStream([
         'in' => $media->getLocalPath(),
@@ -297,7 +297,7 @@ it('encrypts multiple codec streams in single packaging operation', function () 
     $packager->open($collection);
 
     // Configure encryption (applies to all streams)
-    $keyData = $packager->withAESEncryption('multi', 'master.key', 'cbc1');
+    $keyData = $packager->withAESEncryption('master.key', 'cbc1', 'multi');
 
     // Add streams for each codec
     $packager->addStream([
@@ -347,19 +347,19 @@ it('generates unique encryption keys per codec when needed', function () {
     $packagerH264 = new Packager($driver, $logger);
     $mediaH264 = Media::make('local', 'video_h264.mp4');
     $packagerH264->open(MediaCollection::make([$mediaH264]));
-    $keyDataH264 = $packagerH264->withAESEncryption('h264', 'h264_unique.key');
+    $keyDataH264 = $packagerH264->withAESEncryption('h264_unique.key', 'cbc1', 'h264');
 
     // Test HEVC
     $packagerHevc = new Packager($driver, $logger);
     $mediaHevc = Media::make('local', 'video_hevc.mp4');
     $packagerHevc->open(MediaCollection::make([$mediaHevc]));
-    $keyDataHevc = $packagerHevc->withAESEncryption('hevc', 'hevc_unique.key');
+    $keyDataHevc = $packagerHevc->withAESEncryption('hevc_unique.key', 'cbc1', 'hevc');
 
     // Test AV1
     $packagerAv1 = new Packager($driver, $logger);
     $mediaAv1 = Media::make('local', 'video_av1.mp4');
     $packagerAv1->open(MediaCollection::make([$mediaAv1]));
-    $keyDataAv1 = $packagerAv1->withAESEncryption('av1', 'av1_unique.key');
+    $keyDataAv1 = $packagerAv1->withAESEncryption('av1_unique.key', 'cbc1', 'av1');
 
     // Verify each got unique keys
     expect($keyDataH264['key'])->not->toBe($keyDataHevc['key'])

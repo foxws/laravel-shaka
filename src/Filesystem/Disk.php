@@ -15,6 +15,7 @@ use League\Flysystem\Local\LocalFilesystemAdapter;
  * @method bool has(string $path)
  * @method bool exists(string $path)
  * @method string|null get(string $path)
+ * @method bool put(string $path, string|resource $contents, mixed $options = [])
  * @method resource|null readStream(string $path)
  * @method bool writeStream(string $path, resource $resource, array $options = [])
  * @method bool makeDirectory(string $path)

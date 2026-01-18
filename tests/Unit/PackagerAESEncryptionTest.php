@@ -6,6 +6,7 @@ use Foxws\Shaka\Filesystem\Media;
 use Foxws\Shaka\Filesystem\MediaCollection;
 use Foxws\Shaka\Filesystem\TemporaryDirectories;
 use Foxws\Shaka\Support\Packager;
+use Foxws\Shaka\Support\PackagerResult;
 use Foxws\Shaka\Support\ShakaPackager;
 use Illuminate\Support\Facades\Storage;
 use Psr\Log\LoggerInterface;
@@ -76,7 +77,7 @@ it('configures encryption with cbc1 protection scheme by default', function () {
         ->and($options)->toHaveKey('clear_lead')
         ->and($options['clear_lead'])->toBe(0)
         ->and($options)->toHaveKey('hls_key_uri')
-        ->and($options['hls_key_uri'])->toBe('encryption.key');
+        ->and($options['hls_key_uri'])->toBe('key');
 
     // Cleanup
     $tempDirs->deleteAll();
@@ -99,7 +100,7 @@ it('allows custom protection scheme', function () {
     $collection = MediaCollection::make([$media]);
 
     $packager->open($collection);
-    $packager->withAESEncryption('', 'encryption.key', 'cbcs');
+    $packager->withAESEncryption('encryption.key', 'cbcs');
 
     $builder = $packager->getBuilder();
     $options = $builder->getOptions();
@@ -127,7 +128,7 @@ it('allows omitting protection scheme', function () {
     $collection = MediaCollection::make([$media]);
 
     $packager->open($collection);
-    $packager->withAESEncryption('', 'encryption.key', null);
+    $packager->withAESEncryption('encryption.key', null);
 
     $builder = $packager->getBuilder();
     $options = $builder->getOptions();
@@ -155,7 +156,8 @@ it('supports custom key filename', function () {
     $collection = MediaCollection::make([$media]);
 
     $packager->open($collection);
-    $keyData = $packager->withAESEncryption('', 'custom-key.bin');
+
+    $keyData = $packager->withAESEncryption('custom-key.bin');
 
     $builder = $packager->getBuilder();
     $options = $builder->getOptions();
@@ -164,5 +166,145 @@ it('supports custom key filename', function () {
         ->and($keyData['file_path'])->toContain('custom-key.bin');
 
     // Cleanup
+    $tempDirs->deleteAll();
+});
+
+it('supports key rotation with crypto_period_duration', function () {
+    $tempDirs = new TemporaryDirectories(
+        sys_get_temp_dir().'/test-temp',
+        sys_get_temp_dir().'/test-cache'
+    );
+
+    app()->instance(TemporaryDirectories::class, $tempDirs);
+
+    $driver = mock(ShakaPackager::class);
+    $logger = mock(LoggerInterface::class)->shouldIgnoreMissing();
+
+    $packager = new Packager($driver, $logger);
+
+    $media = Media::make('local', 'test.mp4');
+    $collection = MediaCollection::make([$media]);
+
+    $packager->open($collection);
+    $packager->withAESEncryption();
+    $packager->withKeyRotationDuration(300);
+
+    $builder = $packager->getBuilder();
+    $options = $builder->getOptions();
+
+    expect($options)->toHaveKey('crypto_period_duration')
+        ->and($options['crypto_period_duration'])->toBe(300);
+
+    // Cleanup
+    $tempDirs->deleteAll();
+});
+
+it('supports different key rotation intervals', function () {
+    $tempDirs = new TemporaryDirectories(
+        sys_get_temp_dir().'/test-temp',
+        sys_get_temp_dir().'/test-cache'
+    );
+
+    app()->instance(TemporaryDirectories::class, $tempDirs);
+
+    $driver = mock(ShakaPackager::class);
+    $logger = mock(LoggerInterface::class)->shouldIgnoreMissing();
+
+    $packager = new Packager($driver, $logger);
+
+    $media = Media::make('local', 'test.mp4');
+    $collection = MediaCollection::make([$media]);
+
+    $packager->open($collection);
+    $packager->withAESEncryption('rotation.key', 'cbc1');
+    $packager->withKeyRotationDuration(1800); // 30 minutes
+
+    $builder = $packager->getBuilder();
+    $options = $builder->getOptions();
+
+    expect($options['crypto_period_duration'])->toBe(1800)
+        ->and($options['protection_scheme'])->toBe('cbc1')
+        ->and($options['hls_key_uri'])->toBe('rotation.key');
+
+    // Cleanup
+    $tempDirs->deleteAll();
+});
+
+it('collects all encryption keys after packaging with rotation', function () {
+    $tempDirs = new TemporaryDirectories(
+        sys_get_temp_dir().'/test-temp',
+        sys_get_temp_dir().'/test-cache'
+    );
+
+    app()->instance(TemporaryDirectories::class, $tempDirs);
+
+    // Create a temporary directory with multiple key files (simulating rotation)
+    $tempDir = sys_get_temp_dir().'/test-rotation-'.bin2hex(random_bytes(4));
+    mkdir($tempDir, 0777, true);
+
+    // Simulate multiple keys generated during rotation
+    file_put_contents($tempDir.'/encryption_0.key', random_bytes(16));
+    file_put_contents($tempDir.'/encryption_1.key', random_bytes(16));
+    file_put_contents($tempDir.'/encryption_2.key', random_bytes(16));
+    file_put_contents($tempDir.'/video.m4s', 'segment data'); // Non-key file
+
+    $result = new PackagerResult('success', null, $tempDir);
+
+    $keys = $result->getEncryptionKeys();
+
+    expect($keys)->toHaveCount(3)
+        ->and($keys[0])->toHaveKeys(['path', 'filename', 'content'])
+        ->and($keys[0]['filename'])->toBe('encryption_0.key')
+        ->and(strlen($keys[0]['content']))->toBe(32) // 16 bytes = 32 hex chars
+        ->and($keys[1]['filename'])->toBe('encryption_1.key')
+        ->and($keys[2]['filename'])->toBe('encryption_2.key');
+
+    // Cleanup
+    array_map('unlink', glob($tempDir.'/*'));
+    rmdir($tempDir);
+    $tempDirs->deleteAll();
+});
+
+it('tracks uploaded encryption keys during toDisk', function () {
+    Storage::fake('s3');
+
+    $tempDirs = new TemporaryDirectories(
+        sys_get_temp_dir().'/test-temp',
+        sys_get_temp_dir().'/test-cache'
+    );
+
+    app()->instance(TemporaryDirectories::class, $tempDirs);
+
+    // Create temporary directory with encryption keys
+    $tempDir = sys_get_temp_dir().'/test-upload-'.bin2hex(random_bytes(4));
+    mkdir($tempDir, 0777, true);
+
+    file_put_contents($tempDir.'/encryption_0.key', random_bytes(16));
+    file_put_contents($tempDir.'/encryption_1.key', random_bytes(16));
+    file_put_contents($tempDir.'/video.mp4', 'video data');
+
+    $result = new PackagerResult('success', null, $tempDir);
+
+    // Upload to S3
+    $result->toDisk('s3', 'public', false);
+
+    // Get uploaded keys
+    $uploadedKeys = $result->getUploadedEncryptionKeys();
+
+    expect($uploadedKeys)->toHaveCount(2)
+        ->and($uploadedKeys[0])->toHaveKeys(['filename', 'path', 'content'])
+        ->and($uploadedKeys[0]['filename'])->toBe('encryption_0.key')
+        ->and($uploadedKeys[0]['path'])->toBe('encryption_0.key')
+        ->and(strlen($uploadedKeys[0]['content']))->toBe(32)
+        ->and($uploadedKeys[1]['filename'])->toBe('encryption_1.key');
+
+    // Verify files were uploaded
+    expect(Storage::disk('s3')->exists('encryption_0.key'))->toBeTrue()
+        ->and(Storage::disk('s3')->exists('encryption_1.key'))->toBeTrue()
+        ->and(Storage::disk('s3')->exists('video.mp4'))->toBeTrue();
+
+    // Cleanup
+    array_map('unlink', glob($tempDir.'/*'));
+    rmdir($tempDir);
     $tempDirs->deleteAll();
 });

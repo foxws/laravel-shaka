@@ -9,6 +9,8 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 
 class PackagerResult
 {
+    protected array $uploadedEncryptionKeys = [];
+
     public function __construct(
         protected string $output,
         protected ?Disk $sourceDisk = null,
@@ -49,6 +51,15 @@ class PackagerResult
 
             if ($visibility) {
                 $targetDisk->setVisibility($targetPath, $visibility);
+            }
+
+            // Track uploaded encryption keys
+            if (pathinfo($filename, PATHINFO_EXTENSION) === 'key') {
+                $this->uploadedEncryptionKeys[] = [
+                    'filename' => $filename,
+                    'path' => $targetPath,
+                    'content' => bin2hex(file_get_contents($file)),
+                ];
             }
 
             // Clean up temporary file after copying
@@ -107,5 +118,47 @@ class PackagerResult
         }
 
         return null;
+    }
+
+    /**
+     * Get all encryption key files from the temporary directory.
+     *
+     * Useful when using key rotation to collect all generated keys.
+     *
+     * @return array<int, array{path: string, filename: string, content: string}> Array of key files with path, filename, and hex-encoded content
+     */
+    public function getEncryptionKeys(): array
+    {
+        if (! $this->temporaryDirectory || ! is_dir($this->temporaryDirectory)) {
+            return [];
+        }
+
+        $keys = [];
+        $files = $this->getAllFilesInTemporaryDirectory($this->temporaryDirectory);
+
+        foreach ($files as $file) {
+            // Look for .key files (standard encryption key extension)
+            if (pathinfo($file, PATHINFO_EXTENSION) === 'key') {
+                $keys[] = [
+                    'path' => $file,
+                    'filename' => basename($file),
+                    'content' => bin2hex(file_get_contents($file)),
+                ];
+            }
+        }
+
+        return $keys;
+    }
+
+    /**
+     * Get encryption keys that were uploaded during the last toDisk() call.
+     *
+     * Returns keys with their uploaded paths and hex-encoded content, ready for database storage.
+     *
+     * @return array<int, array{filename: string, path: string, content: string}> Array of uploaded keys
+     */
+    public function getUploadedEncryptionKeys(): array
+    {
+        return $this->uploadedEncryptionKeys;
     }
 }

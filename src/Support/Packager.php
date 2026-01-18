@@ -336,6 +336,18 @@ class Packager
     }
 
     /**
+     * Add multiple custom options to the builder
+     */
+    public function withOptions(array $options): self
+    {
+        foreach ($options as $key => $value) {
+            $this->builder()->withOption($key, $value);
+        }
+
+        return $this;
+    }
+
+    /**
      * Returns the final command that would be executed, useful for debugging purposes.
      */
     public function getCommand(): string

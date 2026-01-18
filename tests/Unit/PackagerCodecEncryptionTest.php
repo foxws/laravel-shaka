@@ -218,7 +218,7 @@ it('supports cenc protection scheme with HEVC', function () {
     $packager->open($collection);
 
     // Use cenc (Common Encryption)
-    $keyData = $packager->withAESEncryption('hevc', 'hevc_cenc.key', 'cenc');
+    $keyData = $packager->withAESEncryption('hevc_cenc.key', 'cenc', 'hevc');
 
     $packager->addStream([
         'in' => $media->getLocalPath(),

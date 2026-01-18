@@ -186,8 +186,8 @@ it('supports key rotation with crypto_period_duration', function () {
     $collection = MediaCollection::make([$media]);
 
     $packager->open($collection);
-    $packager->withAESEncryption()
-        ->withKeyRotationDuration(300);
+    $packager->withAESEncryption();
+    $packager->withKeyRotationDuration(300);
 
     $builder = $packager->getBuilder();
     $options = $builder->getOptions();
@@ -216,8 +216,8 @@ it('supports different key rotation intervals', function () {
     $collection = MediaCollection::make([$media]);
 
     $packager->open($collection);
-    $packager->withAESEncryption('rotation.key', 'cbc1')
-        ->withKeyRotationDuration(1800); // 30 minutes
+    $packager->withAESEncryption('rotation.key', 'cbc1');
+    $packager->withKeyRotationDuration(1800); // 30 minutes
 
     $builder = $packager->getBuilder();
     $options = $builder->getOptions();

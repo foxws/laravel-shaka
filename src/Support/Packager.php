@@ -273,14 +273,18 @@ class Packager
      * When used with withKeyRotationDuration(), the filename becomes a base name
      * (e.g., 'key' becomes 'key_0', 'key_1', 'key_2', etc. in cache storage).
      *
-     * Protection schemes: 'cbc1' (default, HLS), 'cbcs', 'cenc', or null (SAMPLE-AES).
+     * Protection schemes:
+     * - 'cenc' (AES-CTR): Recommended for Widevine/PlayReady, supports key rotation
+     * - 'cbcs' (AES-CBC): For FairPlay/Safari
+     * - 'cbc1': Legacy HLS, limited browser support
+     * - null: SAMPLE-AES, widest compatibility but NO key rotation support
      *
      * @param  string  $keyFilename  Base name for key file (default: 'key')
-     * @param  string|null  $protectionScheme  Protection scheme ('cbc1', 'cbcs', 'cenc', or null)
+     * @param  string|null  $protectionScheme  Protection scheme ('cenc', 'cbcs', 'cbc1', or null)
      * @param  string|null  $label  Optional label for multi-key scenarios
      * @return array{key: string, key_id: string, file_path: string} Encryption key data
      */
-    public function withAESEncryption(string $keyFilename = 'key', ?string $protectionScheme = 'cbc1', ?string $label = null): array
+    public function withAESEncryption(string $keyFilename = 'key', ?string $protectionScheme = 'cenc', ?string $label = null): array
     {
         // Generate key and write to cache storage (fast)
         $keyData = EncryptionKeyGenerator::generateAndWrite($keyFilename);
@@ -308,6 +312,9 @@ class Packager
      *
      * Rotates encryption keys at specified intervals. Call after withAESEncryption().
      * Common values: 300 (5 min), 600 (10 min), 1800 (30 min), 3600 (1 hour).
+     *
+     * IMPORTANT: Key rotation requires protection scheme 'cenc' or 'cbcs'.
+     * SAMPLE-AES (null) does not support key rotation.
      *
      * @param  int  $seconds  Duration in seconds before rotating to a new key
      */

@@ -41,25 +41,31 @@ class PackagerResult
 
         foreach ($files as $file) {
             $filename = basename($file);
+            $isKeyFile = pathinfo($filename, PATHINFO_EXTENSION) === 'key';
 
             // Determine target path
             $targetPath = $targetDirectory ? $targetDirectory.$filename : $filename;
 
-            $stream = fopen($file, 'r');
-            $targetDisk->writeStream($targetPath, $stream);
-            fclose($stream);
+            // For key files (tiny, 16 bytes), read once and upload directly
+            if ($isKeyFile) {
+                $keyContent = file_get_contents($file);
+                $targetDisk->put($targetPath, $keyContent);
 
-            if ($visibility) {
-                $targetDisk->setVisibility($targetPath, $visibility);
-            }
-
-            // Track uploaded encryption keys
-            if (pathinfo($filename, PATHINFO_EXTENSION) === 'key') {
+                // Track uploaded encryption key
                 $this->uploadedEncryptionKeys[] = [
                     'filename' => $filename,
                     'path' => $targetPath,
-                    'content' => bin2hex(file_get_contents($file)),
+                    'content' => bin2hex($keyContent),
                 ];
+            } else {
+                // For large files (segments), stream from disk to avoid memory usage
+                $stream = fopen($file, 'r');
+                $targetDisk->writeStream($targetPath, $stream);
+                fclose($stream);
+            }
+
+            if ($visibility) {
+                $targetDisk->setVisibility($targetPath, $visibility);
             }
 
             // Clean up temporary file after copying

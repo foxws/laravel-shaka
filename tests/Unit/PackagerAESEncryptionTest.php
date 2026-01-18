@@ -50,7 +50,7 @@ it('generates AES encryption with default settings', function () {
     $tempDirs->deleteAll();
 });
 
-it('configures encryption with cbc1 protection scheme by default', function () {
+it('configures encryption with cenc protection scheme by default', function () {
     $tempDirs = new TemporaryDirectories(
         sys_get_temp_dir().'/test-temp',
         sys_get_temp_dir().'/test-cache'
@@ -73,7 +73,7 @@ it('configures encryption with cbc1 protection scheme by default', function () {
     $options = $builder->getOptions();
 
     expect($options)->toHaveKey('protection_scheme')
-        ->and($options['protection_scheme'])->toBe('cbc1')
+        ->and($options['protection_scheme'])->toBe('cenc')
         ->and($options)->toHaveKey('clear_lead')
         ->and($options['clear_lead'])->toBe(0)
         ->and($options)->toHaveKey('hls_key_uri')

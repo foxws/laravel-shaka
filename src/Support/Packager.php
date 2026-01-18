@@ -23,6 +23,8 @@ class Packager
 
     protected ?string $temporaryDirectory = null;
 
+    protected ?string $cacheDirectory = null;
+
     public function __construct(
         ShakaPackager $packager,
         ?LoggerInterface $logger = null
@@ -269,11 +271,11 @@ class Packager
      *
      * Generates encryption key, writes to cache storage, and configures Shaka Packager.
      * When used with withKeyRotationDuration(), the filename becomes a base name
-     * (e.g., 'key' becomes 'key_0.key', 'key_1.key', 'key_2.key', etc.).
+     * (e.g., 'key' becomes 'key_0', 'key_1', 'key_2', etc. in cache storage).
      *
      * Protection schemes: 'cbc1' (default, HLS), 'cbcs', 'cenc', or null (SAMPLE-AES).
      *
-     * @param  string  $keyFilename  Base name for key file (default: 'key' -> key.key or key_0.key with rotation)
+     * @param  string  $keyFilename  Base name for key file (default: 'key')
      * @param  string|null  $protectionScheme  Protection scheme ('cbc1', 'cbcs', 'cenc', or null)
      * @param  string|null  $label  Optional label for multi-key scenarios
      * @return array{key: string, key_id: string, file_path: string} Encryption key data
@@ -282,6 +284,9 @@ class Packager
     {
         // Generate key and write to cache storage (fast)
         $keyData = EncryptionKeyGenerator::generateAndWrite($keyFilename);
+
+        // Store cache directory for later use in PackagerResult
+        $this->cacheDirectory = dirname($keyData['file_path']);
 
         $config = [
             'keys' => EncryptionKeyGenerator::formatForShaka($keyData['key_id'], $keyData['key'], $label),
@@ -389,7 +394,7 @@ class Packager
         // Get the first media's disk as the source disk
         $sourceDisk = $this->mediaCollection->collection()->first()?->getDisk();
 
-        return new PackagerResult($result, $sourceDisk, $this->temporaryDirectory);
+        return new PackagerResult($result, $sourceDisk, $this->temporaryDirectory, $this->cacheDirectory);
     }
 
     public function packageWithBuilder(CommandBuilder $builder): PackagerResult

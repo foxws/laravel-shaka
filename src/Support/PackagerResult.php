@@ -14,7 +14,8 @@ class PackagerResult
     public function __construct(
         protected string $output,
         protected ?Disk $sourceDisk = null,
-        protected ?string $temporaryDirectory = null
+        protected ?string $temporaryDirectory = null,
+        protected ?string $cacheDirectory = null
     ) {}
 
     public function getOutput(): string
@@ -36,30 +37,43 @@ class PackagerResult
         // Get the target directory from outputPath parameter or preserve source structure
         $targetDirectory = $outputPath ?: $this->getSourceDirectory();
 
-        // Scan the temporary directory for all files (including generated segments)
+        // Collect files from temp directory (segments/manifests) and cache directory (encryption keys)
         $files = $this->getAllFilesInTemporaryDirectory($this->temporaryDirectory);
 
+        if ($this->cacheDirectory && is_dir($this->cacheDirectory)) {
+            $cacheFiles = $this->getAllFilesInTemporaryDirectory($this->cacheDirectory);
+            $files = array_merge($files, $cacheFiles);
+        }
+
+        // Copy all files to target disk
         foreach ($files as $file) {
             $filename = basename($file);
-            $isKeyFile = pathinfo($filename, PATHINFO_EXTENSION) === 'key';
-
-            // Determine target path
             $targetPath = $targetDirectory ? $targetDirectory.$filename : $filename;
 
-            // For key files (tiny, 16 bytes), read once and upload directly
-            if ($isKeyFile) {
-                $keyContent = file_get_contents($file);
-                $targetDisk->put($targetPath, $keyContent);
+            // Check if this is an encryption key file
+            $extension = pathinfo($filename, PATHINFO_EXTENSION);
+            $baseWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
+            $isRotationKey = preg_match('/^[a-zA-Z_-]+_\d+$/', $baseWithoutExt);
+            $isKeyFile = $extension === 'key' || $isRotationKey;
 
-                // Track uploaded encryption key
-                $this->uploadedEncryptionKeys[] = [
-                    'filename' => $filename,
-                    'path' => $targetPath,
-                    'content' => bin2hex($keyContent),
-                ];
+            // Small text files (.m3u8 manifests) and key files - use put() for reliability
+            $isSmallFile = $isKeyFile || $extension === 'm3u8';
+
+            if ($isSmallFile) {
+                $content = file_get_contents($file);
+                $targetDisk->put($targetPath, $content);
+
+                // Track uploaded encryption key metadata
+                if ($isKeyFile) {
+                    $this->uploadedEncryptionKeys[] = [
+                        'filename' => $filename,
+                        'path' => $targetPath,
+                        'content' => bin2hex($content),
+                    ];
+                }
             } else {
-                // For large files (segments), stream from disk to avoid memory usage
-                $stream = fopen($file, 'r');
+                // Stream large binary files (video/audio segments)
+                $stream = fopen($file, 'rb');
                 $targetDisk->writeStream($targetPath, $stream);
                 fclose($stream);
             }
@@ -135,19 +149,45 @@ class PackagerResult
      */
     public function getEncryptionKeys(): array
     {
-        if (! $this->temporaryDirectory || ! is_dir($this->temporaryDirectory)) {
-            return [];
+        $keys = [];
+
+        // Check temp directory for keys
+        if ($this->temporaryDirectory && is_dir($this->temporaryDirectory)) {
+            $files = $this->getAllFilesInTemporaryDirectory($this->temporaryDirectory);
+            $keys = array_merge($keys, $this->extractKeysFromFiles($files));
         }
 
+        // Check cache directory for keys (where rotation keys are stored)
+        if ($this->cacheDirectory && is_dir($this->cacheDirectory)) {
+            $cacheFiles = $this->getAllFilesInTemporaryDirectory($this->cacheDirectory);
+            $keys = array_merge($keys, $this->extractKeysFromFiles($cacheFiles));
+        }
+
+        return $keys;
+    }
+
+    /**
+     * Extract encryption keys from a list of files
+     */
+    protected function extractKeysFromFiles(array $files): array
+    {
         $keys = [];
-        $files = $this->getAllFilesInTemporaryDirectory($this->temporaryDirectory);
 
         foreach ($files as $file) {
-            // Look for .key files (standard encryption key extension)
-            if (pathinfo($file, PATHINFO_EXTENSION) === 'key') {
+            $filename = basename($file);
+            $extension = pathinfo($filename, PATHINFO_EXTENSION);
+            $baseWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
+
+            // Look for encryption key files:
+            // 1. *.key extension (static keys)
+            // 2. Rotation pattern: key_0, key_1, encryption_0 (with or without .key extension)
+            $isRotationKey = preg_match('/^[a-zA-Z_-]+_\d+$/', $baseWithoutExt);
+            $isKeyFile = $extension === 'key' || $isRotationKey;
+
+            if ($isKeyFile) {
                 $keys[] = [
                     'path' => $file,
-                    'filename' => basename($file),
+                    'filename' => $filename,
                     'content' => bin2hex(file_get_contents($file)),
                 ];
             }

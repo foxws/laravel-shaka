@@ -77,7 +77,7 @@ it('configures encryption with cbc1 protection scheme by default', function () {
         ->and($options)->toHaveKey('clear_lead')
         ->and($options['clear_lead'])->toBe(0)
         ->and($options)->toHaveKey('hls_key_uri')
-        ->and($options['hls_key_uri'])->toBe('encryption.key');
+        ->and($options['hls_key_uri'])->toBe('key');
 
     // Cleanup
     $tempDirs->deleteAll();

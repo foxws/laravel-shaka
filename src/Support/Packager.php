@@ -302,7 +302,6 @@ class Packager
      * Common values: 300 (5 min), 600 (10 min), 1800 (30 min), 3600 (1 hour).
      *
      * @param  int  $seconds  Duration in seconds before rotating to a new key
-     * @return self
      */
     public function withKeyRotationDuration(int $seconds): self
     {

@@ -105,10 +105,10 @@ $packager->addVideoStream('input.mp4', 'video.mp4');
 $packager->withHlsMasterPlaylist('master.m3u8');
 $result = $packager->export();
 
-// Upload everything (segments + keys) to S3
-$result->toDisk('s3', 'public');
+// Upload everything (segments + keys) to S3 private bucket
+$result->toDisk('s3', 'videos');
 
-// Get all keys that were uploaded - ready for database storage
+// Get all keys that were uploaded - store metadata in database
 $uploadedKeys = $result->getUploadedEncryptionKeys();
 
 foreach ($uploadedKeys as $key) {
@@ -121,7 +121,38 @@ foreach ($uploadedKeys as $key) {
 }
 ```
 
-That's it! `toDisk()` automatically uploads both segments and encryption keys, then `getUploadedEncryptionKeys()` gives you everything you need to store in your database.
+That's it! `toDisk()` automatically uploads both segments and encryption keys to your **private S3 bucket**.
+
+### Serving Keys with Dynamic URLs
+
+Use `setKeyUrlResolver()` to generate signed temporary URLs dynamically when serving playlists:
+
+```php
+use Foxws\Shaka\Http\DynamicHLSPlaylist;
+
+// In your controller
+public function playlist(Video $video)
+{
+    $playlist = (new DynamicHLSPlaylist('s3'))
+        ->setKeyUrlResolver(function ($keyFilename) use ($video) {
+            // Generate signed URL on-demand (expires in 1 hour)
+            return Storage::disk('s3')->temporaryUrl(
+                "videos/{$video->id}/{$keyFilename}",
+                now()->addHour()
+            );
+        })
+        ->open($video->hls_master_path);
+
+    return $playlist->toResponse(request());
+}
+```
+
+**Benefits:**
+
+- URLs are generated fresh on every request
+- No need to store/track expiration times
+- Keys remain in private S3 bucket
+- Players fetch keys transparently
 
 ## Codec-Specific Examples (continued)
 
@@ -333,6 +364,48 @@ echo $keyData['file_path']; // Cache path
 echo $keyData['key'];       // Hex-encoded 128-bit key
 echo $keyData['key_id'];    // Hex-encoded key ID
 ```
+
+### Secure Storage with Signed URLs
+
+For production use, store keys in a **private S3 bucket** and use `setKeyUrlResolver()` to generate signed URLs dynamically:
+
+```php
+use Foxws\Shaka\Http\DynamicHLSPlaylist;
+use Illuminate\Support\Facades\Storage;
+
+// In your controller
+public function streamVideo(Video $video)
+{
+    $this->authorize('view', $video);
+
+    $playlist = (new DynamicHLSPlaylist('s3'))
+        ->setKeyUrlResolver(function ($keyFilename) use ($video) {
+            // Generate fresh signed URL for each key request
+            return Storage::disk('s3')->temporaryUrl(
+                "videos/{$video->id}/{$keyFilename}",
+                now()->addHour()
+            );
+        })
+        ->setMediaUrlResolver(function ($segmentFilename) use ($video) {
+            // Also sign segment URLs for complete security
+            return Storage::disk('s3')->temporaryUrl(
+                "videos/{$video->id}/{$segmentFilename}",
+                now()->addHours(2)
+            );
+        })
+        ->open($video->hls_master_path);
+
+    return $playlist->toResponse(request());
+}
+```
+
+**Benefits:**
+
+- Keys are never publicly accessible
+- URLs generated fresh on each request
+- No need to track expiration times
+- Players fetch keys and segments transparently
+- Revoke access via authorization checks
 
 ## Troubleshooting
 

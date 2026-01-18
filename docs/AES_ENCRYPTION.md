@@ -59,9 +59,9 @@ $media = Media::make('videos', 'input.mp4');
 $packager->open(MediaCollection::make([$media]));
 
 // Enable encryption with key rotation every 5 minutes
-$keyData = $packager
-    ->withAESEncryption('encryption.key', 'cbc1')
-    ->withKeyRotationDuration(300); // 300 seconds = 5 minutes
+// Base name 'key' becomes: key_0.key, key_1.key, key_2.key, etc.
+$keyData = $packager->withAESEncryption(); // Uses default 'key' base name
+$packager->withKeyRotationDuration(300); // 300 seconds = 5 minutes
 
 $packager->addVideoStream('input.mp4', 'video.mp4');
 $packager->withHlsMasterPlaylist('master.m3u8');
@@ -99,12 +99,11 @@ Players automatically fetch the correct key for each segment.
 After packaging with key rotation, the keys are automatically tracked when uploading:
 
 ```php
-$result = $packager
-    ->withAESEncryption('encryption.key', 'cbc1')
-    ->withKeyRotationDuration(300)
-    ->addVideoStream('input.mp4', 'video.mp4')
-    ->withHlsMasterPlaylist('master.m3u8')
-    ->export();
+$packager->withAESEncryption(); // Default: key_0.key, key_1.key, key_2.key...
+$packager->withKeyRotationDuration(300);
+$packager->addVideoStream('input.mp4', 'video.mp4');
+$packager->withHlsMasterPlaylist('master.m3u8');
+$result = $packager->export();
 
 // Upload everything (segments + keys) to S3
 $result->toDisk('s3', 'public');
@@ -114,8 +113,8 @@ $uploadedKeys = $result->getUploadedEncryptionKeys();
 
 foreach ($uploadedKeys as $key) {
     EncryptionKey::create([
-        'filename' => $key['filename'],    // e.g., "encryption_0.key"
-        'path' => $key['path'],            // S3 path: "videos/encryption_0.key"
+        'filename' => $key['filename'],    // e.g., "key_0.key", "key_1.key"
+        'path' => $key['path'],            // S3 path: "videos/key_0.key"
         'key' => $key['content'],          // Hex-encoded key content
         'video_id' => $video->id,
     ]);
@@ -373,13 +372,16 @@ $keyData = $packager->withAESEncryption('encryption.key');
 /**
  * Enable AES-128 encryption with auto-generated keys.
  *
- * @param string $keyFilename Name of the key file (default: 'encryption.key')
+ * When used with withKeyRotationDuration(), the filename becomes a base name
+ * (e.g., 'key' becomes 'key_0.key', 'key_1.key', 'key_2.key', etc.).
+ *
+ * @param string $keyFilename Base name for key file (default: 'key')
  * @param string|null $protectionScheme 'cbc1', 'cbcs', 'cenc', or null for SAMPLE-AES
  * @param string|null $label Optional label for multi-key scenarios
  * @return array{key: string, key_id: string, file_path: string}
  */
 public function withAESEncryption(
-    string $keyFilename = 'encryption.key',
+    string $keyFilename = 'key',
     ?string $protectionScheme = 'cbc1',
     ?string $label = null
 ): array

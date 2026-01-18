@@ -268,14 +268,17 @@ class Packager
      * Enable AES-128 encryption with auto-generated keys.
      *
      * Generates encryption key, writes to cache storage, and configures Shaka Packager.
+     * When used with withKeyRotationDuration(), the filename becomes a base name
+     * (e.g., 'key' becomes 'key_0.key', 'key_1.key', 'key_2.key', etc.).
+     *
      * Protection schemes: 'cbc1' (default, HLS), 'cbcs', 'cenc', or null (SAMPLE-AES).
      *
-     * @param  string  $keyFilename  Name of the key file to generate
+     * @param  string  $keyFilename  Base name for key file (default: 'key' -> key.key or key_0.key with rotation)
      * @param  string|null  $protectionScheme  Protection scheme ('cbc1', 'cbcs', 'cenc', or null)
      * @param  string|null  $label  Optional label for multi-key scenarios
      * @return array{key: string, key_id: string, file_path: string} Encryption key data
      */
-    public function withAESEncryption(string $keyFilename = 'encryption.key', ?string $protectionScheme = 'cbc1', ?string $label = null): array
+    public function withAESEncryption(string $keyFilename = 'key', ?string $protectionScheme = 'cbc1', ?string $label = null): array
     {
         // Generate key and write to cache storage (fast)
         $keyData = EncryptionKeyGenerator::generateAndWrite($keyFilename);

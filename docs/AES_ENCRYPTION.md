@@ -375,13 +375,13 @@ $keyData = $packager->withAESEncryption('encryption.key');
  *
  * @param string $keyFilename Name of the key file (default: 'encryption.key')
  * @param string|null $protectionScheme 'cbc1', 'cbcs', 'cenc', or null for SAMPLE-AES
- * @param string $label Optional label for multi-key scenarios
+ * @param string|null $label Optional label for multi-key scenarios
  * @return array{key: string, key_id: string, file_path: string}
  */
 public function withAESEncryption(
     string $keyFilename = 'encryption.key',
     ?string $protectionScheme = 'cbc1',
-    string $label = ''
+    ?string $label = null
 ): array
 
 /**

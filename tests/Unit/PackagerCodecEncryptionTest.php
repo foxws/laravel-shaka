@@ -254,7 +254,7 @@ it('supports SAMPLE-AES with AV1 for HLS', function () {
     $packager->open($collection);
 
     // Use null protection scheme for SAMPLE-AES (HLS-specific)
-    $keyData = $packager->withAESEncryption('av1', 'av1_sample_aes.key', null);
+    $keyData = $packager->withAESEncryption('av1_sample_aes.key', null, 'av1');
 
     $packager->addStream([
         'in' => $media->getLocalPath(),

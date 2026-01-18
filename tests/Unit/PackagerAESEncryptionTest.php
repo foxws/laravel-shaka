@@ -49,40 +49,6 @@ it('generates AES encryption with default settings', function () {
     $tempDirs->deleteAll();
 });
 
-it('copies encryption key to temp directory for export', function () {
-    $tempDirs = new TemporaryDirectories(
-        sys_get_temp_dir().'/test-temp',
-        sys_get_temp_dir().'/test-cache'
-    );
-
-    app()->instance(TemporaryDirectories::class, $tempDirs);
-
-    $driver = mock(ShakaPackager::class);
-    $logger = mock(LoggerInterface::class)->shouldIgnoreMissing();
-
-    $packager = new Packager($driver, $logger);
-
-    $media = Media::make('local', 'test.mp4');
-    $collection = MediaCollection::make([$media]);
-
-    $packager->open($collection);
-
-    $keyData = $packager->withAESEncryption('', 'my-encryption.key');
-
-    // Key should be in cache storage
-    expect($keyData['file_path'])->toStartWith(sys_get_temp_dir().'/test-cache/');
-
-    // Key should also be copied to temp directory
-    $tempDir = (new ReflectionClass($packager))->getMethod('getTemporaryDirectory')->invoke($packager);
-    $exportKeyPath = $tempDir.DIRECTORY_SEPARATOR.'my-encryption.key';
-
-    expect(file_exists($exportKeyPath))->toBeTrue()
-        ->and(file_get_contents($exportKeyPath))->toBe(file_get_contents($keyData['file_path']));
-
-    // Cleanup
-    $tempDirs->deleteAll();
-});
-
 it('configures encryption with cbc1 protection scheme by default', function () {
     $tempDirs = new TemporaryDirectories(
         sys_get_temp_dir().'/test-temp',

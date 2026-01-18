@@ -37,6 +37,7 @@ $result = Shaka::fromDisk('s3')
 📚 **[Full Documentation](docs/README.md)**
 
 - [Quick Reference](docs/QUICK_REFERENCE.md) - Complete API reference
+- [AES Encryption](docs/AES_ENCRYPTION.md) - Encryption with key rotation
 - [Architecture Overview](docs/ARCHITECTURE.md) - Understanding the design
 - [Configuration](docs/CONFIGURATION.md) - Configuring the package
 
@@ -133,55 +134,79 @@ $result = Shaka::fromDisk('s3')
 ### HLS with Encryption
 
 ```php
-// For browser-compatible AES-128-CBC encryption, use .ts segments and 'cbc1' protection scheme
-// Without protection_scheme, Shaka uses SAMPLE-AES which only works on native iOS/tvOS
-$result = Shaka::open('input.mp4')
-    ->addVideoStream('input.mp4', 'video.ts')  // Use .ts for encryption compatibility
-    ->addAudioStream('input.mp4', 'audio.ts')  // Use .ts for encryption compatibility
+// Basic encryption with auto-generated AES-128 key
+Shaka::open('input.mp4')
+    ->addVideoStream('input.mp4', 'video.mp4')
+    ->addAudioStream('input.mp4', 'audio.mp4')
     ->withHlsMasterPlaylist('master.m3u8')
-    ->withEncryption([
-        'keys' => 'label=:key_id=abc:key=def',
-        'hls_key_uri' => 'encryption.key',
-        'protection_scheme' => 'cbc1',  // Use 'cbc1' for browser-compatible AES-128-CBC
-        'clear_lead' => 0,  // Encrypt all segments from the start (default is 5 seconds unencrypted)
-    ])
+    ->withAESEncryption()  // Auto-generates key with 'cbc1' scheme
     ->export()
     ->save();
 
-// For unencrypted streams, .mp4 (fMP4) offers better performance
-$result = Shaka::open('input.mp4')
-    ->addVideoStream('input.mp4', 'video.mp4')  // .mp4 OK without encryption
+// With key rotation (generates key_0.key, key_1.key, etc.)
+Shaka::open('input.mp4')
+    ->addVideoStream('input.mp4', 'video.mp4')
     ->addAudioStream('input.mp4', 'audio.mp4')
     ->withHlsMasterPlaylist('master.m3u8')
+    ->withAESEncryption()
+    ->withKeyRotationDuration(60)  // Rotate every 60 seconds
     ->export()
+    ->toDisk('s3')
     ->save();
 ```
 
+See [AES Encryption Guide](docs/AES_ENCRYPTION.md) for complete documentation.
+
 ### Dynamic URL Resolvers (HLS & DASH)
 
-Customize how URLs are generated for your streaming manifests:
+Serve encrypted streaming content with S3 signed URLs:
 
 **HLS Example:**
 
 ```php
 use Foxws\Shaka\Http\DynamicHLSPlaylist;
+use Illuminate\Support\Facades\Storage;
 
-return (new DynamicHLSPlaylist('videos'))
-    ->open('master.m3u8')
-    ->setKeyUrlResolver(fn ($key) => route('video.key', ['key' => $key]))
-    ->setMediaUrlResolver(fn ($file) => Storage::disk('cdn')->url($file))
-    ->setPlaylistUrlResolver(fn ($playlist) => route('video.playlist', ['playlist' => $playlist]));
+public function playlist(Video $video)
+{
+    return (new DynamicHLSPlaylist('s3'))
+        ->open("videos/{$video->id}/master.m3u8")
+        ->setKeyUrlResolver(fn ($key) => Storage::disk('s3')->temporaryUrl(
+            "videos/{$video->id}/{$key}",
+            now()->addHour()
+        ))
+        ->setMediaUrlResolver(fn ($file) => Storage::disk('s3')->temporaryUrl(
+            "videos/{$video->id}/{$file}",
+            now()->addHours(2)
+        ))
+        ->toResponse(request());
+}
 ```
 
 **DASH Example:**
 
 ```php
 use Foxws\Shaka\Http\DynamicDASHManifest;
+use Illuminate\Support\Facades\Storage;
 
-return (new DynamicDASHManifest('videos'))
-    ->open('manifest.mpd')
-    ->setMediaUrlResolver(fn ($file) => Storage::disk('cdn')->url($file))
-    ->setInitUrlResolver(fn ($file) => Storage::disk('cdn')->url("init/{$file}"));
+public function manifest(Video $video)
+{
+    return (new DynamicDASHManifest('s3'))
+        ->open("videos/{$video->id}/manifest.mpd")
+        ->setKeyUrlResolver(fn ($key) => Storage::disk('s3')->temporaryUrl(
+            "videos/{$video->id}/{$key}",
+            now()->addHour()
+        ))
+        ->setMediaUrlResolver(fn ($file) => Storage::disk('s3')->temporaryUrl(
+            "videos/{$video->id}/{$file}",
+            now()->addHours(2)
+        ))
+        ->setInitUrlResolver(fn ($file) => Storage::disk('s3')->temporaryUrl(
+            "videos/{$video->id}/{$file}",
+            now()->addHours(2)
+        ))
+        ->toResponse(request());
+}
 ```
 
 **Use cases for URL resolvers:**
@@ -220,7 +245,8 @@ See [URL Resolver Examples](examples/UrlResolverExamples.php) and [Documentation
 - `withHlsMasterPlaylist(string $path)` - Set HLS master playlist output
 - `withMpdOutput(string $path)` - Set DASH manifest output
 - `withSegmentDuration(int $seconds)` - Set segment duration
-- `withEncryption(array $config)` - Enable encryption
+- `withAESEncryption(string $keyFilename = 'key', ?string $protectionScheme = 'cbc1', ?string $label = null)` - Enable AES-128 encryption
+- `withKeyRotationDuration(int $seconds)` - Enable key rotation for encryption
 - `toDisk(string $disk)` - Set the target disk for output
 - `toPath(string $path)` - Set the target output path (subdirectory)
 - `withVisibility(string $visibility)` - Set file visibility (e.g., 'public', 'private')

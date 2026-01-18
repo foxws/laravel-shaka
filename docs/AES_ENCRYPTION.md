@@ -61,7 +61,7 @@ $packager->open(MediaCollection::make([$media]));
 // Enable encryption with key rotation every 5 minutes
 // Base name 'key' becomes: key_0.key, key_1.key, key_2.key, etc.
 $keyData = $packager->withAESEncryption(); // Uses default 'key' base name
-$packager->withKeyRotationDuration(300); // 300 seconds = 5 minutes
+$packager->withKeyRotationDuration(60); // 60 seconds for balanced security
 
 $packager->addVideoStream('input.mp4', 'video.mp4');
 $packager->withHlsMasterPlaylist('master.m3u8');
@@ -71,17 +71,17 @@ $result = $packager->export();
 ### Common Rotation Intervals
 
 ```php
-// 5 minutes - high security, more keys
+// 30 seconds - high security (Apple HLS recommendation)
+->withKeyRotationDuration(30)
+
+// 60 seconds - balanced security
+->withKeyRotationDuration(60)
+
+// 5 minutes - lower overhead, still secure
 ->withKeyRotationDuration(300)
 
-// 10 minutes - balanced
-->withKeyRotationDuration(600)
-
-// 30 minutes - fewer keys, longer segments
-->withKeyRotationDuration(1800)
-
-// 1 hour - minimal rotation
-->withKeyRotationDuration(3600)
+// 15 minutes - minimal rotation for low-risk content
+->withKeyRotationDuration(900)
 ```
 
 ### How It Works

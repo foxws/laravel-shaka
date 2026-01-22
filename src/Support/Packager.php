@@ -284,7 +284,7 @@ class Packager
      * @param  string|null  $label  Optional label for multi-key scenarios
      * @return array{key: string, key_id: string, file_path: string} Encryption key data
      */
-    public function withAESEncryption(string $keyFilename = 'key', ?string $protectionScheme = 'cenc', ?string $label = null): array
+    public function withAESEncryption(string $keyFilename = 'key', ?string $protectionScheme = null, ?string $label = null): array
     {
         // Generate key and write to cache storage (fast)
         $keyData = EncryptionKeyGenerator::generateAndWrite($keyFilename);

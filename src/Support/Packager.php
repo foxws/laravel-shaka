@@ -298,7 +298,7 @@ class Packager
             'clear_lead' => 0,
         ];
 
-        if ($protectionScheme !== null) {
+        if (filled($protectionScheme)) {
             $config['protection_scheme'] = $protectionScheme;
         }
 

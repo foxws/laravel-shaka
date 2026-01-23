@@ -43,7 +43,7 @@ $testCases = [
 ];
 
 echo "Testing Encryption Key Detection\n";
-echo str_repeat('=', 80) . "\n\n";
+echo str_repeat('=', 80)."\n\n";
 
 $passed = 0;
 $failed = 0;
@@ -61,7 +61,7 @@ foreach ($testCases as $test) {
     $isRotationKey = preg_match('/^(key|encryption|drm|secret|aes)_\d+$/i', $basename);
 
     // Static key pattern: common key filenames without numeric suffix and no extension
-    $isStaticKey = !$extension && preg_match('/^(key|encryption|drm|secret|aes)$/i', $filename);
+    $isStaticKey = ! $extension && preg_match('/^(key|encryption|drm|secret|aes)$/i', $filename);
 
     $isKeyFile = $isRotationKey || $isStaticKey;
 
@@ -81,7 +81,7 @@ foreach ($testCases as $test) {
     }
 }
 
-echo "\n" . str_repeat('=', 80) . "\n";
+echo "\n".str_repeat('=', 80)."\n";
 echo sprintf("Results: %d passed, %d failed out of %d tests\n", $passed, $failed, count($testCases));
 
 if ($failed > 0) {

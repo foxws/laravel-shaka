@@ -48,7 +48,7 @@ class PackagerResult
      */
     public function toPath(string $path): self
     {
-        $this->targetPath = rtrim($path, '/') . '/';
+        $this->targetPath = rtrim($path, '/').'/';
 
         return $this;
     }
@@ -101,7 +101,7 @@ class PackagerResult
             $isRotationKey = preg_match('/^(key|encryption|drm|secret|aes)_\d+$/i', $basename);
 
             // Static key pattern: common key filenames without numeric suffix and no extension
-            $isStaticKey = !$extension && preg_match('/^(key|encryption|drm|secret|aes)$/i', $filename);
+            $isStaticKey = ! $extension && preg_match('/^(key|encryption|drm|secret|aes)$/i', $filename);
 
             $isKeyFile = $isRotationKey || $isStaticKey;
 
@@ -236,7 +236,7 @@ class PackagerResult
             $isRotationKey = preg_match('/^(key|encryption|drm|secret|aes)_\d+$/i', $basename);
 
             // Static key pattern: common key filenames without numeric suffix and no extension
-            $isStaticKey = !$extension && preg_match('/^(key|encryption|drm|secret|aes)$/i', $filename);
+            $isStaticKey = ! $extension && preg_match('/^(key|encryption|drm|secret|aes)$/i', $filename);
 
             $isKeyFile = $isRotationKey || $isStaticKey;
 

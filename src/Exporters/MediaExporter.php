@@ -116,30 +116,48 @@ class MediaExporter
         $targetDisk = $this->toDisk ?: $this->getDisk();
 
         // Copy outputs from temporary directory to target disk and cleanup
-        $result->toDisk($targetDisk, $this->visibility, true, $this->toPath);
+        if ($this->toPath) {
+            $result->toPath($this->toPath);
+        }
+
+        $result->toDisk($targetDisk, $this->visibility, true)
+            ->save();
 
         $this->runAfterSavingCallbacks($result);
 
         return $this->getMediaOpener();
     }
 
-    protected function getMediaOpener(): MediaOpener
+    /**
+     * Register a callback to handle uploaded encryption keys.
+     * The callback receives an array of uploaded keys.
+     */
+    public function onKeysUploaded(callable $callback): self
     {
-        return new MediaOpener(
-            $this->packager->getMediaCollection()->last()->getDisk()->getName(),
-            $this->packager,
-            $this->packager->getMediaCollection()
-        );
+        return $this->afterSaving(function ($exporter, $result) use ($callback) {
+            $uploadedKeys = $result->getUploadedEncryptionKeys();
+
+            if (! empty($uploadedKeys)) {
+                call_user_func($callback, $uploadedKeys);
+            }
+        });
     }
 
     /**
-     * Forwards the call to the driver object and returns the result
-     * if it's something different than the driver object itself.
+     * Get the MediaOpener instance.
+     */
+    protected function getMediaOpener(): MediaOpener
+    {
+        return new MediaOpener($this->getDisk(), $this->packager, $this->packager->getMediaCollection());
+    }
+
+    /**
+     * Forward method calls to the packager.
      */
     public function __call($method, $arguments)
     {
-        $result = $this->forwardCallTo($packager = $this->packager, $method, $arguments);
+        $result = $this->forwardCallTo($this->packager, $method, $arguments);
 
-        return ($result === $packager) ? $this : $result;
+        return $result === $this->packager ? $this : $result;
     }
 }

@@ -11,6 +11,14 @@ class PackagerResult
 {
     protected array $uploadedEncryptionKeys = [];
 
+    protected ?Disk $targetDisk = null;
+
+    protected ?string $targetPath = null;
+
+    protected ?string $visibility = null;
+
+    protected bool $cleanup = true;
+
     public function __construct(
         protected string $output,
         protected ?Disk $sourceDisk = null,
@@ -24,18 +32,49 @@ class PackagerResult
     }
 
     /**
-     * Copy exported files from temporary directory to target disk
+     * Set the target disk for file uploads
      */
-    public function toDisk(Disk|Filesystem|string $disk, ?string $visibility = null, bool $cleanup = true, ?string $outputPath = null): self
+    public function toDisk(Disk|Filesystem|string $disk, ?string $visibility = null, bool $cleanup = true): self
     {
-        $targetDisk = Disk::make($disk);
+        $this->targetDisk = Disk::make($disk);
+        $this->visibility = $visibility;
+        $this->cleanup = $cleanup;
+
+        return $this;
+    }
+
+    /**
+     * Set the target path/directory for file uploads
+     */
+    public function toPath(string $path): self
+    {
+        $this->targetPath = rtrim($path, '/') . '/';
+
+        return $this;
+    }
+
+    /**
+     * Execute the file upload to the configured disk and path
+     */
+    public function save(): self
+    {
+        if (! $this->targetDisk) {
+            throw new \RuntimeException('Target disk not set. Call toDisk() first.');
+        }
 
         if (! $this->temporaryDirectory) {
             throw new \RuntimeException('Cannot copy files: temporary directory not set');
         }
 
-        // Get the target directory from outputPath parameter or preserve source structure
-        $targetDirectory = $outputPath ?: $this->getSourceDirectory();
+        \Log::info('PackagerResult starting file upload', [
+            'target_disk' => get_class($this->targetDisk),
+            'target_path' => $this->targetPath,
+            'temp_dir' => $this->temporaryDirectory,
+            'cache_dir' => $this->cacheDirectory,
+        ]);
+
+        // Get the target directory
+        $targetDirectory = $this->targetPath ?: $this->getSourceDirectory();
 
         // Collect files from temp directory (segments/manifests) and cache directory (encryption keys)
         $files = $this->getAllFilesInTemporaryDirectory($this->temporaryDirectory);
@@ -51,17 +90,27 @@ class PackagerResult
             $targetPath = $targetDirectory ? $targetDirectory.$filename : $filename;
 
             // Check if this is an encryption key file
+            // Rotation keys: base_0, base_1, etc. (with or without extension)
+            // Static keys: any filename without extension that looks like a key file
             $extension = pathinfo($filename, PATHINFO_EXTENSION);
-            $baseWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
-            $isRotationKey = preg_match('/^[a-zA-Z_-]+_\d+$/', $baseWithoutExt);
-            $isKeyFile = $extension === 'key' || $isRotationKey;
+            $basename = pathinfo($filename, PATHINFO_FILENAME);
 
-            // Small text files (.m3u8 manifests) and key files - use put() for reliability
-            $isSmallFile = $isKeyFile || $extension === 'm3u8';
+            // Rotation key pattern: common key base names with _digits suffix
+            // Matches: key_0, encryption_1, drm_2, secret_3, etc.
+            // Does NOT match: video_1080, audio_128, init_0, segment_0, etc.
+            $isRotationKey = preg_match('/^(key|encryption|drm|secret|aes)_\d+$/i', $basename);
+
+            // Static key pattern: common key filenames without numeric suffix and no extension
+            $isStaticKey = !$extension && preg_match('/^(key|encryption|drm|secret|aes)$/i', $filename);
+
+            $isKeyFile = $isRotationKey || $isStaticKey;
+
+            // Small text files (.m3u8, .mpd manifests) and key files - use put() for reliability
+            $isSmallFile = $isKeyFile || in_array($extension, ['m3u8', 'mpd']);
 
             if ($isSmallFile) {
                 $content = file_get_contents($file);
-                $targetDisk->put($targetPath, $content);
+                $this->targetDisk->put($targetPath, $content);
 
                 // Track uploaded encryption key metadata
                 if ($isKeyFile) {
@@ -74,23 +123,22 @@ class PackagerResult
             } else {
                 // Stream large binary files (video/audio segments)
                 $stream = fopen($file, 'rb');
-                $targetDisk->writeStream($targetPath, $stream);
+                $this->targetDisk->writeStream($targetPath, $stream);
                 fclose($stream);
             }
 
-            if ($visibility) {
-                $targetDisk->setVisibility($targetPath, $visibility);
+            if ($this->visibility) {
+                $this->targetDisk->setVisibility($targetPath, $this->visibility);
             }
 
             // Clean up temporary file after copying
-            if ($cleanup) {
+            if ($this->cleanup) {
                 unlink($file);
             }
         }
 
         // Clean up temporary directory if empty
-        if ($cleanup && is_dir($this->temporaryDirectory)) {
-            @rmdir($this->temporaryDirectory);
+        if ($this->cleanup && is_dir($this->temporaryDirectory)) {
         }
 
         return $this;
@@ -176,13 +224,21 @@ class PackagerResult
         foreach ($files as $file) {
             $filename = basename($file);
             $extension = pathinfo($filename, PATHINFO_EXTENSION);
-            $baseWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
 
-            // Look for encryption key files:
-            // 1. *.key extension (static keys)
-            // 2. Rotation pattern: key_0, key_1, encryption_0 (with or without .key extension)
-            $isRotationKey = preg_match('/^[a-zA-Z_-]+_\d+$/', $baseWithoutExt);
-            $isKeyFile = $extension === 'key' || $isRotationKey;
+            // Check for encryption key files
+            // Rotation keys: base_0, base_1, etc. (with or without extension)
+            // Static keys: any filename without extension that looks like a key file
+            $basename = pathinfo($filename, PATHINFO_FILENAME);
+
+            // Rotation key pattern: common key base names with _digits suffix
+            // Matches: key_0, encryption_1, drm_2, secret_3, etc.
+            // Does NOT match: video_1080, audio_128, init_0, segment_0, etc.
+            $isRotationKey = preg_match('/^(key|encryption|drm|secret|aes)_\d+$/i', $basename);
+
+            // Static key pattern: common key filenames without numeric suffix and no extension
+            $isStaticKey = !$extension && preg_match('/^(key|encryption|drm|secret|aes)$/i', $filename);
+
+            $isKeyFile = $isRotationKey || $isStaticKey;
 
             if ($isKeyFile) {
                 $keys[] = [

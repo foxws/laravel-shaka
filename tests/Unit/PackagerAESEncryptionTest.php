@@ -73,6 +73,8 @@ it('configures encryption without protection scheme by default', function () {
     $options = $builder->getOptions();
 
     expect($options)->not->toHaveKey('protection_scheme')
+        ->and($options)->toHaveKey('enable_raw_key_encryption')
+        ->and($options['enable_raw_key_encryption'])->toBeTrue()
         ->and($options)->toHaveKey('clear_lead')
         ->and($options['clear_lead'])->toBe(0)
         ->and($options)->toHaveKey('hls_key_uri')

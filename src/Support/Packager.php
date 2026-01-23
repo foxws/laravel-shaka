@@ -296,6 +296,7 @@ class Packager
         $formattedKeys = EncryptionKeyGenerator::formatForShaka($keyData['key_id'], $keyData['key'], $label);
 
         // Set individual encryption options directly on the builder
+        $this->builder()->withOption('enable_raw_key_encryption', true);
         $this->builder()->withOption('keys', $formattedKeys);
         $this->builder()->withOption('hls_key_uri', $keyFilename);
         $this->builder()->withOption('clear_lead', 0);

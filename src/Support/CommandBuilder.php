@@ -81,6 +81,7 @@ class CommandBuilder
         }
 
         $this->options['segment_duration'] = $seconds;
+        $this->options['fragment_duration'] = $seconds;
 
         return $this;
     }

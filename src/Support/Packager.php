@@ -292,17 +292,17 @@ class Packager
         // Store cache directory for later use in PackagerResult
         $this->cacheDirectory = dirname($keyData['file_path']);
 
-        $config = [
-            'keys' => EncryptionKeyGenerator::formatForShaka($keyData['key_id'], $keyData['key'], $label),
-            'hls_key_uri' => $keyFilename,
-            'clear_lead' => 0,
-        ];
+        // Format keys for Shaka Packager
+        $formattedKeys = EncryptionKeyGenerator::formatForShaka($keyData['key_id'], $keyData['key'], $label);
+
+        // Set individual encryption options directly on the builder
+        $this->builder()->withOption('keys', $formattedKeys);
+        $this->builder()->withOption('hls_key_uri', $keyFilename);
+        $this->builder()->withOption('clear_lead', 0);
 
         if (filled($protectionScheme)) {
-            $config['protection_scheme'] = $protectionScheme;
+            $this->builder()->withOption('protection_scheme', $protectionScheme);
         }
-
-        $this->withEncryption($config);
 
         return $keyData;
     }

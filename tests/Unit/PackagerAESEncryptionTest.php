@@ -50,7 +50,7 @@ it('generates AES encryption with default settings', function () {
     $tempDirs->deleteAll();
 });
 
-it('configures encryption with cenc protection scheme by default', function () {
+it('configures encryption without protection scheme by default', function () {
     $tempDirs = new TemporaryDirectories(
         sys_get_temp_dir().'/test-temp',
         sys_get_temp_dir().'/test-cache'
@@ -72,8 +72,7 @@ it('configures encryption with cenc protection scheme by default', function () {
     $builder = $packager->getBuilder();
     $options = $builder->getOptions();
 
-    expect($options)->toHaveKey('protection_scheme')
-        ->and($options['protection_scheme'])->toBe('cenc')
+    expect($options)->not->toHaveKey('protection_scheme')
         ->and($options)->toHaveKey('clear_lead')
         ->and($options['clear_lead'])->toBe(0)
         ->and($options)->toHaveKey('hls_key_uri')

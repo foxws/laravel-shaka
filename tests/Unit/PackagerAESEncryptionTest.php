@@ -307,3 +307,122 @@ it('tracks uploaded encryption keys during toDisk', function () {
     rmdir($tempDir);
     $tempDirs->deleteAll();
 });
+
+it('configures clearkey encryption for DASH', function () {
+    $tempDirs = new TemporaryDirectories(
+        sys_get_temp_dir().'/test-temp',
+        sys_get_temp_dir().'/test-cache'
+    );
+
+    app()->instance(TemporaryDirectories::class, $tempDirs);
+
+    $driver = mock(ShakaPackager::class);
+    $logger = mock(LoggerInterface::class)->shouldIgnoreMissing();
+
+    $packager = new Packager($driver, $logger);
+
+    $media = Media::make('local', 'test.mp4');
+    $collection = MediaCollection::make([$media]);
+
+    $packager->open($collection);
+
+    // Configure clearkey encryption manually
+    $packager->withEncryption([
+        'enable_raw_key_encryption' => true,
+        'keys' => 'label=:key_id=abba271e8bcf552bbd2e86a434a9a5d9:key=69eaa802a6763af979e8d1940fb88392',
+        'protection_scheme' => 'cenc',
+        'clear_lead' => 0,
+    ]);
+
+    $builder = $packager->getBuilder();
+    $options = $builder->getOptions();
+
+    expect($options)->toHaveKey('enable_raw_key_encryption')
+        ->and($options['enable_raw_key_encryption'])->toBeTrue()
+        ->and($options)->toHaveKey('keys')
+        ->and($options)->toHaveKey('protection_scheme')
+        ->and($options['protection_scheme'])->toBe('cenc')
+        ->and($options)->toHaveKey('clear_lead')
+        ->and($options['clear_lead'])->toBe(0);
+
+    // Cleanup
+    $tempDirs->deleteAll();
+});
+
+it('configures clearkey encryption with cbcs protection scheme', function () {
+    $tempDirs = new TemporaryDirectories(
+        sys_get_temp_dir().'/test-temp',
+        sys_get_temp_dir().'/test-cache'
+    );
+
+    app()->instance(TemporaryDirectories::class, $tempDirs);
+
+    $driver = mock(ShakaPackager::class);
+    $logger = mock(LoggerInterface::class)->shouldIgnoreMissing();
+
+    $packager = new Packager($driver, $logger);
+
+    $media = Media::make('local', 'test.mp4');
+    $collection = MediaCollection::make([$media]);
+
+    $packager->open($collection);
+
+    // Configure clearkey with cbcs (for FairPlay compatibility)
+    $packager->withEncryption([
+        'enable_raw_key_encryption' => true,
+        'keys' => 'label=SD:key_id=abba271e8bcf552bbd2e86a434a9a5d9:key=69eaa802a6763af979e8d1940fb88392',
+        'protection_scheme' => 'cbcs',
+        'clear_lead' => 5,
+    ]);
+
+    $builder = $packager->getBuilder();
+    $options = $builder->getOptions();
+
+    expect($options['protection_scheme'])->toBe('cbcs')
+        ->and($options['clear_lead'])->toBe(5)
+        ->and($options)->toHaveKey('enable_raw_key_encryption');
+
+    // Cleanup
+    $tempDirs->deleteAll();
+});
+
+it('configures clearkey encryption with multiple keys', function () {
+    $tempDirs = new TemporaryDirectories(
+        sys_get_temp_dir().'/test-temp',
+        sys_get_temp_dir().'/test-cache'
+    );
+
+    app()->instance(TemporaryDirectories::class, $tempDirs);
+
+    $driver = mock(ShakaPackager::class);
+    $logger = mock(LoggerInterface::class)->shouldIgnoreMissing();
+
+    $packager = new Packager($driver, $logger);
+
+    $media = Media::make('local', 'test.mp4');
+    $collection = MediaCollection::make([$media]);
+
+    $packager->open($collection);
+
+    // Configure clearkey with multiple keys (for different quality levels)
+    $keys = 'label=SD:key_id=abba271e8bcf552bbd2e86a434a9a5d9:key=69eaa802a6763af979e8d1940fb88392,'.
+            'label=HD:key_id=6d76f25cb17f5e16b8eaef6bbf582d8e:key=cb541084c99731aef4fff74500c12ead,'.
+            'label=UHD1:key_id=3b8f3c56c8edf33d8152674ea3e1d6e1:key=5a5e9e9e2e6c1c9e2f6a8e5e1e1e9e2e';
+
+    $packager->withEncryption([
+        'enable_raw_key_encryption' => true,
+        'keys' => $keys,
+        'protection_scheme' => 'cenc',
+    ]);
+
+    $builder = $packager->getBuilder();
+    $options = $builder->getOptions();
+
+    expect($options)->toHaveKey('keys')
+        ->and($options['keys'])->toContain('label=SD')
+        ->and($options['keys'])->toContain('label=HD')
+        ->and($options['keys'])->toContain('label=UHD1');
+
+    // Cleanup
+    $tempDirs->deleteAll();
+});

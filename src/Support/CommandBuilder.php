@@ -88,8 +88,6 @@ class CommandBuilder
 
     public function withEncryption(array $encryptionConfig): self
     {
-        $this->options['enable_raw_key_encryption'] = true;
-
         foreach ($encryptionConfig as $key => $value) {
             $this->options[$key] = $value;
         }

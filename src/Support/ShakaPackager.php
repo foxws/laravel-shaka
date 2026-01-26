@@ -106,7 +106,7 @@ class ShakaPackager
 
     protected function redactSensitiveData(string $commandLine): string
     {
-        $sensitiveOptions = ['keys', 'key', 'key_id', 'pssh', 'protection_systems', 'raw_key', 'iv'];
+        static $sensitiveOptions = ['keys', 'key', 'key_id', 'pssh', 'protection_systems', 'raw_key', 'iv'];
 
         $redacted = $commandLine;
 

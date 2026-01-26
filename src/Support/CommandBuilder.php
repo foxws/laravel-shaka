@@ -120,7 +120,11 @@ class CommandBuilder
             $parts->push($streamParts->implode(','));
         });
 
-        // Add global options
+        // Add global options - early return if empty
+        if (empty($this->options)) {
+            return $parts->implode(' ');
+        }
+
         Collection::make($this->options)->each(function ($value, $key) use ($parts) {
             $escapedKey = $this->escapeKey($key);
 

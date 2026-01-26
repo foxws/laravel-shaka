@@ -146,11 +146,7 @@ class DynamicHLSPlaylist implements Responsable
             return $key;
         }
 
-        if (array_key_exists($key, $this->keyCache)) {
-            return $this->keyCache[$key];
-        }
-
-        return $this->keyCache[$key] = call_user_func($this->keyUrlResolver, $key);
+        return $this->keyCache[$key] ??= call_user_func($this->keyUrlResolver, $key);
     }
 
     /**
@@ -162,11 +158,7 @@ class DynamicHLSPlaylist implements Responsable
             return $filename;
         }
 
-        if (array_key_exists($filename, $this->mediaCache)) {
-            return $this->mediaCache[$filename];
-        }
-
-        return $this->mediaCache[$filename] = call_user_func($this->mediaUrlResolver, $filename);
+        return $this->mediaCache[$filename] ??= call_user_func($this->mediaUrlResolver, $filename);
     }
 
     /**
@@ -178,11 +170,7 @@ class DynamicHLSPlaylist implements Responsable
             return $filename;
         }
 
-        if (array_key_exists($filename, $this->playlistCache)) {
-            return $this->playlistCache[$filename];
-        }
-
-        return $this->playlistCache[$filename] = call_user_func($this->playlistUrlResolver, $filename);
+        return $this->playlistCache[$filename] ??= call_user_func($this->playlistUrlResolver, $filename);
     }
 
     /**
@@ -200,21 +188,20 @@ class DynamicHLSPlaylist implements Responsable
      */
     protected static function lineHasMediaFilename(string $line): bool
     {
-        // Skip lines that are already full URLs
-        if (Str::startsWith($line, ['http://', 'https://'])) {
+        // Skip lines that are already full URLs or comments
+        if ($line === '' || $line[0] === '#' || str_starts_with($line, 'http://') || str_starts_with($line, 'https://')) {
             return false;
         }
 
-        return ! Str::startsWith($line, '#') && Str::endsWith($line, [
-            '.m3u8',  // Playlist files
-            '.ts',    // Transport stream segments
-            '.mp4',   // MP4 media files
-            '.m4s',   // fMP4 media segments
-            '.m4a',   // Audio-only MP4
-            '.m4v',   // Video-only MP4
-            '.aac',   // AAC audio
-            '.vtt',   // WebVTT subtitles
-        ]);
+        // Check file extensions - common ones first for performance
+        return str_ends_with($line, '.m3u8')
+            || str_ends_with($line, '.ts')
+            || str_ends_with($line, '.m4s')
+            || str_ends_with($line, '.mp4')
+            || str_ends_with($line, '.m4a')
+            || str_ends_with($line, '.m4v')
+            || str_ends_with($line, '.aac')
+            || str_ends_with($line, '.vtt');
     }
 
     /**
@@ -260,6 +247,10 @@ class DynamicHLSPlaylist implements Responsable
      */
     public function get(): string
     {
+        if (! $this->media) {
+            throw new \RuntimeException('No playlist file opened. Call open() first.');
+        }
+
         return $this->getProcessedPlaylist($this->media->getPath());
     }
 

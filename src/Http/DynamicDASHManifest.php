@@ -110,11 +110,7 @@ class DynamicDASHManifest implements Responsable
      */
     protected function resolveMediaUrl(string $filename): string
     {
-        if (array_key_exists($filename, $this->mediaCache)) {
-            return $this->mediaCache[$filename];
-        }
-
-        return $this->mediaCache[$filename] = call_user_func($this->mediaUrlResolver, $filename);
+        return $this->mediaCache[$filename] ??= call_user_func($this->mediaUrlResolver, $filename);
     }
 
     /**
@@ -122,11 +118,7 @@ class DynamicDASHManifest implements Responsable
      */
     protected function resolveInitUrl(string $filename): string
     {
-        if (array_key_exists($filename, $this->initCache)) {
-            return $this->initCache[$filename];
-        }
-
-        return $this->initCache[$filename] = call_user_func($this->initUrlResolver, $filename);
+        return $this->initCache[$filename] ??= call_user_func($this->initUrlResolver, $filename);
     }
 
     /**
@@ -134,6 +126,10 @@ class DynamicDASHManifest implements Responsable
      */
     public function get(): string
     {
+        if (! $this->media) {
+            throw new \RuntimeException('No manifest file opened. Call open() first.');
+        }
+
         $content = $this->disk->get($this->media->getPath());
 
         return $this->processManifest($content);
@@ -148,11 +144,7 @@ class DynamicDASHManifest implements Responsable
         if ($this->mediaUrlResolver) {
             $content = preg_replace_callback(
                 '/<BaseURL>([^<]+)<\/BaseURL>/',
-                function ($matches) {
-                    $filename = $matches[1];
-
-                    return '<BaseURL>'.$this->resolveMediaUrl($filename).'</BaseURL>';
-                },
+                fn ($matches) => '<BaseURL>'.$this->resolveMediaUrl($matches[1]).'</BaseURL>',
                 $content
             );
         }
@@ -161,11 +153,7 @@ class DynamicDASHManifest implements Responsable
         if ($this->initUrlResolver) {
             $content = preg_replace_callback(
                 '/initialization="([^"]+)"/',
-                function ($matches) {
-                    $filename = $matches[1];
-
-                    return 'initialization="'.$this->resolveInitUrl($filename).'"';
-                },
+                fn ($matches) => 'initialization="'.$this->resolveInitUrl($matches[1]).'"',
                 $content
             );
         }
@@ -174,11 +162,7 @@ class DynamicDASHManifest implements Responsable
         if ($this->mediaUrlResolver) {
             $content = preg_replace_callback(
                 '/media="([^"]+)"/',
-                function ($matches) {
-                    $filename = $matches[1];
-
-                    return 'media="'.$this->resolveMediaUrl($filename).'"';
-                },
+                fn ($matches) => 'media="'.$this->resolveMediaUrl($matches[1]).'"',
                 $content
             );
         }

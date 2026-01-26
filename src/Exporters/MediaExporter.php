@@ -100,6 +100,10 @@ class MediaExporter
 
     protected function runAfterSavingCallbacks(PackagerResult $result)
     {
+        if (empty($this->afterSavingCallbacks)) {
+            return;
+        }
+
         foreach ($this->afterSavingCallbacks as $key => $callback) {
             call_user_func($callback, $this, $result);
 

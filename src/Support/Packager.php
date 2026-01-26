@@ -365,20 +365,20 @@ class Packager
      */
     protected function filterSensitiveOptions(array $options): array
     {
-        $filtered = $options;
-
         // List of sensitive keys that should be redacted
-        $sensitiveKeys = [
-            'keys',
-            'key',
-            'key_id',
-            'pssh',
-            'protection_systems',
-            'raw_key',
-            'iv',
+        static $sensitiveKeys = [
+            'keys' => true,
+            'key' => true,
+            'key_id' => true,
+            'pssh' => true,
+            'protection_systems' => true,
+            'raw_key' => true,
+            'iv' => true,
         ];
 
-        foreach ($sensitiveKeys as $key) {
+        $filtered = $options;
+
+        foreach ($sensitiveKeys as $key => $_) {
             if (isset($filtered[$key])) {
                 $filtered[$key] = '[REDACTED]';
             }

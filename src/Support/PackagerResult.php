@@ -74,8 +74,13 @@ class PackagerResult
             } else {
                 // Stream large binary files (video/audio segments)
                 $stream = fopen($file, 'rb');
-                $targetDisk->writeStream($targetPath, $stream);
-                fclose($stream);
+                try {
+                    $targetDisk->writeStream($targetPath, $stream);
+                } finally {
+                    if (is_resource($stream)) {
+                        fclose($stream);
+                    }
+                }
             }
 
             if ($visibility) {

@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
+## 0.9.0 - 2026-01-26
+
+### What's Changed
+
+* fix: improve performance and error handling in various classes by @francoism90 in https://github.com/foxws/laravel-shaka/pull/24
+
+**Full Changelog**: https://github.com/foxws/laravel-shaka/compare/0.8.0...0.9.0
+
 ## 0.8.0 - 2026-01-23
 
 **Full Changelog**: https://github.com/foxws/laravel-shaka/compare/0.7.0...0.8.0

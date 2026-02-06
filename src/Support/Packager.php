@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Foxws\Shaka\Support;
 
+use Foxws\Shaka\Events\PackagingStarted;
+use Foxws\Shaka\Events\PackagingCompleted;
+use Foxws\Shaka\Events\PackagingFailed;
 use Foxws\Shaka\Filesystem\MediaCollection;
 use Foxws\Shaka\Filesystem\TemporaryDirectories;
 use Illuminate\Support\Traits\ForwardsCalls;
@@ -405,16 +408,43 @@ class Packager
             ]);
         }
 
-        $result = $this->packager->command($command);
+        // Dispatch event before starting the packaging operation
+        PackagingStarted::dispatch($this->mediaCollection, $command);
 
-        if ($this->logger) {
-            $this->logger->info('Packaging operation completed');
+        $startTime = microtime(true);
+
+        try {
+            $result = $this->packager->command($command);
+
+            if ($this->logger) {
+                $this->logger->info('Packaging operation completed');
+            }
+
+            // Get the first media's disk as the source disk
+            $sourceDisk = $this->mediaCollection->collection()->first()?->getDisk();
+
+            $packagerResult = new PackagerResult($result, $sourceDisk, $this->temporaryDirectory, $this->cacheDirectory);
+
+            PackagingCompleted::dispatch($packagerResult, microtime(true) - $startTime);
+
+            return $packagerResult;
+        } catch (\Exception $e) {
+            $executionTime = microtime(true) - $startTime;
+
+            if ($this->logger) {
+                $this->logger->error('Packaging operation failed', [
+                    'exception' => $e->getMessage(),
+                    'execution_time' => $executionTime,
+                ]);
+            }
+
+            PackagingFailed::dispatch($e, $executionTime, [
+                'command' => $command,
+                'mediaCollection' => $this->mediaCollection,
+            ]);
+
+            throw $e;
         }
-
-        // Get the first media's disk as the source disk
-        $sourceDisk = $this->mediaCollection->collection()->first()?->getDisk();
-
-        return new PackagerResult($result, $sourceDisk, $this->temporaryDirectory, $this->cacheDirectory);
     }
 
     public function packageWithBuilder(CommandBuilder $builder): PackagerResult
@@ -428,12 +458,38 @@ class Packager
             ]);
         }
 
-        $result = $this->packager->command($command);
+        PackagingStarted::dispatch($this->mediaCollection, $command);
 
-        if ($this->logger) {
-            $this->logger->info('Packaging operation completed');
+        $startTime = microtime(true);
+
+        try {
+            $result = $this->packager->command($command);
+
+            if ($this->logger) {
+                $this->logger->info('Packaging operation completed');
+            }
+
+            $packagerResult = new PackagerResult($result);
+
+            PackagingCompleted::dispatch($packagerResult, microtime(true) - $startTime);
+
+            return $packagerResult;
+        } catch (\Exception $e) {
+            $executionTime = microtime(true) - $startTime;
+
+            if ($this->logger) {
+                $this->logger->error('Packaging operation failed', [
+                    'exception' => $e->getMessage(),
+                    'execution_time' => $executionTime,
+                ]);
+            }
+
+            PackagingFailed::dispatch($e, $executionTime, [
+                'command' => $command,
+                'mediaCollection' => $this->mediaCollection,
+            ]);
+
+            throw $e;
         }
-
-        return new PackagerResult($result);
     }
 }

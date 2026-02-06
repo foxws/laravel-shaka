@@ -20,7 +20,7 @@ class ShakaServiceProvider extends PackageServiceProvider
             ->name('laravel-shaka')
             ->hasConfigFile('laravel-shaka')
             ->hasCommands([
-                Commands\VerifyInstallationCommand::class,
+                Commands\PackageInfoCommand::class,
             ]);
     }
 

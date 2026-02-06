@@ -8,7 +8,7 @@ return [
      * Path to the packager binary and other related settings.
      */
     'packager' => [
-        'binaries' => env('PACKAGER_PATH', 'packager'),
+        'binaries' => env('PACKAGER_PATH', '/usr/local/bin/packager'),
     ],
 
     /**

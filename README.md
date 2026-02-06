@@ -70,7 +70,7 @@ Install Shaka Packager binary on your system. Visit the [Shaka Packager releases
 After installation, verify that Shaka Packager is properly configured:
 
 ```bash
-php artisan shaka:verify
+php artisan shaka:info
 ```
 
 This will check:
@@ -79,14 +79,6 @@ This will check:
 - Can retrieve version information
 - Configuration is properly set up
 - Temporary directory is accessible
-
-### Package Information
-
-View package and binary information:
-
-```bash
-php artisan shaka:info
-```
 
 ## Quick Start
 

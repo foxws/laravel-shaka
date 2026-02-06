@@ -15,9 +15,9 @@ class PackagerResult
 
     protected array $failedFiles = [];
 
-    protected ?\Illuminate\Contracts\Filesystem\Filesystem $tempFilesystem = null;
+    protected ?Filesystem $tempFilesystem = null;
 
-    protected ?\Illuminate\Contracts\Filesystem\Filesystem $cacheFilesystem = null;
+    protected ?Filesystem $cacheFilesystem = null;
 
     public function __construct(
         protected string $output,

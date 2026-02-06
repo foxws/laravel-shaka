@@ -46,14 +46,14 @@ class StreamValidator
     protected static function validatePaths(array $stream): void
     {
         // Validate input path is not empty and doesn't contain dangerous characters
-        if (preg_match('/[;&|`$]/', $stream['in'])) {
+        if (preg_match('/[;&|`]/', $stream['in'])) {
             throw new InvalidStreamConfigurationException(
                 'Input path contains potentially dangerous characters'
             );
         }
 
         // Validate output path
-        if (preg_match('/[;&|`$]/', $stream['output'])) {
+        if (preg_match('/[;&|`]/', $stream['output'])) {
             throw new InvalidStreamConfigurationException(
                 'Output path contains potentially dangerous characters'
             );

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Foxws\Shaka\Support;
 
+use Foxws\Shaka\Exceptions\InvalidStreamConfigurationException;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 
@@ -26,8 +27,18 @@ class CommandBuilder
         return new self;
     }
 
+    /**
+     * Add a stream configuration directly
+     *
+     * Accepts the Shaka format (in, stream, output) and validates it
+     * before adding to the streams collection.
+     *
+     * @throws InvalidStreamConfigurationException
+     */
     public function addStream(array $stream): self
     {
+        StreamValidator::validate($stream);
+
         $this->streams->push($stream);
 
         return $this;

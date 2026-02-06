@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Foxws\Shaka\Support;
 
-use Foxws\Shaka\Events\PackagingStarted;
 use Foxws\Shaka\Events\PackagingCompleted;
 use Foxws\Shaka\Events\PackagingFailed;
+use Foxws\Shaka\Events\PackagingStarted;
 use Foxws\Shaka\Filesystem\MediaCollection;
 use Foxws\Shaka\Filesystem\TemporaryDirectories;
 use Illuminate\Support\Traits\ForwardsCalls;

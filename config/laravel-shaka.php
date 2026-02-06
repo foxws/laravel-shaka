@@ -8,7 +8,7 @@ return [
      * Path to the packager binary and other related settings.
      */
     'packager' => [
-        'binaries' => env('PACKAGER_PATH', '/usr/local/bin/packager'),
+        'binaries' => env('PACKAGER_PATH', 'packager'),
     ],
 
     /**
@@ -19,7 +19,7 @@ return [
     /**
      * Timeout for the packaging process in seconds.
      */
-    'timeout' => 60 * 60 * 4, // 4 hours
+    'timeout' => env('PACKAGER_TIMEOUT', 3600), // 1 hour
 
     /**
      * Log channel for packager output. Set to false to disable logging.

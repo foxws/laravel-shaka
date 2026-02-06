@@ -13,7 +13,7 @@ class PackagingStarted
     use Dispatchable, SerializesModels;
 
     public function __construct(
-        public MediaCollection $mediaCollection,
-        public array $options
+        public ?MediaCollection $mediaCollection = null,
+        public array $options = []
     ) {}
 }

@@ -131,8 +131,14 @@ class DynamicDASHManifest implements Responsable
         }
 
         $content = $this->disk->get($this->media->getPath());
+        $manifest = $this->processManifest($content);
 
-        return $this->processManifest($content);
+        // Ensure XML declaration is present for proper parsing by media players
+        if (! str_starts_with(trim($manifest), '<?xml')) {
+            $manifest = '<?xml version="1.0" encoding="UTF-8"?>'."\n".$manifest;
+        }
+
+        return $manifest;
     }
 
     /**
@@ -140,20 +146,23 @@ class DynamicDASHManifest implements Responsable
      */
     protected function processManifest(string $content): string
     {
+        // Expand SegmentTemplate with $Number$ placeholders to SegmentList
+        $content = $this->expandSegmentTemplates($content);
+
         // Replace BaseURL elements with resolved URLs
         if ($this->mediaUrlResolver) {
             $content = preg_replace_callback(
                 '/<BaseURL>([^<]+)<\/BaseURL>/',
-                fn ($matches) => '<BaseURL>'.$this->resolveMediaUrl($matches[1]).'</BaseURL>',
+                fn ($matches) => '<BaseURL>'.htmlspecialchars($this->resolveMediaUrl($matches[1]), ENT_XML1 | ENT_COMPAT, 'UTF-8').'</BaseURL>',
                 $content
             );
         }
 
-        // Replace initialization attribute URLs
+        // Replace initialization attribute URLs (sourceURL for SegmentList)
         if ($this->initUrlResolver) {
             $content = preg_replace_callback(
-                '/initialization="([^"]+)"/',
-                fn ($matches) => 'initialization="'.$this->resolveInitUrl($matches[1]).'"',
+                '/(initialization|sourceURL)="([^"]+)"/',
+                fn ($matches) => $matches[1].'="'.htmlspecialchars($this->resolveInitUrl($matches[2]), ENT_XML1 | ENT_COMPAT, 'UTF-8').'"',
                 $content
             );
         }
@@ -162,12 +171,95 @@ class DynamicDASHManifest implements Responsable
         if ($this->mediaUrlResolver) {
             $content = preg_replace_callback(
                 '/media="([^"]+)"/',
-                fn ($matches) => 'media="'.$this->resolveMediaUrl($matches[1]).'"',
+                fn ($matches) => 'media="'.htmlspecialchars($this->resolveMediaUrl($matches[1]), ENT_XML1 | ENT_COMPAT, 'UTF-8').'"',
                 $content
             );
         }
 
         return $content;
+    }
+
+    /**
+     * Expand SegmentTemplate with $Number$ placeholders to SegmentList.
+     */
+    protected function expandSegmentTemplates(string $content): string
+    {
+        return preg_replace_callback(
+            '/<SegmentTemplate\s+([^>]*)>(.*?)<\/SegmentTemplate>/s',
+            function ($matches) {
+                $attributes = $matches[1];
+                $innerContent = $matches[2];
+
+                // Extract template attributes
+                preg_match('/timescale="(\d+)"/', $attributes, $timescaleMatch);
+                preg_match('/initialization="([^"]+)"/', $attributes, $initMatch);
+                preg_match('/media="([^"]+)"/', $attributes, $mediaMatch);
+                preg_match('/startNumber="(\d+)"/', $attributes, $startMatch);
+
+                $timescale = $timescaleMatch[1] ?? '1';
+                $initUrl = $initMatch[1] ?? '';
+                $mediaTemplate = $mediaMatch[1] ?? '';
+                $startNumber = (int) ($startMatch[1] ?? 1);
+
+                // Check if media template contains $Number$
+                if (! str_contains($mediaTemplate, '$Number$')) {
+                    return $matches[0]; // Return unchanged
+                }
+
+                // Parse SegmentTimeline to get segment durations
+                preg_match('/<SegmentTimeline>(.*?)<\/SegmentTimeline>/s', $innerContent, $timelineMatch);
+                if (! $timelineMatch) {
+                    return $matches[0]; // No timeline, return unchanged
+                }
+
+                // Parse segment timing from <S> elements
+                preg_match_all('/<S\s+([^>]*?)\/?\s*>/', $timelineMatch[1], $sMatches);
+
+                $segmentDurations = [];
+                foreach ($sMatches[1] as $sAttrs) {
+                    // Extract d (duration) and r (repeat count)
+                    preg_match('/d="(\d+)"/', $sAttrs, $dMatch);
+                    preg_match('/r="(-?\d+)"/', $sAttrs, $rMatch);
+
+                    $duration = $dMatch[1] ?? null;
+                    $repeat = isset($rMatch[1]) ? (int) $rMatch[1] : 0;
+
+                    if ($duration !== null) {
+                        // Add duration once, then repeat if needed
+                        $repeatCount = $repeat >= 0 ? $repeat : 0;
+                        for ($i = 0; $i <= $repeatCount; $i++) {
+                            $segmentDurations[] = $duration;
+                        }
+                    }
+                }
+
+                $segmentCount = count($segmentDurations);
+
+                // Build SegmentList
+                $segmentList = '<SegmentList timescale="'.$timescale.'">';
+
+                // Add Initialization element
+                if ($initUrl) {
+                    $segmentList .= '<Initialization sourceURL="'.$initUrl.'"/>';
+                }
+
+                // Add SegmentTimeline (required for timing information)
+                $segmentList .= $timelineMatch[0];
+
+                // Add SegmentURL elements with duration attributes
+                for ($i = 0; $i < $segmentCount; $i++) {
+                    $segmentNumber = $startNumber + $i;
+                    $segmentUrl = str_replace('$Number$', (string) $segmentNumber, $mediaTemplate);
+                    $duration = $segmentDurations[$i];
+                    $segmentList .= '<SegmentURL media="'.$segmentUrl.'" duration="'.$duration.'"/>';
+                }
+
+                $segmentList .= '</SegmentList>';
+
+                return $segmentList;
+            },
+            $content
+        );
     }
 
     /**

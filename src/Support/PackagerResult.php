@@ -11,6 +11,14 @@ class PackagerResult
 {
     protected array $uploadedEncryptionKeys = [];
 
+    protected array $copiedFiles = [];
+
+    protected array $failedFiles = [];
+
+    protected ?\Illuminate\Contracts\Filesystem\Filesystem $tempFilesystem = null;
+
+    protected ?\Illuminate\Contracts\Filesystem\Filesystem $cacheFilesystem = null;
+
     public function __construct(
         protected string $output,
         protected ?Disk $sourceDisk = null,
@@ -37,68 +45,147 @@ class PackagerResult
         // Get the target directory from outputPath parameter or preserve source structure
         $targetDirectory = $outputPath ?: $this->getSourceDirectory();
 
-        // Collect files from temp directory (segments/manifests) and cache directory (encryption keys)
-        $files = $this->getAllFilesInTemporaryDirectory($this->temporaryDirectory);
-
-        if ($this->cacheDirectory && is_dir($this->cacheDirectory)) {
-            $cacheFiles = $this->getAllFilesInTemporaryDirectory($this->cacheDirectory);
-            $files = array_merge($files, $cacheFiles);
+        // Copy files from temp directory
+        if ($tempDisk = $this->getTempFilesystem()) {
+            $this->copyFilesFromDisk($tempDisk, $targetDisk, $targetDirectory, $visibility, $this->temporaryDirectory);
         }
 
-        // Copy all files to target disk
-        foreach ($files as $file) {
-            $filename = basename($file);
-            $targetPath = $targetDirectory ? $targetDirectory.$filename : $filename;
+        // Copy files from cache directory if it exists
+        if ($cacheDisk = $this->getCacheFilesystem()) {
+            $this->copyFilesFromDisk($cacheDisk, $targetDisk, $targetDirectory, $visibility, $this->cacheDirectory);
+        }
+
+        // Clean up temporary directories
+        if ($cleanup) {
+            if ($tempDisk && is_dir($this->temporaryDirectory)) {
+                $tempDisk->deleteDirectory('/');
+                @rmdir($this->temporaryDirectory);
+            }
+
+            if ($cacheDisk && $this->cacheDirectory && is_dir($this->cacheDirectory)) {
+                $cacheDisk->deleteDirectory('/');
+                @rmdir($this->cacheDirectory);
+            }
+        }
+
+        return $this;
+    }
+
+    protected function copyFilesFromDisk(Filesystem $sourceDisk, Disk $targetDisk, ?string $targetDirectory, ?string $visibility, string $sourceBasePath): void
+    {
+        foreach ($sourceDisk->allFiles() as $relativePath) {
+            $targetPath = $targetDirectory ? $targetDirectory.$relativePath : $relativePath;
 
             // Check if this is an encryption key file
+            $filename = basename($relativePath);
             $extension = pathinfo($filename, PATHINFO_EXTENSION);
-            $baseWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
-            $isRotationKey = preg_match('/^[a-zA-Z_-]+_\d+$/', $baseWithoutExt);
-            $isKeyFile = $extension === 'key' || $isRotationKey;
-
-            // Small text files (.m3u8 manifests) and key files - use put() for reliability
+            $isKeyFile = $extension === 'key' || preg_match('/^[a-zA-Z_-]+_\d+$/', pathinfo($filename, PATHINFO_FILENAME));
             $isSmallFile = $isKeyFile || $extension === 'm3u8';
 
-            if ($isSmallFile) {
-                $content = file_get_contents($file);
-                $targetDisk->put($targetPath, $content);
+            try {
+                if ($isSmallFile) {
+                    $content = $sourceDisk->get($relativePath);
+                    $targetDisk->put($targetPath, $content);
 
-                // Track uploaded encryption key metadata
-                if ($isKeyFile) {
-                    $this->uploadedEncryptionKeys[] = [
-                        'filename' => $filename,
-                        'path' => $targetPath,
-                        'content' => bin2hex($content),
-                    ];
-                }
-            } else {
-                // Stream large binary files (video/audio segments)
-                $stream = fopen($file, 'rb');
-                try {
+                    // Track uploaded encryption key metadata
+                    if ($isKeyFile) {
+                        $this->uploadedEncryptionKeys[] = [
+                            'filename' => $filename,
+                            'path' => $targetPath,
+                            'content' => bin2hex($content),
+                        ];
+                    }
+                } else {
+                    // Stream large binary files (video/audio segments)
+                    $stream = $sourceDisk->readStream($relativePath);
                     $targetDisk->writeStream($targetPath, $stream);
-                } finally {
+
                     if (is_resource($stream)) {
                         fclose($stream);
                     }
                 }
-            }
 
-            if ($visibility) {
-                $targetDisk->setVisibility($targetPath, $visibility);
-            }
+                if ($visibility) {
+                    $targetDisk->setVisibility($targetPath, $visibility);
+                }
 
-            // Clean up temporary file after copying
-            if ($cleanup) {
-                unlink($file);
+                // Track successfully copied file
+                $this->copiedFiles[$targetPath] = [
+                    'source' => $sourceBasePath.'/'.$relativePath,
+                    'size' => $sourceDisk->size($relativePath),
+                    'type' => $isKeyFile ? 'key' : ($extension === 'm3u8' ? 'manifest' : 'segment'),
+                ];
+            } catch (\Exception $e) {
+                $this->failedFiles[] = [
+                    'source' => $sourceBasePath.'/'.$relativePath,
+                    'target' => $targetPath,
+                    'error' => $e->getMessage(),
+                    'size' => 0,
+                ];
             }
         }
+    }
 
-        // Clean up temporary directory if empty
-        if ($cleanup && is_dir($this->temporaryDirectory)) {
-            @rmdir($this->temporaryDirectory);
+    protected function getTempFilesystem(): ?Filesystem
+    {
+        if (! $this->temporaryDirectory || ! is_dir($this->temporaryDirectory)) {
+            return null;
         }
 
-        return $this;
+        if (! $this->tempFilesystem) {
+            $this->tempFilesystem = Disk::make('local')->buildFilesystem([
+                'driver' => 'local',
+                'root' => $this->temporaryDirectory,
+            ]);
+        }
+
+        return $this->tempFilesystem;
+    }
+
+    protected function getCacheFilesystem(): ?Filesystem
+    {
+        if (! $this->cacheDirectory || ! is_dir($this->cacheDirectory)) {
+            return null;
+        }
+
+        if (! $this->cacheFilesystem) {
+            $this->cacheFilesystem = Disk::make('local')->buildFilesystem([
+                'driver' => 'local',
+                'root' => $this->cacheDirectory,
+            ]);
+        }
+
+        return $this->cacheFilesystem;
+    }
+
+    public function getCopiedFiles(): array
+    {
+        return $this->copiedFiles;
+    }
+
+    public function getFailedFiles(): array
+    {
+        return $this->failedFiles;
+    }
+
+    public function hasCopyFailures(): bool
+    {
+        return ! empty($this->failedFiles);
+    }
+
+    public function getCopySummary(): array
+    {
+        $totalSize = 0;
+        foreach ($this->copiedFiles as $file) {
+            $totalSize += $file['size'] ?? 0;
+        }
+
+        return [
+            'total' => count($this->copiedFiles) + count($this->failedFiles),
+            'copied' => count($this->copiedFiles),
+            'failed' => count($this->failedFiles),
+            'totalSize' => $totalSize,
+        ];
     }
 
     /**

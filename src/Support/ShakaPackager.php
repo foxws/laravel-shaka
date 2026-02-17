@@ -34,7 +34,7 @@ class ShakaPackager
     ): self {
         $config = $configuration ?? Config::get('laravel-shaka');
 
-        $binaryPath = $config['packager']['binaries'] ?? '/usr/local/bin/packager';
+        $binaryPath = $config['packager']['binaries'] ?? 'packager';
 
         $timeout = $config['timeout'] ?? 3600;
 

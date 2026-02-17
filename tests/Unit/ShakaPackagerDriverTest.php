@@ -7,7 +7,7 @@ use Foxws\Shaka\Support\ShakaPackager;
 use Illuminate\Support\Facades\Config;
 
 beforeEach(function () {
-    Config::set('laravel-shaka.packager.binaries', '/usr/local/bin/packager');
+    Config::set('laravel-shaka.packager.binaries', 'packager');
     Config::set('laravel-shaka.timeout', 3600);
 });
 
@@ -37,7 +37,7 @@ it('can get and set timeout', function () {
 it('can get binary path from config', function () {
     $driver = ShakaPackager::create();
 
-    expect($driver->getBinaryPath())->toBe('/usr/local/bin/packager');
+    expect($driver->getBinaryPath())->toBe('packager');
 });
 
 it('respects custom binary path configuration', function () {

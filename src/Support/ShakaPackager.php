@@ -38,19 +38,20 @@ class ShakaPackager
 
         $timeout = $config['timeout'] ?? 3600;
 
-        // Verify binary exists
-        if (! static::isExecutable($binaryPath)) {
-            throw new ExecutableNotFoundException(
-                "Shaka Packager binary not found at: {$binaryPath}"
-            );
-        }
-
         return new self($binaryPath, $logger, $timeout);
     }
 
     protected static function isExecutable(string $path): bool
     {
-        return is_file($path) && is_executable($path);
+        // Check if it's an absolute path that exists
+        if (is_file($path) && is_executable($path)) {
+            return true;
+        }
+
+        // Check if it's a command available in PATH
+        $which = shell_exec('which ' . escapeshellarg($path) . ' 2>/dev/null');
+
+        return !empty($which);
     }
 
     public function getName(): string

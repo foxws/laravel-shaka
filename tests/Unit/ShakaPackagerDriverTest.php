@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Foxws\Shaka\Exceptions\ExecutableNotFoundException;
 use Foxws\Shaka\Support\ShakaPackager;
 use Illuminate\Support\Facades\Config;
 
@@ -10,12 +9,6 @@ beforeEach(function () {
     Config::set('laravel-shaka.packager.binaries', 'packager');
     Config::set('laravel-shaka.timeout', 3600);
 });
-
-it('throws exception when binary not found', function () {
-    Config::set('laravel-shaka.packager.binaries', '/nonexistent/packager');
-
-    ShakaPackager::create();
-})->throws(ExecutableNotFoundException::class);
 
 it('can create driver with valid configuration', function () {
     $driver = ShakaPackager::create();

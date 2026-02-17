@@ -37,16 +37,14 @@ class ShakaServiceProvider extends PackageServiceProvider
         });
 
         $this->app->singleton('laravel-shaka-configuration', function () {
-            $baseConfig = [
-                'packager.binaries' => Config::string('laravel-shaka.packager.binaries'),
-                'timeout' => Config::integer('laravel-shaka.timeout'),
-            ];
+            $config = Config::get('laravel-shaka', []);
 
-            if ($configuredTemporaryRoot = Config::string('laravel-shaka.temporary_files_root')) {
-                $baseConfig['temporary_directory'] = $configuredTemporaryRoot;
+            // Add temporary_directory if configured
+            if (! empty($config['temporary_files_root'])) {
+                $config['temporary_directory'] = $config['temporary_files_root'];
             }
 
-            return $baseConfig;
+            return $config;
         });
 
         $this->app->singleton(TemporaryDirectories::class, function () {
@@ -68,8 +66,9 @@ class ShakaServiceProvider extends PackageServiceProvider
         $this->app->singleton(Packager::class, function ($app) {
             $driver = $app->make(ShakaPackager::class);
             $logger = $app->make('laravel-shaka-logger');
+            $config = $app->make('laravel-shaka-configuration');
 
-            return new Packager($driver, $logger);
+            return new Packager($driver, $logger, $config);
         });
 
         // Register the main class to use with the facade

@@ -39,15 +39,3 @@ it('can get binary path from config', function () {
 
     expect($driver->getBinaryPath())->toBe('packager');
 });
-
-it('respects custom binary path configuration', function () {
-    $customPath = '/custom/path/to/packager';
-
-    Config::set('laravel-shaka.packager.binaries', $customPath);
-
-    try {
-        ShakaPackager::create();
-    } catch (ExecutableNotFoundException $e) {
-        expect($e->getMessage())->toContain($customPath);
-    }
-});

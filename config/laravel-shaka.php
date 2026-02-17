@@ -14,7 +14,7 @@ return [
     */
 
     'packager' => [
-        'binaries' => env('PACKAGER_PATH', '/usr/local/bin/packager'),
+        'binaries' => env('PACKAGER_PATH', 'packager'),
     ],
 
     /*

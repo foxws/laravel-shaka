@@ -28,12 +28,16 @@ class Packager
 
     protected ?string $cacheDirectory = null;
 
+    protected ?array $configuration = null;
+
     public function __construct(
         ShakaPackager $packager,
-        ?LoggerInterface $logger = null
+        ?LoggerInterface $logger = null,
+        ?array $configuration = null
     ) {
         $this->packager = $packager;
         $this->logger = $logger;
+        $this->configuration = $configuration;
     }
 
     public static function create(
@@ -42,12 +46,12 @@ class Packager
     ): self {
         $packager = ShakaPackager::create($logger, $configuration);
 
-        return new self($packager, $logger);
+        return new self($packager, $logger, $configuration);
     }
 
     public function fresh(): self
     {
-        return new self($this->packager, $this->logger);
+        return new self($this->packager, $this->logger, $this->configuration);
     }
 
     public function getPackager(): ShakaPackager
@@ -77,7 +81,7 @@ class Packager
         }
 
         // Initialize a fresh CommandBuilder for this media collection
-        $this->builder = CommandBuilder::make();
+        $this->builder = $this->createBuilder();
 
         if ($this->logger) {
             $this->logger->debug('Opened media collection', [
@@ -97,10 +101,36 @@ class Packager
     public function builder(): CommandBuilder
     {
         if (! $this->builder) {
-            $this->builder = CommandBuilder::make();
+            $this->builder = $this->createBuilder();
         }
 
         return $this->builder;
+    }
+
+    /**
+     * Create a new CommandBuilder with configuration defaults
+     */
+    protected function createBuilder(): CommandBuilder
+    {
+        $builder = CommandBuilder::make();
+
+        if (! $this->configuration) {
+            return $builder;
+        }
+
+        // Apply segment_duration default
+        if (filled($this->configuration['segment_duration'] ?? null)) {
+            $builder->withSegmentDuration($this->configuration['segment_duration']);
+        }
+
+        // Apply packager_options defaults
+        if (filled($this->configuration['packager_options'] ?? null) && is_array($this->configuration['packager_options'])) {
+            foreach ($this->configuration['packager_options'] as $key => $value) {
+                $builder->withOption($key, $value);
+            }
+        }
+
+        return $builder;
     }
 
     /**

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Foxws\Shaka\Support;
 
-use Foxws\Shaka\Exceptions\ExecutableNotFoundException;
 use Foxws\Shaka\Exceptions\RuntimeException;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Process;
@@ -49,9 +48,9 @@ class ShakaPackager
         }
 
         // Check if it's a command available in PATH
-        $which = shell_exec('which ' . escapeshellarg($path) . ' 2>/dev/null');
+        $which = shell_exec('which '.escapeshellarg($path).' 2>/dev/null');
 
-        return !empty($which);
+        return ! empty($which);
     }
 
     public function getName(): string

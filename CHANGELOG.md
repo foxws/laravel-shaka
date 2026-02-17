@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
+## 1.1.0 - 2026-02-17
+
+### What's Changed
+
+* feat: enhance configuration options for Shaka Packager by @francoism90 in https://github.com/foxws/laravel-shaka/pull/25
+
+**Full Changelog**: https://github.com/foxws/laravel-shaka/compare/1.0.0...1.1.0
+
 ## 0.9.0 - 2026-01-26
 
 ### What's Changed

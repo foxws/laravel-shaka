@@ -95,7 +95,7 @@ return [
     |
     */
 
-    'log_channel' => env('PACKAGER_LOG_CHANNEL', null),
+    'log_channel' => env('PACKAGER_LOG_CHANNEL', env('LOG_CHANNEL', 'stack')),
 
     /*
     |--------------------------------------------------------------------------

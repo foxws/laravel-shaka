@@ -14,7 +14,7 @@ return [
     */
 
     'packager' => [
-        'binaries' => env('PACKAGER_PATH', 'packager'),
+        'binaries' => (string) env('PACKAGER_PATH', 'packager'),
     ],
 
     /*
@@ -71,7 +71,7 @@ return [
     |
     */
 
-    'force_generic_input' => env('PACKAGER_FORCE_GENERIC_INPUT', true),
+    'force_generic_input' => (bool) env('PACKAGER_FORCE_GENERIC_INPUT', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -83,7 +83,7 @@ return [
     |
     */
 
-    'timeout' => env('PACKAGER_TIMEOUT', 14400),
+    'timeout' => (int) env('PACKAGER_TIMEOUT', 14400),
 
     /*
     |--------------------------------------------------------------------------
@@ -95,7 +95,7 @@ return [
     |
     */
 
-    'log_channel' => env('PACKAGER_LOG_CHANNEL', null),
+    'log_channel' => env('PACKAGER_LOG_CHANNEL', env('LOG_CHANNEL', 'stack')),
 
     /*
     |--------------------------------------------------------------------------
@@ -107,7 +107,7 @@ return [
     |
     */
 
-    'temporary_files_root' => env('PACKAGER_TEMPORARY_FILES_ROOT', storage_path('app/packager/temp')),
+    'temporary_files_root' => (string) env('PACKAGER_TEMPORARY_FILES_ROOT', storage_path('app/packager/temp')),
 
     /*
     |--------------------------------------------------------------------------
@@ -128,6 +128,23 @@ return [
     |
     */
 
-    'cache_files_root' => env('PACKAGER_CACHE_FILES_ROOT', '/dev/shm'),
+    'cache_files_root' => (string) env('PACKAGER_CACHE_FILES_ROOT', '/dev/shm'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Concurrency Workers
+    |--------------------------------------------------------------------------
+    |
+    | Number of parallel child processes used when uploading packaged files
+    | to the target disk (e.g. S3). Each worker handles a chunk of files
+    | concurrently via Laravel's Concurrency facade.
+    |
+    | Higher values can improve upload throughput for large HLS/DASH outputs
+    | with many segments, but consume more system resources. A value between
+    | 10 and 30 is recommended for most setups.
+    |
+    */
+
+    'concurrency_workers' => (int) env('PACKAGER_CONCURRENCY_WORKERS', 10),
 
 ];

@@ -453,7 +453,7 @@ class Packager
             // Get the first media's disk as the source disk
             $sourceDisk = $this->mediaCollection->collection()->first()?->getDisk();
 
-            $packagerResult = new PackagerResult($result, $sourceDisk, $this->temporaryDirectory, $this->cacheDirectory);
+            $packagerResult = new PackagerResult($result, $sourceDisk, $this->temporaryDirectory, $this->cacheDirectory, $this->configuration);
 
             PackagingCompleted::dispatch($packagerResult, microtime(true) - $startTime);
 
@@ -499,7 +499,9 @@ class Packager
                 $this->logger->info('Packaging operation completed');
             }
 
-            $packagerResult = new PackagerResult($result);
+            $sourceDisk = $this->mediaCollection?->collection()->first()?->getDisk();
+
+            $packagerResult = new PackagerResult($result, $sourceDisk, $this->temporaryDirectory, $this->cacheDirectory, $this->configuration);
 
             PackagingCompleted::dispatch($packagerResult, microtime(true) - $startTime);
 

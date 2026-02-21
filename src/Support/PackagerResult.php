@@ -119,8 +119,10 @@ class PackagerResult
         $chunkSize = (int) ceil(count($fileOps) / $workers);
         $chunks = array_chunk($fileOps, max(1, $chunkSize));
 
-        $tasks = array_map(
-            fn (array $chunk) => function () use ($chunk, $diskName, $visibility): array {
+        $tasks = [];
+
+        foreach ($chunks as $chunk) {
+            $tasks[] = function () use ($chunk, $diskName, $visibility): array {
                 $disk = Storage::disk($diskName);
                 $results = [];
 
@@ -163,9 +165,8 @@ class PackagerResult
                 }
 
                 return $results;
-            },
-            $chunks
-        );
+            };
+        }
 
         foreach (Concurrency::run($tasks) as $chunkResults) {
             foreach ($chunkResults as $result) {

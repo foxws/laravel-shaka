@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Storage;
 
 class PackagerResult
 {
-
     protected array $uploadedEncryptionKeys = [];
 
     protected array $copiedFiles = [];

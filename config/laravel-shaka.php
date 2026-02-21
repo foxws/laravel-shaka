@@ -83,7 +83,7 @@ return [
     |
     */
 
-    'timeout' =>  (int) env('PACKAGER_TIMEOUT', 14400),
+    'timeout' => (int) env('PACKAGER_TIMEOUT', 14400),
 
     /*
     |--------------------------------------------------------------------------

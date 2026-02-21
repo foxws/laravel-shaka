@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Foxws\Shaka\Support;
 
 use Foxws\Shaka\Filesystem\Disk;
+use Illuminate\Concurrency\ConcurrencyManager;
 use Illuminate\Console\Application;
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Concurrency;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Laravel\SerializableClosure\SerializableClosure;
@@ -126,8 +128,6 @@ class PackagerResult
         $chunkSize = (int) ceil(count($fileOps) / $workers);
         $chunks = array_chunk($fileOps, max(1, $chunkSize));
 
-        $command = Application::formatCommandString('invoke-serialized-closure');
-
         $tasks = [];
 
         foreach ($chunks as $chunk) {
@@ -177,33 +177,43 @@ class PackagerResult
             };
         }
 
-        $poolResults = Process::pool(function (\Illuminate\Process\Pool $pool) use ($tasks, $command, $workerTimeout): void {
-            foreach ($tasks as $key => $task) {
-                $pool->as((string) $key)
-                    ->path(base_path())
-                    ->timeout($workerTimeout)
-                    ->env([
-                        'LARAVEL_INVOKABLE_CLOSURE' => base64_encode(
-                            serialize(new SerializableClosure($task))
-                        ),
-                    ])
-                    ->command($command);
-            }
-        })->start()->wait();
+        // Use Concurrency::run() when the facade has been faked or replaced (e.g. in tests),
+        // so tasks run synchronously in-process without spawning subprocesses.
+        // In production the real ConcurrencyManager is present, and we drive Process::pool()
+        // ourselves so we can apply a configurable per-worker timeout.
+        if (! (Concurrency::getFacadeRoot() instanceof ConcurrencyManager)) {
+            $allChunkResults = collect(Concurrency::run($tasks));
+        } else {
+            $command = Application::formatCommandString('invoke-serialized-closure');
 
-        $allChunkResults = $poolResults->collect()->mapWithKeys(function ($result, $key) {
-            if ($result->failed()) {
-                throw new \Exception('Concurrent copy process failed with exit code ['.$result->exitCode().']. Message: '.$result->errorOutput());
-            }
+            $poolResults = Process::pool(function (\Illuminate\Process\Pool $pool) use ($tasks, $command, $workerTimeout): void {
+                foreach ($tasks as $key => $task) {
+                    $pool->as((string) $key)
+                        ->path(base_path())
+                        ->timeout($workerTimeout)
+                        ->env([
+                            'LARAVEL_INVOKABLE_CLOSURE' => base64_encode(
+                                serialize(new SerializableClosure($task))
+                            ),
+                        ])
+                        ->command($command);
+                }
+            })->start()->wait();
 
-            $decoded = json_decode($result->output(), true);
+            $allChunkResults = $poolResults->collect()->mapWithKeys(function ($result, $key) {
+                if ($result->failed()) {
+                    throw new \Exception('Concurrent copy process failed with exit code ['.$result->exitCode().']. Message: '.$result->errorOutput());
+                }
 
-            if (! ($decoded['successful'] ?? false)) {
-                throw new \Exception($decoded['message'] ?? 'Concurrent copy process returned an error.');
-            }
+                $decoded = json_decode($result->output(), true);
 
-            return [(int) $key => unserialize($decoded['result'])];
-        })->sortKeys()->values();
+                if (! ($decoded['successful'] ?? false)) {
+                    throw new \Exception($decoded['message'] ?? 'Concurrent copy process returned an error.');
+                }
+
+                return [(int) $key => unserialize($decoded['result'])];
+            })->sortKeys()->values();
+        }
 
         foreach ($allChunkResults as $chunkResults) {
             foreach ($chunkResults as $result) {

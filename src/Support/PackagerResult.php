@@ -111,7 +111,7 @@ class PackagerResult
      * bootstraps a fresh Laravel application so Storage::disk() is fully available
      * without needing to serialize any Filesystem objects.
      *
-     * @param  array<int, array{absolutePath: string, targetPath: string, filename: string, extension: string, isKeyFile: bool, isSmallFile: bool}>  $fileOps
+     * @param  array<int, array{absolutePath: string, targetPath: string, filename: string, extension: string, isKeyFile: bool, isSmallFile: bool, size: int}>  $fileOps
      */
     protected function copyFilesConcurrently(array $fileOps, string $diskName, ?string $visibility): void
     {

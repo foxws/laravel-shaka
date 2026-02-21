@@ -8,14 +8,12 @@ use Foxws\Shaka\Filesystem\TemporaryDirectories;
 use Foxws\Shaka\Support\Packager;
 use Foxws\Shaka\Support\PackagerResult;
 use Foxws\Shaka\Support\ShakaPackager;
-use Illuminate\Support\Facades\Concurrency;
 use Illuminate\Support\Facades\Storage;
 use Psr\Log\LoggerInterface;
 
 beforeEach(function () {
     Storage::fake('local');
     Storage::fake('export');
-    Concurrency::fake();
 
     // Create a test video file
     Storage::disk('local')->put('test.mp4', 'fake video content');

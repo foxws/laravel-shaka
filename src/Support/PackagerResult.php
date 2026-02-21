@@ -177,11 +177,12 @@ class PackagerResult
             };
         }
 
-        // Use Concurrency::run() when the facade has been faked or replaced (e.g. in tests),
-        // so tasks run synchronously in-process without spawning subprocesses.
-        // In production the real ConcurrencyManager is present, and we drive Process::pool()
-        // ourselves so we can apply a configurable per-worker timeout.
-        if (! (Concurrency::getFacadeRoot() instanceof ConcurrencyManager)) {
+        // Use Concurrency::run() when the facade has been faked/replaced, or when the sync
+        // driver is configured (e.g. in tests via TestCase::getEnvironmentSetUp), so tasks
+        // run synchronously in-process without spawning subprocesses.
+        // In production with a non-sync driver we use Process::pool() directly so we can
+        // apply a configurable per-worker timeout (Laravel's default of 60 s is too short).
+        if (! (Concurrency::getFacadeRoot() instanceof ConcurrencyManager) || config('concurrency.default') === 'sync') {
             $allChunkResults = collect(Concurrency::run($tasks));
         } else {
             $command = Application::formatCommandString('invoke-serialized-closure');

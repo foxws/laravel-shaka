@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
+## 1.5.0 - 2026-02-22
+
+### What's Changed
+
+* feat: spatie/fork by @francoism90 in https://github.com/foxws/laravel-shaka/pull/28
+
+**Full Changelog**: https://github.com/foxws/laravel-shaka/compare/1.4.0...1.5.0
+
 ## 1.3.0 - 2026-02-21
 
 ### What's Changed

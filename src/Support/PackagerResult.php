@@ -236,5 +236,4 @@ class PackagerResult
 
         return $keys;
     }
-
 }

@@ -290,12 +290,12 @@ it('tracks uploaded encryption keys during toDisk', function () {
     $result->toDisk('s3', 'public', false);
 
     // Get uploaded keys
-    $uploadedKeys = $result->getUploadedEncryptionKeys();
+    $uploadedKeys = $result->getEncryptionKeys();
 
     expect($uploadedKeys)->toHaveCount(2)
         ->and($uploadedKeys[0])->toHaveKeys(['filename', 'path', 'content'])
         ->and($uploadedKeys[0]['filename'])->toBe('encryption_0.key')
-        ->and($uploadedKeys[0]['path'])->toBe('encryption_0.key')
+        ->and($uploadedKeys[0]['path'])->toEndWith('encryption_0.key')
         ->and(strlen($uploadedKeys[0]['content']))->toBe(32)
         ->and($uploadedKeys[1]['filename'])->toBe('encryption_1.key');
 

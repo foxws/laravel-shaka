@@ -73,22 +73,18 @@ class PackagerResult
      * Build primitive file operation descriptors from a list of relative paths.
      *
      * @param  array<string>  $files
-     * @return array<int, array{absolutePath: string, targetPath: string, isSmallFile: bool}>
+     * @return array<int, array{absolutePath: string, targetPath: string}>
      */
     protected function buildFileOperations(array $files, ?string $targetDirectory, string $sourceBasePath): array
     {
         $ops = [];
 
         foreach ($files as $relativePath) {
-            $filename = basename($relativePath);
-            $extension = pathinfo($filename, PATHINFO_EXTENSION);
-            $isKeyFile = $extension === 'key' || (bool) preg_match('/^[a-zA-Z_-]+_\d+$/', pathinfo($filename, PATHINFO_FILENAME));
             $absolutePath = $sourceBasePath.DIRECTORY_SEPARATOR.$relativePath;
 
             $ops[] = [
                 'absolutePath' => $absolutePath,
                 'targetPath' => $targetDirectory ? $targetDirectory.$relativePath : $relativePath,
-                'isSmallFile' => $isKeyFile || $extension === 'm3u8',
             ];
         }
 
@@ -102,7 +98,7 @@ class PackagerResult
      * (spatie/fork) has no hard-coded timeout, unlike the default process driver,
      * making it suitable for large file uploads to remote disks such as S3.
      *
-     * @param  array<int, array{absolutePath: string, targetPath: string, isSmallFile: bool}>  $fileOps
+     * @param  array<int, array{absolutePath: string, targetPath: string}>  $fileOps
      */
     protected function copyFilesConcurrently(array $fileOps, string $diskName, ?string $visibility): void
     {
@@ -120,15 +116,11 @@ class PackagerResult
 
                 foreach ($chunk as $op) {
                     try {
-                        if ($op['isSmallFile']) {
-                            $disk->put($op['targetPath'], file_get_contents($op['absolutePath']), $options);
-                        } else {
-                            $stream = fopen($op['absolutePath'], 'rb');
-                            $disk->writeStream($op['targetPath'], $stream, $options);
+                        $stream = fopen($op['absolutePath'], 'rb');
+                        $disk->writeStream($op['targetPath'], $stream, $options);
 
-                            if (is_resource($stream)) {
-                                fclose($stream);
-                            }
+                        if (is_resource($stream)) {
+                            fclose($stream);
                         }
                     } catch (\Exception $e) {
                         $failures[] = [

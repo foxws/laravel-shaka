@@ -2,14 +2,6 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
-## 1.4.0 - 2026-02-21
-
-### What's Changed
-
-* feat: add concurrency worker timeout configuration by @francoism90 in https://github.com/foxws/laravel-shaka/pull/27
-
-**Full Changelog**: https://github.com/foxws/laravel-shaka/compare/1.3.0...1.4.0
-
 ## 1.3.0 - 2026-02-21
 
 ### What's Changed

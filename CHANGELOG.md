@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
+## 1.6.0 - 2026-02-23
+
+### What's Changed
+
+* fix: adjust default concurrency workers and improve error handling by @francoism90 in https://github.com/foxws/laravel-shaka/pull/29
+
+**Full Changelog**: https://github.com/foxws/laravel-shaka/compare/1.5.0...1.6.0
+
 ## 1.5.0 - 2026-02-22
 
 ### What's Changed

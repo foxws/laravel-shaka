@@ -24,12 +24,13 @@
     ],
     "require": {
         "php": "^8.3",
+        "aws/aws-sdk-php": "^3.295",
+        "guzzlehttp/promises": "^2.0",
         "illuminate/contracts": "^11.0 || ^12.0",
         "illuminate/filesystem": "^11.0 || ^12.0",
         "illuminate/process": "^11.0 || ^12.0",
         "illuminate/support": "^11.0 || ^12.0",
         "psr/log": "^3.0",
-        "spatie/fork": "^1.2",
         "spatie/laravel-package-tools": "^1.16"
     },
     "require-dev": {

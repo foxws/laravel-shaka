@@ -141,10 +141,10 @@ return [
     |
     | Higher values can improve upload throughput for large HLS/DASH outputs
     | with many segments, but consume more system resources. A value between
-    | 10 and 30 is recommended for most setups.
+    | 5 and 15 is recommended for most setups.
     |
     */
 
-    'concurrency_workers' => (int) env('PACKAGER_CONCURRENCY_WORKERS', 10),
+    'concurrency_workers' => (int) env('PACKAGER_CONCURRENCY_WORKERS', 5),
 
 ];

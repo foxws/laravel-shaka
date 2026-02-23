@@ -6,9 +6,12 @@ namespace Foxws\Shaka\Support;
 
 use Exception;
 use Foxws\Shaka\Filesystem\Disk;
+use Generator;
+use GuzzleHttp\Promise\EachPromise;
 use Illuminate\Contracts\Filesystem\Filesystem;
-use Illuminate\Support\Facades\Concurrency;
+use League\MimeTypeDetection\FinfoMimeTypeDetector;
 use RuntimeException;
+use Throwable;
 
 class PackagerResult
 {
@@ -110,75 +113,139 @@ class PackagerResult
     }
 
     /**
-     * Upload files concurrently using the fork driver via the Concurrency facade.
-     *
-     * Files are chunked into up to 5 forks (capped to avoid overwhelming remote
-     * storage such as S3 or Garage with too many simultaneous connections).
-     * Each file upload retries up to 3 times with exponential backoff (1s, 2s)
-     * to recover from transient throttling or connection errors.
+     * Upload files to the target disk, using async S3 promises when the disk
+     * is S3-backed, and a sequential retry loop for local/other disks.
      *
      * @param  array<int, array{absolutePath: string, targetPath: string}>  $fileOps
      */
     protected function copyFilesConcurrently(array $fileOps, string $diskName, ?string $visibility): void
     {
-        $workers = min($this->configuration['concurrency_workers'] ?? 5, 5);
-        $chunkSize = (int) ceil(count($fileOps) / $workers);
-        $chunks = array_chunk($fileOps, max(1, $chunkSize));
+        $disk = Disk::make($diskName);
 
-        $tasks = [];
+        if ($disk->isS3Disk()) {
+            $this->uploadFilesViaS3Async($fileOps, $disk, $visibility);
 
-        foreach ($chunks as $chunk) {
-            $tasks[] = function () use ($chunk, $diskName, $visibility): array {
-                $disk = Disk::make($diskName);
-                $failures = [];
-                $options = $visibility ? ['visibility' => $visibility] : [];
-
-                foreach ($chunk as $op) {
-                    $attempt = 0;
-                    $maxAttempts = 3;
-                    $stream = null;
-
-                    while ($attempt < $maxAttempts) {
-                        try {
-                            $stream = fopen($op['absolutePath'], 'rb');
-
-                            if ($stream === false) {
-                                throw new RuntimeException("Failed to open file: {$op['absolutePath']}");
-                            }
-
-                            $disk->writeStream($op['targetPath'], $stream, $options);
-
-                            if (is_resource($stream)) {
-                                fclose($stream);
-                            }
-
-                            break;
-                        } catch (Exception $e) {
-                            if (is_resource($stream)) {
-                                fclose($stream);
-                            }
-
-                            $attempt++;
-
-                            if ($attempt >= $maxAttempts) {
-                                $failures[] = [
-                                    'source' => $op['absolutePath'],
-                                    'target' => $op['targetPath'],
-                                    'error' => $e->getMessage(),
-                                ];
-                            } else {
-                                // Exponential backoff: 1s on first retry, 2s on second
-                                usleep((int) (500000 * (2 ** $attempt)));
-                            }
-                        }
-                    }
-                }
-
-                return $failures;
-            };
+            return;
         }
 
-        $this->failedFiles = array_merge(...Concurrency::driver('fork')->run($tasks));
+        $this->uploadFilesSequentially($fileOps, $disk, $visibility);
+    }
+
+    /**
+     * Upload files concurrently to S3 using the AWS SDK's putObjectAsync.
+     *
+     * Dispatches up to `laravel-shaka.concurrency_workers` uploads at a time
+     * via Guzzle promises. This is I/O-overlap concurrency within a single
+     * process — no forking, no process spawning, no shared-state corruption.
+     *
+     * Adapter-level options (e.g. CacheControl) and the Flysystem path prefix
+     * are preserved so behaviour matches what writeStream would produce.
+     *
+     * @param  array<int, array{absolutePath: string, targetPath: string}>  $fileOps
+     */
+    protected function uploadFilesViaS3Async(array $fileOps, Disk $disk, ?string $visibility): void
+    {
+        $client = $disk->getS3Client();
+        $bucket = $disk->getS3Bucket();
+        $adapterOptions = $disk->getS3UploadOptions();
+        $concurrency = (int) ($this->configuration['concurrency_workers'] ?? 10);
+        $mimeDetector = new FinfoMimeTypeDetector;
+
+        $acl = match ($visibility) {
+            'public' => 'public-read',
+            'private' => 'private',
+            default => null,
+        };
+
+        $failed = [];
+
+        $generator = (function () use ($fileOps, $client, $bucket, $disk, $adapterOptions, $acl, $mimeDetector, &$failed): Generator {
+            foreach ($fileOps as $op) {
+                $stream = fopen($op['absolutePath'], 'rb');
+
+                if ($stream === false) {
+                    $failed[] = [
+                        'source' => $op['absolutePath'],
+                        'target' => $op['targetPath'],
+                        'error' => "Failed to open file: {$op['absolutePath']}",
+                    ];
+
+                    continue;
+                }
+
+                $key = $disk->prefixS3Path($op['targetPath']);
+
+                $params = array_merge($adapterOptions, [
+                    'Bucket' => $bucket,
+                    'Key' => $key,
+                    'Body' => $stream,
+                    'ContentType' => $mimeDetector->detectMimeTypeFromPath($key) ?? 'application/octet-stream',
+                ]);
+
+                if ($acl !== null) {
+                    $params['ACL'] = $acl;
+                }
+
+                yield $client->putObjectAsync($params)->then(
+                    function () use ($stream): void {
+                        if (is_resource($stream)) {
+                            fclose($stream);
+                        }
+                    },
+                    function ($reason) use ($stream, $op, &$failed): void {
+                        if (is_resource($stream)) {
+                            fclose($stream);
+                        }
+
+                        $failed[] = [
+                            'source' => $op['absolutePath'],
+                            'target' => $op['targetPath'],
+                            'error' => $reason instanceof Throwable ? $reason->getMessage() : (string) $reason,
+                        ];
+                    }
+                );
+            }
+        })();
+
+        (new EachPromise($generator, ['concurrency' => $concurrency]))->promise()->wait();
+
+        $this->failedFiles = array_merge($this->failedFiles, $failed);
+    }
+
+    /**
+     * Upload files sequentially to the target disk.
+     *
+     * @param  array<int, array{absolutePath: string, targetPath: string}>  $fileOps
+     */
+    protected function uploadFilesSequentially(array $fileOps, Disk $disk, ?string $visibility): void
+    {
+        $options = $visibility ? ['visibility' => $visibility] : [];
+
+        foreach ($fileOps as $op) {
+            try {
+                $stream = fopen($op['absolutePath'], 'rb');
+
+                if ($stream === false) {
+                    throw new RuntimeException("Failed to open file: {$op['absolutePath']}");
+                }
+
+                $disk->writeStream($op['targetPath'], $stream, $options);
+
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
+            } catch (Exception $e) {
+                if (isset($stream) && is_resource($stream)) {
+                    fclose($stream);
+                }
+
+                $this->failedFiles[] = [
+                    'source' => $op['absolutePath'],
+                    'target' => $op['targetPath'],
+                    'error' => $e->getMessage(),
+                ];
+            }
+        }
     }
 
     protected function getTempFilesystem(): ?Filesystem

@@ -135,16 +135,11 @@ return [
     | Concurrency Workers
     |--------------------------------------------------------------------------
     |
-    | Number of parallel child processes used when uploading packaged files
-    | to the target disk (e.g. S3). Each worker handles a chunk of files
-    | concurrently via Laravel's Concurrency facade.
-    |
-    | Higher values can improve upload throughput for large HLS/DASH outputs
-    | with many segments, but consume more system resources. A value between
-    | 5 and 15 is recommended for most setups.
+    | Maximum number of concurrent S3 uploads when copying packaged files
+    | to an S3-backed disk. Ignored for local disks.
     |
     */
 
-    'concurrency_workers' => (int) env('PACKAGER_CONCURRENCY_WORKERS', 5),
+    'concurrency_workers' => (int) env('PACKAGER_CONCURRENCY_WORKERS', 10),
 
 ];

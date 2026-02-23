@@ -68,7 +68,7 @@ class PackagerResult
             }
         }
 
-        if (filled($this->failedFiles)) {
+        if ($this->hasCopyFailures()) {
             $errors = array_map(
                 fn (array $f) => "{$f['target']}: {$f['error']}",
                 $this->failedFiles
@@ -220,7 +220,7 @@ class PackagerResult
 
     public function hasCopyFailures(): bool
     {
-        return ! empty($this->failedFiles);
+        return filled($this->failedFiles);
     }
 
     protected function getSourceDirectory(): ?string

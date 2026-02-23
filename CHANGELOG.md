@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
+## 1.7.0 - 2026-02-23
+
+### What's Changed
+
+* feat: add S3 support for concurrent file uploads by @francoism90 in https://github.com/foxws/laravel-shaka/pull/30
+
+**Full Changelog**: https://github.com/foxws/laravel-shaka/compare/1.6.0...1.7.0
+
 ## 1.6.0 - 2026-02-23
 
 ### What's Changed

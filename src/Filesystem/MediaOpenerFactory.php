@@ -37,7 +37,7 @@ class MediaOpenerFactory
 
         $resolver = $this->packagerResolver;
 
-        return $this->packager = $resolver();
+        return ($resolver)();
     }
 
     public function new(): MediaOpener

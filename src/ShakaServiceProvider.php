@@ -63,7 +63,7 @@ class ShakaServiceProvider extends PackageServiceProvider
         });
 
         // Register the Packager
-        $this->app->singleton(Packager::class, function ($app) {
+        $this->app->scoped(Packager::class, function ($app) {
             $driver = $app->make(ShakaPackager::class);
             $logger = $app->make('laravel-shaka-logger');
             $config = $app->make('laravel-shaka-configuration');

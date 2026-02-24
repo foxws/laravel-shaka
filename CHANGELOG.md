@@ -2,6 +2,10 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
+## 1.8.2 - 2026-02-24
+
+**Full Changelog**: https://github.com/foxws/laravel-shaka/compare/1.8.1...1.8.2
+
 ## 1.8.1 - 2026-02-24
 
 **Full Changelog**: https://github.com/foxws/laravel-shaka/compare/1.8.0...1.8.1

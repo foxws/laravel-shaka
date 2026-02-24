@@ -447,14 +447,14 @@ class Packager
         try {
             $result = $this->packager->command($command);
 
-            if ($this->logger) {
-                $this->logger->info('Packaging operation completed');
-            }
-
             // Get the first media's disk as the source disk
             $sourceDisk = $this->mediaCollection->collection()->first()?->getDisk();
 
             $packagerResult = new PackagerResult($result, $sourceDisk, $this->temporaryDirectory, $this->cacheDirectory, $this->configuration);
+
+            if ($this->logger) {
+                $this->logger->info('Packaging operation completed');
+            }
 
             PackagingCompleted::dispatch($packagerResult, microtime(true) - $startTime);
 
@@ -496,13 +496,13 @@ class Packager
         try {
             $result = $this->packager->command($command);
 
-            if ($this->logger) {
-                $this->logger->info('Packaging operation completed');
-            }
-
             $sourceDisk = $this->mediaCollection?->collection()->first()?->getDisk();
 
             $packagerResult = new PackagerResult($result, $sourceDisk, $this->temporaryDirectory, $this->cacheDirectory, $this->configuration);
+
+            if ($this->logger) {
+                $this->logger->info('Packaging operation completed');
+            }
 
             PackagingCompleted::dispatch($packagerResult, microtime(true) - $startTime);
 

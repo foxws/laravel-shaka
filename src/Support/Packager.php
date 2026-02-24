@@ -11,6 +11,7 @@ use Foxws\Shaka\Filesystem\MediaCollection;
 use Foxws\Shaka\Filesystem\TemporaryDirectories;
 use Illuminate\Support\Traits\ForwardsCalls;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 class Packager
 {
@@ -458,7 +459,7 @@ class Packager
             PackagingCompleted::dispatch($packagerResult, microtime(true) - $startTime);
 
             return $packagerResult;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $executionTime = microtime(true) - $startTime;
 
             if ($this->logger) {

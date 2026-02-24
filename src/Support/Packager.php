@@ -507,7 +507,7 @@ class Packager
             PackagingCompleted::dispatch($packagerResult, microtime(true) - $startTime);
 
             return $packagerResult;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $executionTime = microtime(true) - $startTime;
 
             if ($this->logger) {

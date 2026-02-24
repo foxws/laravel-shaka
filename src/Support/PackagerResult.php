@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Foxws\Shaka\Support;
 
-use Exception;
 use Foxws\Shaka\Filesystem\Disk;
 use Generator;
 use GuzzleHttp\Promise\EachPromise;
@@ -238,7 +237,7 @@ class PackagerResult
                 if (is_resource($stream)) {
                     fclose($stream);
                 }
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 if (isset($stream) && is_resource($stream)) {
                     fclose($stream);
                 }

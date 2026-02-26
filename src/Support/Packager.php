@@ -281,6 +281,76 @@ class Packager
     }
 
     /**
+     * Set the base URL prefix for HLS Media Playlists and media files.
+     */
+    public function withHlsBaseUrl(string $url): self
+    {
+        $this->builder()->withHlsBaseUrl($url);
+
+        return $this;
+    }
+
+    /**
+     * Set the key URI for 'identity' and FairPlay key formats.
+     */
+    public function withHlsKeyUri(string $uri): self
+    {
+        $this->builder()->withHlsKeyUri($uri);
+
+        return $this;
+    }
+
+    /**
+     * Set the HLS playlist type: 'VOD', 'EVENT', or 'LIVE'.
+     */
+    public function withHlsPlaylistType(string $type): self
+    {
+        $this->builder()->withHlsPlaylistType($type);
+
+        return $this;
+    }
+
+    /**
+     * Set the initial EXT-X-MEDIA-SEQUENCE value for live HLS playlists.
+     */
+    public function withHlsMediaSequenceNumber(int $number): self
+    {
+        $this->builder()->withHlsMediaSequenceNumber($number);
+
+        return $this;
+    }
+
+    /**
+     * Set EXT-X-START offset on HLS media playlists (positive = from start, negative = from end).
+     */
+    public function withHlsStartTimeOffset(float|int $seconds): self
+    {
+        $this->builder()->withHlsStartTimeOffset($seconds);
+
+        return $this;
+    }
+
+    /**
+     * Restrict output to HLS only.
+     */
+    public function withHlsOnly(bool $enabled = true): self
+    {
+        $this->builder()->withHlsOnly($enabled);
+
+        return $this;
+    }
+
+    /**
+     * Emit EXT-X-SESSION-KEY in the master playlist for offline HLS playback.
+     */
+    public function withCreateSessionKeys(bool $enabled = true): self
+    {
+        $this->builder()->withCreateSessionKeys($enabled);
+
+        return $this;
+    }
+
+    /**
      * Set segment duration
      */
     public function withSegmentDuration(int $seconds): self
@@ -535,7 +605,347 @@ class Packager
      */
     public function withKeyRotationDuration(int $seconds): self
     {
-        $this->builder()->withOption('crypto_period_duration', $seconds);
+        $this->builder()->withCryptoPeriodDuration($seconds);
+
+        return $this;
+    }
+
+    /**
+     * Set the protection scheme: 'cenc', 'cbc1', 'cens', or 'cbcs'.
+     */
+    public function withProtectionScheme(string $scheme): self
+    {
+        $this->builder()->withProtectionScheme($scheme);
+
+        return $this;
+    }
+
+    /**
+     * Set the count of encrypted 16-byte blocks in the protection pattern.
+     */
+    public function withCryptByteBlock(int $count): self
+    {
+        $this->builder()->withCryptByteBlock($count);
+
+        return $this;
+    }
+
+    /**
+     * Set the count of unencrypted 16-byte blocks in the protection pattern.
+     */
+    public function withSkipByteBlock(int $count): self
+    {
+        $this->builder()->withSkipByteBlock($count);
+
+        return $this;
+    }
+
+    /**
+     * Enable or disable VP9 subsample encryption.
+     */
+    public function withVp9SubsampleEncryption(bool $enabled = true): self
+    {
+        $this->builder()->withVp9SubsampleEncryption($enabled);
+
+        return $this;
+    }
+
+    /**
+     * Set the clear lead duration in seconds (default: 5).
+     */
+    public function withClearLead(float|int $seconds): self
+    {
+        $this->builder()->withClearLead($seconds);
+
+        return $this;
+    }
+
+    /**
+     * Specify which protection systems to generate (e.g. Widevine, PlayReady).
+     */
+    public function withProtectionSystems(string $systems): self
+    {
+        $this->builder()->withProtectionSystems($systems);
+
+        return $this;
+    }
+
+    /**
+     * Set extra XML data to append to the PlayReady PSSH.
+     */
+    public function withPlayreadyExtraHeaderData(string $xml): self
+    {
+        $this->builder()->withPlayreadyExtraHeaderData($xml);
+
+        return $this;
+    }
+
+    /**
+     * Enable raw key encryption.
+     */
+    public function withEnableRawKeyEncryption(bool $enabled = true): self
+    {
+        $this->builder()->withEnableRawKeyEncryption($enabled);
+
+        return $this;
+    }
+
+    /**
+     * Enable raw key decryption.
+     */
+    public function withEnableRawKeyDecryption(bool $enabled = true): self
+    {
+        $this->builder()->withEnableRawKeyDecryption($enabled);
+
+        return $this;
+    }
+
+    /**
+     * Set raw key info string(s) for encryption or decryption.
+     */
+    public function withKeys(string $keyInfoString): self
+    {
+        $this->builder()->withKeys($keyInfoString);
+
+        return $this;
+    }
+
+    /**
+     * Set the IV in hex format (16 or 32 hex digits). Testing use only.
+     */
+    public function withIv(string $hex): self
+    {
+        $this->builder()->withIv($hex);
+
+        return $this;
+    }
+
+    /**
+     * Set one or more concatenated PSSH boxes in hex string format.
+     */
+    public function withPssh(string $hex): self
+    {
+        $this->builder()->withPssh($hex);
+
+        return $this;
+    }
+
+    /**
+     * Enable Widevine encryption.
+     */
+    public function withEnableWidevineEncryption(bool $enabled = true): self
+    {
+        $this->builder()->withEnableWidevineEncryption($enabled);
+
+        return $this;
+    }
+
+    /**
+     * Enable entitlement license in the Widevine encryption request.
+     */
+    public function withEnableEntitlementLicense(bool $enabled = true): self
+    {
+        $this->builder()->withEnableEntitlementLicense($enabled);
+
+        return $this;
+    }
+
+    /**
+     * Enable Widevine decryption.
+     */
+    public function withEnableWidevineDecryption(bool $enabled = true): self
+    {
+        $this->builder()->withEnableWidevineDecryption($enabled);
+
+        return $this;
+    }
+
+    /**
+     * Set the Widevine key server URL.
+     */
+    public function withKeyServerUrl(string $url): self
+    {
+        $this->builder()->withKeyServerUrl($url);
+
+        return $this;
+    }
+
+    /**
+     * Set the content identifier (hex string) for Widevine.
+     */
+    public function withContentId(string $hex): self
+    {
+        $this->builder()->withContentId($hex);
+
+        return $this;
+    }
+
+    /**
+     * Set the Widevine policy name.
+     */
+    public function withPolicy(string $policy): self
+    {
+        $this->builder()->withPolicy($policy);
+
+        return $this;
+    }
+
+    /**
+     * Set the maximum SD pixel threshold for Widevine DRM labelling.
+     */
+    public function withMaxSdPixels(int $pixels): self
+    {
+        $this->builder()->withMaxSdPixels($pixels);
+
+        return $this;
+    }
+
+    /**
+     * Set the maximum HD pixel threshold for Widevine DRM labelling.
+     */
+    public function withMaxHdPixels(int $pixels): self
+    {
+        $this->builder()->withMaxHdPixels($pixels);
+
+        return $this;
+    }
+
+    /**
+     * Set the maximum UHD1 pixel threshold for Widevine DRM labelling.
+     */
+    public function withMaxUhd1Pixels(int $pixels): self
+    {
+        $this->builder()->withMaxUhd1Pixels($pixels);
+
+        return $this;
+    }
+
+    /**
+     * Set the signer name.
+     */
+    public function withSigner(string $signer): self
+    {
+        $this->builder()->withSigner($signer);
+
+        return $this;
+    }
+
+    /**
+     * Set the AES signing key (hex). Requires withAesSigningIv(). Exclusive with withRsaSigningKeyPath().
+     */
+    public function withAesSigningKey(string $hex): self
+    {
+        $this->builder()->withAesSigningKey($hex);
+
+        return $this;
+    }
+
+    /**
+     * Set the AES signing IV (hex). Required when withAesSigningKey() is set.
+     */
+    public function withAesSigningIv(string $hex): self
+    {
+        $this->builder()->withAesSigningIv($hex);
+
+        return $this;
+    }
+
+    /**
+     * Set the path to the PKCS#1 RSA private key file. Exclusive with withAesSigningKey().
+     */
+    public function withRsaSigningKeyPath(string $path): self
+    {
+        $this->builder()->withRsaSigningKeyPath($path);
+
+        return $this;
+    }
+
+    /**
+     * Set the key rotation period in seconds.
+     */
+    public function withCryptoPeriodDuration(int $seconds): self
+    {
+        $this->builder()->withCryptoPeriodDuration($seconds);
+
+        return $this;
+    }
+
+    /**
+     * Set the Widevine group identifier (hex string).
+     */
+    public function withGroupId(string $hex): self
+    {
+        $this->builder()->withGroupId($hex);
+
+        return $this;
+    }
+
+    /**
+     * Enable PlayReady encryption.
+     */
+    public function withEnablePlayreadyEncryption(bool $enabled = true): self
+    {
+        $this->builder()->withEnablePlayreadyEncryption($enabled);
+
+        return $this;
+    }
+
+    /**
+     * Set the PlayReady packaging server URL.
+     */
+    public function withPlayreadyServerUrl(string $url): self
+    {
+        $this->builder()->withPlayreadyServerUrl($url);
+
+        return $this;
+    }
+
+    /**
+     * Set the PlayReady program identifier.
+     */
+    public function withProgramIdentifier(string $identifier): self
+    {
+        $this->builder()->withProgramIdentifier($identifier);
+
+        return $this;
+    }
+
+    /**
+     * Set the absolute path to the CA certificate file (PEM).
+     */
+    public function withCaFile(string $path): self
+    {
+        $this->builder()->withCaFile($path);
+
+        return $this;
+    }
+
+    /**
+     * Set the absolute path to the client certificate file.
+     */
+    public function withClientCertFile(string $path): self
+    {
+        $this->builder()->withClientCertFile($path);
+
+        return $this;
+    }
+
+    /**
+     * Set the absolute path to the client certificate private key file.
+     */
+    public function withClientCertPrivateKeyFile(string $path): self
+    {
+        $this->builder()->withClientCertPrivateKeyFile($path);
+
+        return $this;
+    }
+
+    /**
+     * Set the password for the client certificate private key file.
+     */
+    public function withClientCertPrivateKeyPassword(string $password): self
+    {
+        $this->builder()->withClientCertPrivateKeyPassword($password);
 
         return $this;
     }
@@ -598,6 +1008,11 @@ class Packager
             'protection_systems' => true,
             'raw_key' => true,
             'iv' => true,
+            'aes_signing_key' => true,
+            'aes_signing_iv' => true,
+            'content_id' => true,
+            'group_id' => true,
+            'client_cert_private_key_password' => true,
         ];
 
         $filtered = $options;

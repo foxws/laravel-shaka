@@ -85,6 +85,116 @@ class CommandBuilder
         return $this;
     }
 
+    /**
+     * Set the base URL prefix for HLS Media Playlists and media files.
+     */
+    public function withHlsBaseUrl(string $url): self
+    {
+        if ($url === '') {
+            throw new InvalidArgumentException('HLS base URL must not be empty');
+        }
+
+        $this->options['hls_base_url'] = $url;
+
+        return $this;
+    }
+
+    /**
+     * Set the key URI for 'identity' and FairPlay key formats.
+     *
+     * Ignored when the playlist is not encrypted or uses a different key format.
+     */
+    public function withHlsKeyUri(string $uri): self
+    {
+        if ($uri === '') {
+            throw new InvalidArgumentException('HLS key URI must not be empty');
+        }
+
+        $this->options['hls_key_uri'] = $uri;
+
+        return $this;
+    }
+
+    /**
+     * Set the HLS playlist type (EXT-X-PLAYLIST-TYPE).
+     *
+     * Accepted values: 'VOD', 'EVENT', 'LIVE'.
+     * For LIVE, the EXT-X-PLAYLIST-TYPE tag is omitted entirely.
+     */
+    public function withHlsPlaylistType(string $type): self
+    {
+        $type = strtoupper($type);
+
+        $allowed = ['VOD', 'EVENT', 'LIVE'];
+
+        if (! in_array($type, $allowed, true)) {
+            throw new InvalidArgumentException(
+                "HLS playlist type must be one of: ".implode(', ', $allowed).". Got: {$type}"
+            );
+        }
+
+        $this->options['hls_playlist_type'] = $type;
+
+        return $this;
+    }
+
+    /**
+     * Set the initial EXT-X-MEDIA-SEQUENCE value for live HLS playlists.
+     *
+     * Useful when restarting the packager mid-stream so segment numbering
+     * continues from a previous run rather than resetting to zero.
+     */
+    public function withHlsMediaSequenceNumber(int $number): self
+    {
+        if ($number < 0) {
+            throw new InvalidArgumentException('HLS media sequence number must be non-negative');
+        }
+
+        $this->options['hls_media_sequence_number'] = $number;
+
+        return $this;
+    }
+
+    /**
+     * Set EXT-X-START on HLS media playlists.
+     *
+     * A positive value is an offset from the start of the playlist;
+     * a negative value is an offset from the end of the last segment.
+     */
+    public function withHlsStartTimeOffset(float|int $seconds): self
+    {
+        $this->options['hls_start_time_offset'] = $seconds;
+
+        return $this;
+    }
+
+    /**
+     * Restrict output to HLS only (0 = disabled, 1 = enabled).
+     */
+    public function withHlsOnly(bool $enabled = true): self
+    {
+        $this->options['hls_only'] = $enabled ? 1 : 0;
+
+        return $this;
+    }
+
+    /**
+     * Emit EXT-X-SESSION-KEY in the master playlist for offline HLS playback.
+     *
+     * Required when content keys need to be declared up-front for offline/download
+     * scenarios per the HLS specification.
+     */
+    public function withCreateSessionKeys(bool $enabled = true): self
+    {
+        if ($enabled) {
+            $this->options['create_session_keys'] = true;
+        } else {
+            $this->removeOption('create_session_keys');
+        }
+
+        return $this;
+    }
+
     public function withSegmentDuration(int $seconds): self
     {
         if ($seconds < 1) {
@@ -413,6 +523,533 @@ class CommandBuilder
         return $this;
     }
 
+    /**
+     * Set the protection scheme.
+     *
+     * Accepted values: 'cenc' (AES-CTR), 'cbc1', 'cens', 'cbcs' (AES-CBC).
+     * Pattern-based schemes ('cens', 'cbcs') apply to video streams only.
+     */
+    public function withProtectionScheme(string $scheme): self
+    {
+        $scheme = strtolower($scheme);
+
+        $allowed = ['cenc', 'cbc1', 'cens', 'cbcs'];
+
+        if (! in_array($scheme, $allowed, true)) {
+            throw new InvalidArgumentException(
+                'Protection scheme must be one of: '.implode(', ', $allowed).". Got: {$scheme}"
+            );
+        }
+
+        $this->options['protection_scheme'] = $scheme;
+
+        return $this;
+    }
+
+    /**
+     * Set the count of encrypted 16-byte blocks in the protection pattern.
+     *
+     * Common patterns (crypt_byte_block:skip_byte_block): 1:9 (default), 5:5, 10:0.
+     * Applies to video streams with 'cbcs' and 'cens' schemes only; ignored otherwise.
+     */
+    public function withCryptByteBlock(int $count): self
+    {
+        if ($count < 0 || $count > 15) {
+            throw new InvalidArgumentException('Crypt byte block must be between 0 and 15');
+        }
+
+        $this->options['crypt_byte_block'] = $count;
+
+        return $this;
+    }
+
+    /**
+     * Set the count of unencrypted 16-byte blocks in the protection pattern.
+     *
+     * Applies to video streams with 'cbcs' and 'cens' schemes only; ignored otherwise.
+     */
+    public function withSkipByteBlock(int $count): self
+    {
+        if ($count < 0 || $count > 15) {
+            throw new InvalidArgumentException('Skip byte block must be between 0 and 15');
+        }
+
+        $this->options['skip_byte_block'] = $count;
+
+        return $this;
+    }
+
+    /**
+     * Enable or disable VP9 subsample encryption.
+     *
+     * Enabled by default. Passing false emits --novp9_subsample_encryption.
+     */
+    public function withVp9SubsampleEncryption(bool $enabled = true): self
+    {
+        if ($enabled) {
+            $this->removeOption('novp9_subsample_encryption');
+            $this->options['vp9_subsample_encryption'] = true;
+        } else {
+            $this->removeOption('vp9_subsample_encryption');
+            $this->options['novp9_subsample_encryption'] = true;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Set the clear lead duration in seconds.
+     *
+     * Segments within this initial window are unencrypted. Default: 5 seconds.
+     */
+    public function withClearLead(float|int $seconds): self
+    {
+        if ($seconds < 0) {
+            throw new InvalidArgumentException('Clear lead must be non-negative');
+        }
+
+        $this->options['clear_lead'] = $seconds;
+
+        return $this;
+    }
+
+    /**
+     * Specify which protection systems to generate.
+     *
+     * Comma-separated list of system names: Widevine, PlayReady, FairPlay, Marlin, CommonSystem.
+     */
+    public function withProtectionSystems(string $systems): self
+    {
+        if ($systems === '') {
+            throw new InvalidArgumentException('Protection systems must not be empty');
+        }
+
+        $this->options['protection_systems'] = $systems;
+
+        return $this;
+    }
+
+    /**
+     * Set extra XML data to append to the PlayReady PSSH.
+     *
+     * Can be specified even when using a different key source.
+     */
+    public function withPlayreadyExtraHeaderData(string $xml): self
+    {
+        if ($xml === '') {
+            throw new InvalidArgumentException('PlayReady extra header data must not be empty');
+        }
+
+        $this->options['playready_extra_header_data'] = $xml;
+
+        return $this;
+    }
+
+    /**
+     * Enable encryption with raw keys provided on the command line.
+     *
+     * Generates a Common protection system unless --pssh or --protection_systems
+     * is also specified.
+     */
+    public function withEnableRawKeyEncryption(bool $enabled = true): self
+    {
+        if ($enabled) {
+            $this->options['enable_raw_key_encryption'] = true;
+        } else {
+            $this->removeOption('enable_raw_key_encryption');
+        }
+
+        return $this;
+    }
+
+    /**
+     * Enable decryption with raw keys provided on the command line.
+     */
+    public function withEnableRawKeyDecryption(bool $enabled = true): self
+    {
+        if ($enabled) {
+            $this->options['enable_raw_key_decryption'] = true;
+        } else {
+            $this->removeOption('enable_raw_key_decryption');
+        }
+
+        return $this;
+    }
+
+    /**
+     * Set raw key info string(s) for encryption or decryption.
+     *
+     * Format: "label=<label>:key_id=<key_id>:key=<key>[:iv=<iv>][,...]"
+     * key_id and key must be 32-digit hex strings.
+     */
+    public function withKeys(string $keyInfoString): self
+    {
+        if ($keyInfoString === '') {
+            throw new InvalidArgumentException('Keys info string must not be empty');
+        }
+
+        $this->options['keys'] = $keyInfoString;
+
+        return $this;
+    }
+
+    /**
+     * Set the initialization vector in hex format.
+     *
+     * Must be 16 hex digits (8 bytes) or 32 hex digits (16 bytes).
+     * Should only be used for testing — a random IV is generated when omitted.
+     * Mutually exclusive with per-key IV specified inside --keys.
+     */
+    public function withIv(string $hex): self
+    {
+        if (! preg_match('/^[0-9a-fA-F]+$/', $hex) || ! in_array(strlen($hex), [16, 32], true)) {
+            throw new InvalidArgumentException('IV must be a 16-digit or 32-digit hex string (8 or 16 bytes)');
+        }
+
+        $this->options['iv'] = $hex;
+
+        return $this;
+    }
+
+    /**
+     * Set one or more concatenated PSSH boxes in hex string format.
+     *
+     * When neither this nor --protection_systems is specified, a v1 common PSSH
+     * box is generated automatically.
+     */
+    public function withPssh(string $hex): self
+    {
+        if ($hex === '' || ! preg_match('/^[0-9a-fA-F]+$/', $hex)) {
+            throw new InvalidArgumentException('PSSH must be a non-empty hex string');
+        }
+
+        $this->options['pssh'] = $hex;
+
+        return $this;
+    }
+
+    /**
+     * Enable encryption with the Widevine key server.
+     *
+     * Requires either --aes_signing_key/--aes_signing_iv or --rsa_signing_key_path.
+     */
+    public function withEnableWidevineEncryption(bool $enabled = true): self
+    {
+        if ($enabled) {
+            $this->options['enable_widevine_encryption'] = true;
+        } else {
+            $this->removeOption('enable_widevine_encryption');
+        }
+
+        return $this;
+    }
+
+    /**
+     * Enable entitlement license in the Widevine encryption request.
+     */
+    public function withEnableEntitlementLicense(bool $enabled = true): self
+    {
+        if ($enabled) {
+            $this->options['enable_entitlement_license'] = true;
+        } else {
+            $this->removeOption('enable_entitlement_license');
+        }
+
+        return $this;
+    }
+
+    /**
+     * Enable decryption with the Widevine key server.
+     */
+    public function withEnableWidevineDecryption(bool $enabled = true): self
+    {
+        if ($enabled) {
+            $this->options['enable_widevine_decryption'] = true;
+        } else {
+            $this->removeOption('enable_widevine_decryption');
+        }
+
+        return $this;
+    }
+
+    /**
+     * Set the key server URL (required for Widevine encryption and decryption).
+     */
+    public function withKeyServerUrl(string $url): self
+    {
+        if ($url === '') {
+            throw new InvalidArgumentException('Key server URL must not be empty');
+        }
+
+        $this->options['key_server_url'] = $url;
+
+        return $this;
+    }
+
+    /**
+     * Set the content identifier that uniquely identifies the content (hex string).
+     */
+    public function withContentId(string $hex): self
+    {
+        if ($hex === '' || ! preg_match('/^[0-9a-fA-F]+$/', $hex)) {
+            throw new InvalidArgumentException('Content ID must be a non-empty hex string');
+        }
+
+        $this->options['content_id'] = $hex;
+
+        return $this;
+    }
+
+    /**
+     * Set the name of a stored Widevine policy.
+     */
+    public function withPolicy(string $policy): self
+    {
+        if ($policy === '') {
+            throw new InvalidArgumentException('Policy must not be empty');
+        }
+
+        $this->options['policy'] = $policy;
+
+        return $this;
+    }
+
+    /**
+     * Set the maximum pixels per frame threshold for SD tracks.
+     *
+     * Default: 442368 (768 x 576).
+     */
+    public function withMaxSdPixels(int $pixels): self
+    {
+        if ($pixels < 1) {
+            throw new InvalidArgumentException('Max SD pixels must be greater than 0');
+        }
+
+        $this->options['max_sd_pixels'] = $pixels;
+
+        return $this;
+    }
+
+    /**
+     * Set the maximum pixels per frame threshold for HD tracks.
+     *
+     * Default: 2073600 (1920 x 1080).
+     */
+    public function withMaxHdPixels(int $pixels): self
+    {
+        if ($pixels < 1) {
+            throw new InvalidArgumentException('Max HD pixels must be greater than 0');
+        }
+
+        $this->options['max_hd_pixels'] = $pixels;
+
+        return $this;
+    }
+
+    /**
+     * Set the maximum pixels per frame threshold for UHD1 tracks.
+     *
+     * Default: 8847360 (4096 x 2160).
+     */
+    public function withMaxUhd1Pixels(int $pixels): self
+    {
+        if ($pixels < 1) {
+            throw new InvalidArgumentException('Max UHD1 pixels must be greater than 0');
+        }
+
+        $this->options['max_uhd1_pixels'] = $pixels;
+
+        return $this;
+    }
+
+    /**
+     * Set the signer name.
+     */
+    public function withSigner(string $signer): self
+    {
+        if ($signer === '') {
+            throw new InvalidArgumentException('Signer must not be empty');
+        }
+
+        $this->options['signer'] = $signer;
+
+        return $this;
+    }
+
+    /**
+     * Set the AES signing key (hex string).
+     *
+     * Requires withAesSigningIv() to also be set. Mutually exclusive with
+     * withRsaSigningKeyPath().
+     */
+    public function withAesSigningKey(string $hex): self
+    {
+        if ($hex === '' || ! preg_match('/^[0-9a-fA-F]+$/', $hex)) {
+            throw new InvalidArgumentException('AES signing key must be a non-empty hex string');
+        }
+
+        $this->options['aes_signing_key'] = $hex;
+
+        return $this;
+    }
+
+    /**
+     * Set the AES signing IV (hex string).
+     *
+     * Must be provided whenever withAesSigningKey() is set.
+     */
+    public function withAesSigningIv(string $hex): self
+    {
+        if ($hex === '' || ! preg_match('/^[0-9a-fA-F]+$/', $hex)) {
+            throw new InvalidArgumentException('AES signing IV must be a non-empty hex string');
+        }
+
+        $this->options['aes_signing_iv'] = $hex;
+
+        return $this;
+    }
+
+    /**
+     * Set the path to the PKCS#1 RSA private key file for request signing.
+     *
+     * Mutually exclusive with withAesSigningKey().
+     */
+    public function withRsaSigningKeyPath(string $path): self
+    {
+        if ($path === '') {
+            throw new InvalidArgumentException('RSA signing key path must not be empty');
+        }
+
+        $this->options['rsa_signing_key_path'] = $path;
+
+        return $this;
+    }
+
+    /**
+     * Set the key rotation period in seconds.
+     *
+     * When non-zero, key rotation is enabled. Requires a compatible protection
+     * scheme ('cenc' or 'cbcs').
+     */
+    public function withCryptoPeriodDuration(int $seconds): self
+    {
+        if ($seconds < 0) {
+            throw new InvalidArgumentException('Crypto period duration must be non-negative');
+        }
+
+        $this->options['crypto_period_duration'] = $seconds;
+
+        return $this;
+    }
+
+    /**
+     * Set the group identifier for Widevine licenses (hex string).
+     */
+    public function withGroupId(string $hex): self
+    {
+        if ($hex === '' || ! preg_match('/^[0-9a-fA-F]+$/', $hex)) {
+            throw new InvalidArgumentException('Group ID must be a non-empty hex string');
+        }
+
+        $this->options['group_id'] = $hex;
+
+        return $this;
+    }
+
+    /**
+     * Enable encryption with a PlayReady key server.
+     */
+    public function withEnablePlayreadyEncryption(bool $enabled = true): self
+    {
+        if ($enabled) {
+            $this->options['enable_playready_encryption'] = true;
+        } else {
+            $this->removeOption('enable_playready_encryption');
+        }
+
+        return $this;
+    }
+
+    /**
+     * Set the PlayReady packaging server URL.
+     */
+    public function withPlayreadyServerUrl(string $url): self
+    {
+        if ($url === '') {
+            throw new InvalidArgumentException('PlayReady server URL must not be empty');
+        }
+
+        $this->options['playready_server_url'] = $url;
+
+        return $this;
+    }
+
+    /**
+     * Set the program identifier for the PlayReady packaging request.
+     */
+    public function withProgramIdentifier(string $identifier): self
+    {
+        if ($identifier === '') {
+            throw new InvalidArgumentException('Program identifier must not be empty');
+        }
+
+        $this->options['program_identifier'] = $identifier;
+
+        return $this;
+    }
+
+    /**
+     * Set the absolute path to the CA certificate file (PEM format).
+     */
+    public function withCaFile(string $path): self
+    {
+        if ($path === '') {
+            throw new InvalidArgumentException('CA file path must not be empty');
+        }
+
+        $this->options['ca_file'] = $path;
+
+        return $this;
+    }
+
+    /**
+     * Set the absolute path to the client certificate file.
+     */
+    public function withClientCertFile(string $path): self
+    {
+        if ($path === '') {
+            throw new InvalidArgumentException('Client cert file path must not be empty');
+        }
+
+        $this->options['client_cert_file'] = $path;
+
+        return $this;
+    }
+
+    /**
+     * Set the absolute path to the client certificate private key file.
+     */
+    public function withClientCertPrivateKeyFile(string $path): self
+    {
+        if ($path === '') {
+            throw new InvalidArgumentException('Client cert private key file path must not be empty');
+        }
+
+        $this->options['client_cert_private_key_file'] = $path;
+
+        return $this;
+    }
+
+    /**
+     * Set the password for the client certificate private key file.
+     */
+    public function withClientCertPrivateKeyPassword(string $password): self
+    {
+        $this->options['client_cert_private_key_password'] = $password;
+
+        return $this;
+    }
+
     public function withOption(string $key, mixed $value): self
     {
         $this->options[$key] = $value;
@@ -514,12 +1151,29 @@ class CommandBuilder
      */
     protected function validateCrossConstraints(): void
     {
-        $fragmentDuration = $this->options['fragment_duration'] ?? null;
-        $segmentDuration = $this->options['segment_duration'] ?? null;
+        $opts = $this->options;
+
+        // Fragment duration must not exceed segment duration
+        $fragmentDuration = $opts['fragment_duration'] ?? null;
+        $segmentDuration = $opts['segment_duration'] ?? null;
 
         if ($fragmentDuration !== null && $segmentDuration !== null && $fragmentDuration > $segmentDuration) {
             throw new InvalidArgumentException(
                 "Fragment duration ({$fragmentDuration}s) must not be larger than segment duration ({$segmentDuration}s)"
+            );
+        }
+
+        // AES signing key requires AES signing IV
+        if (isset($opts['aes_signing_key']) && ! isset($opts['aes_signing_iv'])) {
+            throw new InvalidArgumentException(
+                'aes_signing_iv is required when aes_signing_key is specified'
+            );
+        }
+
+        // AES and RSA signing methods are mutually exclusive
+        if (isset($opts['aes_signing_key']) && isset($opts['rsa_signing_key_path'])) {
+            throw new InvalidArgumentException(
+                'aes_signing_key and rsa_signing_key_path are mutually exclusive'
             );
         }
     }

@@ -129,7 +129,7 @@ class CommandBuilder
 
         if (! in_array($type, $allowed, true)) {
             throw new InvalidArgumentException(
-                "HLS playlist type must be one of: ".implode(', ', $allowed).". Got: {$type}"
+                'HLS playlist type must be one of: '.implode(', ', $allowed).". Got: {$type}"
             );
         }
 

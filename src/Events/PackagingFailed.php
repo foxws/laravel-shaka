@@ -15,6 +15,6 @@ class PackagingFailed
     public function __construct(
         public Throwable $exception,
         public float $executionTime = 0,
-        public array $context = []
+        public array $context = [],
     ) {}
 }

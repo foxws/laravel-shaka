@@ -14,6 +14,6 @@ class PackagingCompleted
 
     public function __construct(
         public PackagerResult $result,
-        public float $executionTime
+        public float $executionTime = 0,
     ) {}
 }

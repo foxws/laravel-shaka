@@ -14,6 +14,6 @@ class PackagingStarted
 
     public function __construct(
         public ?MediaCollection $mediaCollection = null,
-        public array $options = []
+        public array $options = [],
     ) {}
 }

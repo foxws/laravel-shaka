@@ -291,6 +291,186 @@ class Packager
     }
 
     /**
+     * Set fragment duration in seconds (independent of segment duration).
+     */
+    public function withFragmentDuration(float|int $seconds): self
+    {
+        $this->builder()->withFragmentDuration($seconds);
+
+        return $this;
+    }
+
+    /**
+     * Set the start segment number for DASH SegmentTemplate and HLS segment names.
+     */
+    public function withStartSegmentNumber(int $number): self
+    {
+        $this->builder()->withStartSegmentNumber($number);
+
+        return $this;
+    }
+
+    /**
+     * Set the transport stream timestamp offset in milliseconds (default: 100ms).
+     */
+    public function withTransportStreamTimestampOffsetMs(int $ms): self
+    {
+        $this->builder()->withTransportStreamTimestampOffsetMs($ms);
+
+        return $this;
+    }
+
+    /**
+     * Generate a static MPD even when using segment templates.
+     */
+    public function withGenerateStaticLiveMpd(bool $enabled = true): self
+    {
+        $this->builder()->withGenerateStaticLiveMpd($enabled);
+
+        return $this;
+    }
+
+    /**
+     * Set the minimum buffer time for the DASH MPD.
+     */
+    public function withMinBufferTime(float|int $seconds): self
+    {
+        $this->builder()->withMinBufferTime($seconds);
+
+        return $this;
+    }
+
+    /**
+     * Set how often (in seconds) players should refresh the dynamic MPD.
+     */
+    public function withMinimumUpdatePeriod(float|int $seconds): self
+    {
+        $this->builder()->withMinimumUpdatePeriod($seconds);
+
+        return $this;
+    }
+
+    /**
+     * Set the suggested presentation delay in seconds for a dynamic MPD.
+     */
+    public function withSuggestedPresentationDelay(float|int $seconds): self
+    {
+        $this->builder()->withSuggestedPresentationDelay($seconds);
+
+        return $this;
+    }
+
+    /**
+     * Set the time shift buffer depth in seconds for dynamic DASH/HLS live streams.
+     */
+    public function withTimeShiftBufferDepth(float|int $seconds): self
+    {
+        $this->builder()->withTimeShiftBufferDepth($seconds);
+
+        return $this;
+    }
+
+    /**
+     * Set the number of segments to preserve outside the live window.
+     */
+    public function withPreservedSegmentsOutsideLiveWindow(int $numSegments): self
+    {
+        $this->builder()->withPreservedSegmentsOutsideLiveWindow($numSegments);
+
+        return $this;
+    }
+
+    /**
+     * Set UTCTiming scheme/value pairs for the dynamic DASH MPD.
+     */
+    public function withUtcTimings(string $schemeIdUriValuePairs): self
+    {
+        $this->builder()->withUtcTimings($schemeIdUriValuePairs);
+
+        return $this;
+    }
+
+    /**
+     * Set the default language for audio/text tracks.
+     */
+    public function withDefaultLanguage(string $language): self
+    {
+        $this->builder()->withDefaultLanguage($language);
+
+        return $this;
+    }
+
+    /**
+     * Set the default language for text tracks only (overrides withDefaultLanguage()).
+     */
+    public function withDefaultTextLanguage(string $language): self
+    {
+        $this->builder()->withDefaultTextLanguage($language);
+
+        return $this;
+    }
+
+    /**
+     * Allow approximate segment timeline for live DASH profiles.
+     */
+    public function withAllowApproximateSegmentTimeline(bool $enabled = true): self
+    {
+        $this->builder()->withAllowApproximateSegmentTimeline($enabled);
+
+        return $this;
+    }
+
+    /**
+     * Restrict output to DASH only.
+     */
+    public function withDashOnly(bool $enabled = true): self
+    {
+        $this->builder()->withDashOnly($enabled);
+
+        return $this;
+    }
+
+    /**
+     * Allow adaptive codec switching within DASH adaptation sets.
+     */
+    public function withAllowCodecSwitching(bool $enabled = true): self
+    {
+        $this->builder()->withAllowCodecSwitching($enabled);
+
+        return $this;
+    }
+
+    /**
+     * Enable LL-DASH (Low Latency DASH) streaming mode.
+     */
+    public function withLowLatencyDashMode(bool $enabled = true): self
+    {
+        $this->builder()->withLowLatencyDashMode($enabled);
+
+        return $this;
+    }
+
+    /**
+     * Force streams to be ordered in the muxer as given on the command line.
+     */
+    public function withForceClIndex(bool $enabled = true): self
+    {
+        $this->builder()->withForceClIndex($enabled);
+
+        return $this;
+    }
+
+    /**
+     * Set a label for DASH adaptation set grouping.
+     */
+    public function withDashLabel(string $label): self
+    {
+        $this->builder()->withDashLabel($label);
+
+        return $this;
+    }
+
+    /**
      * Enable encryption
      */
     public function withEncryption(array $encryptionConfig): self
@@ -366,6 +546,16 @@ class Packager
     public function withOption(string $key, mixed $value): self
     {
         $this->builder()->withOption($key, $value);
+
+        return $this;
+    }
+
+    /**
+     * Remove a previously set option from the builder
+     */
+    public function removeOption(string $key): self
+    {
+        $this->builder()->removeOption($key);
 
         return $this;
     }

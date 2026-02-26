@@ -169,16 +169,6 @@ class CommandBuilder
     }
 
     /**
-     * Restrict output to HLS only (0 = disabled, 1 = enabled).
-     */
-    public function withHlsOnly(bool $enabled = true): self
-    {
-        $this->options['hls_only'] = $enabled ? 1 : 0;
-
-        return $this;
-    }
-
-    /**
      * Emit EXT-X-SESSION-KEY in the master playlist for offline HLS playback.
      *
      * Required when content keys need to be declared up-front for offline/download
@@ -432,16 +422,6 @@ class CommandBuilder
         } else {
             $this->removeOption('allow_approximate_segment_timeline');
         }
-
-        return $this;
-    }
-
-    /**
-     * Restrict output to DASH only (0 = disabled, 1 = enabled).
-     */
-    public function withDashOnly(bool $enabled = true): self
-    {
-        $this->options['dash_only'] = $enabled ? 1 : 0;
 
         return $this;
     }
@@ -1135,8 +1115,7 @@ class CommandBuilder
                     $arguments[] = "--{$key}";
                 }
             } elseif ($value !== null && $value !== '') {
-                $arguments[] = "--{$key}";
-                $arguments[] = (string) $value;
+                $arguments[] = "--{$key}={$value}";
             }
         });
 

@@ -331,16 +331,6 @@ class Packager
     }
 
     /**
-     * Restrict output to HLS only.
-     */
-    public function withHlsOnly(bool $enabled = true): self
-    {
-        $this->builder()->withHlsOnly($enabled);
-
-        return $this;
-    }
-
-    /**
      * Emit EXT-X-SESSION-KEY in the master playlist for offline HLS playback.
      */
     public function withCreateSessionKeys(bool $enabled = true): self
@@ -486,16 +476,6 @@ class Packager
     public function withAllowApproximateSegmentTimeline(bool $enabled = true): self
     {
         $this->builder()->withAllowApproximateSegmentTimeline($enabled);
-
-        return $this;
-    }
-
-    /**
-     * Restrict output to DASH only.
-     */
-    public function withDashOnly(bool $enabled = true): self
-    {
-        $this->builder()->withDashOnly($enabled);
 
         return $this;
     }

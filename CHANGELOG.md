@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
+## 1.9.0 - 2026-02-26
+
+### What's Changed
+
+* refactor: use forward call by @francoism90 in https://github.com/foxws/laravel-shaka/pull/31
+
+**Full Changelog**: https://github.com/foxws/laravel-shaka/compare/1.8.3...1.9.0
+
 ## 1.8.3 - 2026-02-24
 
 **Full Changelog**: https://github.com/foxws/laravel-shaka/compare/1.8.2...1.8.3

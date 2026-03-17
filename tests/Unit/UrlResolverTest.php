@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Foxws\Shaka\Http\DynamicDASHManifest;
 use Foxws\Shaka\Http\DynamicHLSPlaylist;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
@@ -121,6 +122,6 @@ it('can parse hls playlist lines', function () {
 
     $parsed = DynamicHLSPlaylist::parseLines($lines);
 
-    expect($parsed)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($parsed)->toBeInstanceOf(Collection::class);
     expect($parsed->count())->toBe(3);
 });

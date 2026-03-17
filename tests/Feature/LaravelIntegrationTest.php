@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use Foxws\Shaka\Exporters\MediaExporter;
 use Foxws\Shaka\Facades\Shaka;
 use Foxws\Shaka\MediaOpener;
+use Foxws\Shaka\ShakaServiceProvider;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
@@ -12,7 +14,7 @@ beforeEach(function () {
 });
 
 it('service provider is registered', function () {
-    expect(app()->getProviders(\Foxws\Shaka\ShakaServiceProvider::class))->not->toBeEmpty();
+    expect(app()->getProviders(ShakaServiceProvider::class))->not->toBeEmpty();
 });
 
 it('registers media opener in service container', function () {
@@ -81,5 +83,5 @@ it('can export from facade chain', function () {
 
     $exporter = Shaka::open('video.mp4')->export();
 
-    expect($exporter)->toBeInstanceOf(\Foxws\Shaka\Exporters\MediaExporter::class);
+    expect($exporter)->toBeInstanceOf(MediaExporter::class);
 });

@@ -9,6 +9,7 @@ use Foxws\Shaka\Events\PackagingFailed;
 use Foxws\Shaka\Events\PackagingStarted;
 use Foxws\Shaka\Filesystem\MediaCollection;
 use Foxws\Shaka\Filesystem\TemporaryDirectories;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Traits\ForwardsCalls;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -137,11 +138,11 @@ class Packager
     /**
      * Create streams from the media collection
      *
-     * @return \Illuminate\Support\Collection<int, Stream>
+     * @return Collection<int, Stream>
      */
-    public function streams(): \Illuminate\Support\Collection
+    public function streams(): Collection
     {
-        $streams = new \Illuminate\Support\Collection;
+        $streams = new Collection;
 
         foreach ($this->mediaCollection->collection() as $media) {
             // You can create multiple streams per media (video, audio, etc.)

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Foxws\Shaka\Facades;
 
+use Foxws\Shaka\MediaOpener;
 use Illuminate\Support\Facades\Facade;
 
 /**
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static \Foxws\Shaka\Http\DynamicHLSPlaylist dynamicHLSPlaylist(?string $disk = null)
  * @method static \Foxws\Shaka\Http\DynamicDASHManifest dynamicDASHManifest(?string $disk = null)
  *
- * @see \Foxws\Shaka\MediaOpener
+ * @see MediaOpener
  */
 class Shaka extends Facade
 {

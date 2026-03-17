@@ -29,7 +29,7 @@ it('filters sensitive encryption keys from logs', function () {
     // Expect the logger to be called with redacted sensitive data
     $logger->shouldReceive('info')
         ->once()
-        ->with('Starting packaging operation with builder', \Mockery::on(function ($context) {
+        ->with('Starting packaging operation with builder', Mockery::on(function ($context) {
             // Check that sensitive keys are redacted
             expect($context)->toHaveKey('options');
             expect($context['options'])->toHaveKey('keys');

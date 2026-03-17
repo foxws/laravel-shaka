@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Foxws\Shaka\Examples;
 
 use Foxws\Shaka\Facades\Shaka;
+use Foxws\Shaka\Filesystem\Media;
+use Foxws\Shaka\Filesystem\MediaCollection;
 use Foxws\Shaka\Support\Packager;
 
 /**
@@ -83,8 +85,8 @@ class FluentBuilderExamples
      */
     public function usingPackagerDirectly(Packager $packager): void
     {
-        $mediaCollection = \Foxws\Shaka\Filesystem\MediaCollection::make([
-            \Foxws\Shaka\Filesystem\Media::make('videos', 'input.mp4'),
+        $mediaCollection = MediaCollection::make([
+            Media::make('videos', 'input.mp4'),
         ]);
 
         $result = $packager
@@ -290,8 +292,8 @@ class FluentBuilderExamples
      */
     public function reusingPackager(Packager $packager): void
     {
-        $mediaCollection = \Foxws\Shaka\Filesystem\MediaCollection::make([
-            \Foxws\Shaka\Filesystem\Media::make('videos', 'input.mp4'),
+        $mediaCollection = MediaCollection::make([
+            Media::make('videos', 'input.mp4'),
         ]);
 
         // First packaging operation

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Foxws\Shaka\Examples;
 
+use Foxws\Shaka\Exceptions\RuntimeException;
 use Foxws\Shaka\Filesystem\Media;
 use Foxws\Shaka\Filesystem\MediaCollection;
 use Foxws\Shaka\Support\CommandBuilder;
@@ -255,7 +256,7 @@ class PackagerExamples
                 // Success
                 logger()->info('Packaging successful', $result->toArray());
             }
-        } catch (\Foxws\Shaka\Exceptions\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             // Packager command failed
             logger()->error('Packaging failed', [
                 'exception' => $e->getMessage(),

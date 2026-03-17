@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
+use Foxws\Shaka\Exporters\MediaExporter;
 use Foxws\Shaka\Facades\Shaka;
 use Foxws\Shaka\Filesystem\Media;
 use Foxws\Shaka\Filesystem\MediaCollection;
 use Foxws\Shaka\MediaOpener;
+use Foxws\Shaka\Support\Packager;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
@@ -68,7 +70,7 @@ it('can chain disk and open operations', function () {
 it('can get packager instance from opener', function () {
     $opener = new MediaOpener;
 
-    expect($opener->getPackager())->toBeInstanceOf(\Foxws\Shaka\Support\Packager::class);
+    expect($opener->getPackager())->toBeInstanceOf(Packager::class);
 });
 
 it('can export from media opener', function () {
@@ -77,11 +79,11 @@ it('can export from media opener', function () {
     $opener = Shaka::open('test.mp4');
     $exporter = $opener->export();
 
-    expect($exporter)->toBeInstanceOf(\Foxws\Shaka\Exporters\MediaExporter::class);
+    expect($exporter)->toBeInstanceOf(MediaExporter::class);
 });
 
 it('validates that media collection is not empty before opening', function () {
-    $packager = app(\Foxws\Shaka\Support\Packager::class);
+    $packager = app(Packager::class);
     $emptyCollection = MediaCollection::make([]);
 
     $packager->open($emptyCollection);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Foxws\Shaka\Examples;
 
+use Foxws\Shaka\Exceptions\RuntimeException;
 use Foxws\Shaka\Facades\Shaka;
 
 /**
@@ -203,7 +204,7 @@ class FromDiskExamples
                 ->export();
 
             logger()->info('Packaging successful from S3', $result->toArray());
-        } catch (\Foxws\Shaka\Exceptions\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             logger()->error('Packaging failed', ['error' => $e->getMessage()]);
         } catch (\InvalidArgumentException $e) {
             logger()->error('Invalid disk or path', ['error' => $e->getMessage()]);

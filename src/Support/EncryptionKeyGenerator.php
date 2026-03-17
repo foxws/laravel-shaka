@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Foxws\Shaka\Support;
 
+use Foxws\Shaka\Filesystem\TemporaryDirectories;
 use Illuminate\Support\Facades\Storage;
 
 class EncryptionKeyGenerator
@@ -57,7 +58,7 @@ class EncryptionKeyGenerator
      */
     public static function writeKeyToTemporary(string $key, string $filename = 'encryption.key'): string
     {
-        $tempDirs = app(\Foxws\Shaka\Filesystem\TemporaryDirectories::class);
+        $tempDirs = app(TemporaryDirectories::class);
 
         $directory = $tempDirs->hasCacheStorage()
             ? $tempDirs->createCache()

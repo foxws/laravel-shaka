@@ -2,6 +2,10 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
+## 2.0.1 - 2026-03-18
+
+**Full Changelog**: https://github.com/foxws/laravel-shaka/compare/v2.0.1...2.0.1
+
 ## v2.0.1 - 2026-03-18
 
 **Full Changelog**: https://github.com/foxws/laravel-shaka/compare/2.0.0...v2.0.1

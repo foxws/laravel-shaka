@@ -192,8 +192,15 @@ return [
     'timeout' => 60 * 60 * 4, // 4 hours
     'log_channel' => env('PACKAGER_LOG_CHANNEL', false),
     'temporary_files_root' => env('PACKAGER_TEMPORARY_FILES_ROOT', storage_path('app/packager/temp')),
+    'concurrency_workers' => env('PACKAGER_CONCURRENCY_WORKERS', 20), // Max concurrent S3 uploads (default: 20)
 ];
 ```
+
+**concurrency_workers**
+
+- Maximum number of concurrent S3 uploads when copying packaged files to an S3-backed disk.
+- Ignored for local disks.
+- Default: 20
 
 ## Artisan Commands
 

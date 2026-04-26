@@ -2,6 +2,15 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
+## 2.0.2 - 2026-04-26
+
+### What's Changed
+
+* build(deps): bump dependabot/fetch-metadata from 2.5.0 to 3.0.0 by @dependabot[bot] in https://github.com/foxws/laravel-shaka/pull/32
+* build(deps): bump dependabot/fetch-metadata from 3.0.0 to 3.1.0 by @dependabot[bot] in https://github.com/foxws/laravel-shaka/pull/33
+
+**Full Changelog**: https://github.com/foxws/laravel-shaka/compare/2.0.1...2.0.2
+
 ## 2.0.1 - 2026-03-18
 
 **Full Changelog**: https://github.com/foxws/laravel-shaka/compare/v2.0.1...2.0.1

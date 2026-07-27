@@ -71,6 +71,17 @@ it('is immutable when adding options', function () {
         ->and($original)->not->toBe($withOption);
 });
 
+it('supports subclassing, preserving the subclass through with* methods', function () {
+    $media = mock(Media::class);
+
+    $stream = TestSubtitleStream::make($media);
+    $withOption = $stream->addOption('language', 'en');
+
+    expect($stream)->toBeInstanceOf(TestSubtitleStream::class)
+        ->and($withOption)->toBeInstanceOf(TestSubtitleStream::class)
+        ->and($stream->getType())->toBe('text');
+});
+
 it('rejects a stream with an invalid type via CommandBuilder', function () {
     CommandBuilder::make()->addStream(Stream::fromArray([
         'in' => 'in.mp4',
@@ -149,3 +160,15 @@ it('rejects a non-hex AES signing key', function () {
 it('rejects an empty RSA signing key path', function () {
     SigningCredentials::rsa('');
 })->throws(InvalidArgumentException::class, 'RSA signing key path must not be empty');
+
+/**
+ * Regression fixture for the "Custom Streams" extension point documented in
+ * docs/ARCHITECTURE.md — Stream's constructor must stay subclassable.
+ */
+class TestSubtitleStream extends Stream
+{
+    public static function make(Media $media, string $type = 'text'): self
+    {
+        return new self($media, null, $type);
+    }
+}

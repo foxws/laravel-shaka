@@ -125,26 +125,30 @@ $result = Shaka::fromDisk('s3')
 
 ### HLS with Encryption
 
+`withAESEncryption()` returns an `EncryptionKey` value object (not `$this`), so
+it breaks the fluent chain — call it on its own line:
+
 ```php
 // Basic encryption with auto-generated AES-128 key
-Shaka::open('input.mp4')
+$streamer = Shaka::open('input.mp4')
     ->addVideoStream('input.mp4', 'video.mp4')
     ->addAudioStream('input.mp4', 'audio.mp4')
-    ->withHlsMasterPlaylist('master.m3u8')
-    ->withAESEncryption()  // Auto-generates key with 'cbc1' scheme
-    ->export()
-    ->save();
+    ->withHlsMasterPlaylist('master.m3u8');
+
+$encryptionKey = $streamer->withAESEncryption(); // Auto-generates key with 'cbc1' scheme
+
+$streamer->export()->save();
 
 // With key rotation (generates key_0.key, key_1.key, etc.)
-Shaka::open('input.mp4')
+$streamer = Shaka::open('input.mp4')
     ->addVideoStream('input.mp4', 'video.mp4')
     ->addAudioStream('input.mp4', 'audio.mp4')
-    ->withHlsMasterPlaylist('master.m3u8')
-    ->withAESEncryption()
-    ->withKeyRotationDuration(60)  // Rotate every 60 seconds
-    ->export()
-    ->toDisk('s3')
-    ->save();
+    ->withHlsMasterPlaylist('master.m3u8');
+
+$encryptionKey = $streamer->withAESEncryption();
+$streamer->withKeyRotationDuration(60); // Rotate every 60 seconds
+
+$streamer->export()->toDisk('s3')->save();
 ```
 
 See [AES Encryption Guide](docs/AES_ENCRYPTION.md) for complete documentation.
@@ -230,14 +234,14 @@ See [URL Resolver Examples](examples/UrlResolverExamples.php) and [Documentation
 - `addVideoStream(string $input, string $output, array $options = [])` - Add video stream
 - `addAudioStream(string $input, string $output, array $options = [])` - Add audio stream
 - `addTextStream(string $input, string $output, array $options = [])` - Add text/caption/subtitle stream
-- `addStream(array $stream)` - Add custom stream
+- `addStream(Stream|array $stream)` - Add custom stream, from a `Stream` value object or a raw `['in' => ..., 'stream' => ..., 'output' => ...]` array
 
 ### Output Configuration
 
 - `withHlsMasterPlaylist(string $path)` - Set HLS master playlist output
 - `withMpdOutput(string $path)` - Set DASH manifest output
 - `withSegmentDuration(int $seconds)` - Set segment duration
-- `withAESEncryption(string $keyFilename = 'key', ?string $protectionScheme = 'cbc1', ?string $label = null)` - Enable AES-128 encryption
+- `withAESEncryption(string $keyFilename = 'key', ProtectionScheme|string|null $protectionScheme = 'cbc1', ?string $label = null): EncryptionKey` - Enable AES-128 encryption (does not return `$this` — breaks the fluent chain)
 - `withKeyRotationDuration(int $seconds)` - Enable key rotation for encryption
 - `toDisk(string $disk)` - Set the target disk for output
 - `toPath(string $path)` - Set the target output path (subdirectory)

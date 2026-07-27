@@ -61,7 +61,7 @@ class PackagerResult
             'Packager produced no output files. Verify that the input media contains valid video or audio streams.'
         );
 
-        $this->copyFilesConcurrently($fileOps, $targetDisk->getName(), $visibility);
+        $this->copyFilesConcurrently($fileOps, $targetDisk, $visibility);
 
         if ($cleanup) {
             if ($tempDisk && is_dir($this->temporaryDirectory)) {
@@ -80,7 +80,7 @@ class PackagerResult
 
             throw new RuntimeException(
                 sprintf(
-                    '%d file(s) failed to copy to disk "%s" after retries: %s',
+                    '%d file(s) failed to copy to disk "%s": %s',
                     count($this->failedFiles),
                     $targetDisk->getName(),
                     implode('; ', $errors)
@@ -107,14 +107,12 @@ class PackagerResult
 
     /**
      * Upload files to the target disk, using async S3 promises when the disk
-     * is S3-backed, and a sequential retry loop for local/other disks.
+     * is S3-backed, and a sequential loop for local/other disks.
      *
      * @param  array<int, FileOperation>  $fileOps
      */
-    protected function copyFilesConcurrently(array $fileOps, string $diskName, ?string $visibility): void
+    protected function copyFilesConcurrently(array $fileOps, Disk $disk, ?string $visibility): void
     {
-        $disk = Disk::make($diskName);
-
         if ($disk->isS3Disk()) {
             $this->uploadFilesViaS3Async($fileOps, $disk, $visibility);
 

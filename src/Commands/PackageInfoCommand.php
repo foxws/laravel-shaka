@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace Foxws\Shaka\Commands;
 
 use Composer\InstalledVersions;
-use Foxws\Shaka\Exceptions\ExecutableNotFoundException;
-use Foxws\Shaka\Support\Packager;
+use Foxws\Shaka\Exceptions\RuntimeException;
+use Foxws\Shaka\Support\ShakaPackager;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Config;
-use Throwable;
+use Illuminate\Contracts\Config\Repository;
 
 use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
@@ -22,35 +21,34 @@ class PackageInfoCommand extends Command
 
     protected $description = 'Display package information and verify Shaka Packager installation';
 
-    public function handle(): int
+    public function handle(Repository $config, ShakaPackager $packager): int
     {
         info('Laravel Shaka Packager - Information & Verification');
 
-        $shakaBinary = Config::get('laravel-shaka.packager.binaries', 'packager');
-        $tempDir = Config::get('laravel-shaka.temporary_files_root', storage_path('app/shaka/temp'));
-        $timeout = Config::get('laravel-shaka.timeout');
-        $logChannel = Config::get('laravel-shaka.log_channel');
-        $logStatus = $logChannel === false ? 'Disabled' : ($logChannel ?: Config::get('logging.default', 'Default'));
+        $tempDir = $config->get('laravel-shaka.temporary_files_root', storage_path('app/shaka/temp'));
+        $logChannel = $config->get('laravel-shaka.log_channel');
+        $logStatus = $logChannel === false ? 'Disabled' : ($logChannel ?: $config->get('logging.default', 'Default'));
 
-        $driverInitialized = false;
+        // Actually invoke the binary (--version) so this reflects whether Shaka
+        // Packager can really run, not just whether the config resolved.
+        $binaryVersion = null;
+
         try {
-            Packager::create();
-            $driverInitialized = true;
-        } catch (ExecutableNotFoundException $e) {
-            error('✗ Cannot initialize Packager driver: '.$e->getMessage());
-        } catch (Throwable $e) {
-            error('✗ Error initializing Packager driver: '.$e->getMessage());
+            $binaryVersion = $packager->getVersion();
+        } catch (RuntimeException $e) {
+            error("✗ Cannot execute Shaka Packager binary: {$e->getMessage()}");
         }
 
         table(
             ['Setting', 'Value', 'Status'],
             [
                 ['Package Version', InstalledVersions::getPrettyVersion('foxws/laravel-shaka') ?? 'dev-main', '✓'],
-                ['Packager Binary', $shakaBinary, $driverInitialized ? '✓' : '✗'],
-                ['Timeout', "{$timeout}s", '✓'],
+                ['Packager Binary', $packager->getBinaryPath(), $binaryVersion ? '✓' : '✗'],
+                ['Binary Version', $binaryVersion ?? 'Unknown', $binaryVersion ? '✓' : '✗'],
+                ['Timeout', "{$packager->getTimeout()}s", '✓'],
                 ['Temp Directory', $tempDir, $this->getTempDirStatus($tempDir)],
                 ['Logging', $logStatus, '✓'],
-                ['Force Generic Input', Config::get('laravel-shaka.force_generic_input') ? 'Enabled' : 'Disabled', '✓'],
+                ['Force Generic Input', $config->get('laravel-shaka.force_generic_input') ? 'Enabled' : 'Disabled', '✓'],
             ]
         );
 
@@ -64,7 +62,7 @@ class PackageInfoCommand extends Command
             warning('⚠ Temporary directory does not exist (will be created automatically)');
         }
 
-        if (! $driverInitialized) {
+        if (! $binaryVersion) {
             error('✗ Shaka Packager is not properly configured. Please check the errors above.');
 
             return self::FAILURE;

@@ -180,7 +180,8 @@ $command = $builder->build();
 
 ### Stream
 
-Represents a single stream configuration:
+Represents a single, immutable stream configuration. `setOutput()`/`setOptions()`/`addOption()`
+return a new instance rather than mutating the current one:
 
 ```php
 $stream = Stream::video($media)
@@ -199,8 +200,11 @@ Structured result from packaging operations:
 $result = $packager->export();
 
 $output = $result->getOutput();
-$metadata = $result->getMetadata();
-$outputPath = $result->getMetadataValue('output_path');
+$result->toDisk('s3'); // Copy temp output to a target disk
+
+$result->hasCopyFailures();
+$result->getFailedFiles();      // array<int, CopyFailure>
+$result->getEncryptionKeys();   // array<int, EncryptionKeyFile>
 ```
 
 ### Media & MediaCollection
@@ -230,8 +234,10 @@ $this->app->singleton(ShakaPackager::class, function ($app) {
     return ShakaPackager::create($logger, $config);
 });
 
-// Register packager
-$this->app->singleton(Packager::class, function ($app) {
+// Register packager (scoped, not singleton: it holds per-export state like
+// the CommandBuilder and temp directory, which must not leak across requests
+// under Octane)
+$this->app->scoped(Packager::class, function ($app) {
     $driver = $app->make(ShakaPackager::class);
     $logger = $app->make('laravel-shaka-logger');
 
@@ -241,15 +247,16 @@ $this->app->singleton(Packager::class, function ($app) {
 
 ## Error Handling
 
-The package uses a clear exception hierarchy:
+The package uses a clear exception hierarchy. Note: `ExecutableNotFoundException`
+exists but nothing currently throws it — a missing/non-executable binary
+surfaces as a `RuntimeException` from the underlying `Process` call instead,
+the first time the packager binary is actually invoked:
 
 ```php
 try {
     $result = Shaka::open('input.mp4')->export();
-} catch (ExecutableNotFoundException $e) {
-    // Binary not found
 } catch (RuntimeException $e) {
-    // Command execution failed
+    // Command execution failed (including: binary not found/not executable)
 } catch (InvalidArgumentException $e) {
     // Invalid input
 }
@@ -287,14 +294,18 @@ class CustomPackagerDriver extends ShakaPackager
 
 ### Custom Streams
 
-Create custom stream types:
+`Stream`'s constructor is `protected` (not `private`) specifically so it stays
+subclassable; mutators use `new static(...)` so a subclass instance survives
+`with*()` calls. Give your subclass its own named constructor rather than
+overriding `make()` — its signature (`Media $media, string $type = 'video'`)
+won't accept an incompatible override:
 
 ```php
 class SubtitleStream extends Stream
 {
-    public static function make(Media $media): self
+    public static function subtitle(Media $media): self
     {
-        return new self($media, 'text');
+        return new self($media, null, 'text');
     }
 }
 ```
@@ -306,9 +317,9 @@ Extend result objects:
 ```php
 class DetailedPackagerResult extends PackagerResult
 {
-    public function getDuration(): float
+    public function getKeyCount(): int
     {
-        return $this->getMetadataValue('duration');
+        return count($this->getEncryptionKeys());
     }
 }
 ```
@@ -321,7 +332,7 @@ class DetailedPackagerResult extends PackagerResult
 4. **Enable logging in production** - Track packaging operations
 5. **Set appropriate timeouts** - Based on your content size
 6. **Handle exceptions appropriately** - Different errors need different handling
-7. **Use the verification command** - During deployment: `php artisan shaka:verify`
+7. **Use the verification command** - During deployment: `php artisan shaka:info`
 
 ## Performance Considerations
 

@@ -54,11 +54,12 @@ $result = Shaka::openFromDisk('s3', 'videos/input.mp4')
 - `addVideoStream(string $input, string $output, array $options = [])` - Add video stream
 - `addAudioStream(string $input, string $output, array $options = [])` - Add audio stream
 - `addTextStream(string $input, string $output, array $options = [])` - Add text/caption/subtitle stream
-- `addStream(array $stream)` - Add custom stream with full control
+- `addStream(Stream|array $stream)` - Add custom stream with full control
 
 ### Output Configuration
 
 - `withMpdOutput(string $path)` - Set DASH manifest output
+- `withBaseUrls(string|array $urls)` - Set DASH `<BaseURL>` element(s) under `<MPD>`
 - `withHlsMasterPlaylist(string $path)` - Set HLS master playlist output
 - `withSegmentDuration(int $seconds)` - Set segment duration
 - `withEncryption(array $config)` - Enable encryption

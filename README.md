@@ -240,6 +240,7 @@ See [URL Resolver Examples](examples/UrlResolverExamples.php) and [Documentation
 
 - `withHlsMasterPlaylist(string $path)` - Set HLS master playlist output
 - `withMpdOutput(string $path)` - Set DASH manifest output
+- `withBaseUrls(string|array $urls)` - Set DASH `<BaseURL>` element(s) under `<MPD>`
 - `withSegmentDuration(int $seconds)` - Set segment duration
 - `withAESEncryption(string $keyFilename = 'key', ProtectionScheme|string|null $protectionScheme = 'cbc1', ?string $label = null): EncryptionKey` - Enable AES-128 encryption (does not return `$this` — breaks the fluent chain)
 - `withKeyRotationDuration(int $seconds)` - Enable key rotation for encryption

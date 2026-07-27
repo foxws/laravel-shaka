@@ -82,6 +82,25 @@ class CommandBuilder
         return $this;
     }
 
+    /**
+     * Set the base URL(s) for the DASH MPD.
+     *
+     * Accepts one URL or an array of URLs; each is added as a separate
+     * <BaseURL> element immediately under the <MPD> element.
+     */
+    public function withBaseUrls(string|array $urls): self
+    {
+        $urls = is_array($urls) ? $urls : [$urls];
+
+        if (empty($urls) || in_array('', $urls, true)) {
+            throw new InvalidArgumentException('Base URLs must not be empty');
+        }
+
+        $this->options['base_urls'] = implode(',', $urls);
+
+        return $this;
+    }
+
     public function withHlsMasterPlaylist(string $path): self
     {
         $this->options['hls_master_playlist_output'] = $path;

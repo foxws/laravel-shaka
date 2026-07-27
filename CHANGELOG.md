@@ -2,6 +2,15 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
+## 2.1.0 - 2026-07-27
+
+### What's Changed
+
+* build(deps): bump actions/checkout from 6 to 7 by @dependabot[bot] in https://github.com/foxws/laravel-shaka/pull/34
+* feat: Introduce encryption key management and file operations by @francoism90 in https://github.com/foxws/laravel-shaka/pull/35
+
+**Full Changelog**: https://github.com/foxws/laravel-shaka/compare/2.0.2...2.1.0
+
 ## 2.0.2 - 2026-04-26
 
 ### What's Changed

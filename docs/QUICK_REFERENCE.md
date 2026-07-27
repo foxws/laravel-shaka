@@ -192,7 +192,7 @@ return [
     'timeout' => 60 * 60 * 4, // 4 hours
     'log_channel' => env('PACKAGER_LOG_CHANNEL', false),
     'temporary_files_root' => env('PACKAGER_TEMPORARY_FILES_ROOT', storage_path('app/packager/temp')),
-    'concurrency_workers' => env('PACKAGER_CONCURRENCY_WORKERS', 20), // Max concurrent S3 uploads (default: 20)
+    'concurrency_workers' => env('PACKAGER_CONCURRENCY_WORKERS', 30), // Max concurrent S3 uploads (default: 30)
 ];
 ```
 
@@ -200,7 +200,8 @@ return [
 
 - Maximum number of concurrent S3 uploads when copying packaged files to an S3-backed disk.
 - Ignored for local disks.
-- Default: 20
+- Default: 30
+- Raise further only after measuring: this bounds an async promise pool (`GuzzleHttp\Promise\EachPromise`), so throughput scales with concurrency until you saturate the destination's write throughput or the local disk read I/O for segment files. Against a local/self-hosted S3-compatible store (low latency, high bandwidth) higher values pay off faster than against real AWS S3 over the WAN — but there's no universally correct number, watch upload duration and destination-side load before pushing past 30-50.
 
 ## Artisan Commands
 

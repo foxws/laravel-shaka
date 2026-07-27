@@ -198,7 +198,7 @@ class Packager
     /**
      * Add a stream to the builder
      */
-    public function addStream(array $stream): self
+    public function addStream(Stream|array $stream): self
     {
         $this->builder()->addStream($stream);
 
@@ -290,22 +290,18 @@ class Packager
      * @param  string  $keyFilename  Base name for key file (default: 'key')
      * @param  string|null  $protectionScheme  Protection scheme ('cenc', 'cbcs', 'cbc1', or null)
      * @param  string|null  $label  Optional label for multi-key scenarios
-     * @return array{key: string, key_id: string, file_path: string} Encryption key data
      */
-    public function withAESEncryption(string $keyFilename = 'key', ?string $protectionScheme = null, ?string $label = null): array
+    public function withAESEncryption(string $keyFilename = 'key', ?string $protectionScheme = null, ?string $label = null): EncryptionKey
     {
         // Generate key and write to cache storage (fast)
-        $keyData = EncryptionKeyGenerator::generateAndWrite($keyFilename);
+        $encryptionKey = EncryptionKey::generateAndWrite($keyFilename);
 
         // Store cache directory for later use in PackagerResult
-        $this->cacheDirectory = dirname($keyData['file_path']);
-
-        // Format keys for Shaka Packager
-        $formattedKeys = EncryptionKeyGenerator::formatForShaka($keyData['key_id'], $keyData['key'], $label);
+        $this->cacheDirectory = dirname($encryptionKey->filePath);
 
         // Set individual encryption options directly on the builder
         $this->builder()->withOption('enable_raw_key_encryption', true);
-        $this->builder()->withOption('keys', $formattedKeys);
+        $this->builder()->withOption('keys', $encryptionKey->toShakaFormat($label));
         $this->builder()->withOption('hls_key_uri', $keyFilename);
         $this->builder()->withOption('clear_lead', 0);
 
@@ -313,7 +309,7 @@ class Packager
             $this->builder()->withOption('protection_scheme', $protectionScheme);
         }
 
-        return $keyData;
+        return $encryptionKey;
     }
 
     /**

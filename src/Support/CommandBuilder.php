@@ -13,6 +13,7 @@ use InvalidArgumentException;
  */
 class CommandBuilder
 {
+    /** @var Collection<int, Stream> */
     protected Collection $streams;
 
     protected array $options = [];
@@ -28,15 +29,18 @@ class CommandBuilder
     }
 
     /**
-     * Add a stream configuration directly
+     * Add a stream to the command.
      *
-     * Accepts the Shaka format (in, stream, output) and validates it
-     * before adding to the streams collection.
+     * Accepts either a Stream value object or the raw Shaka format
+     * (in, stream, output, + extra options), which is validated before
+     * being added to the streams collection.
      *
      * @throws InvalidStreamConfigurationException
      */
-    public function addStream(array $stream): self
+    public function addStream(Stream|array $stream): self
     {
+        $stream = is_array($stream) ? Stream::fromArray($stream) : $stream;
+
         StreamValidator::validate($stream);
 
         $this->streams->push($stream);
@@ -118,22 +122,25 @@ class CommandBuilder
     /**
      * Set the HLS playlist type (EXT-X-PLAYLIST-TYPE).
      *
-     * Accepted values: 'VOD', 'EVENT', 'LIVE'.
-     * For LIVE, the EXT-X-PLAYLIST-TYPE tag is omitted entirely.
+     * For Live, the EXT-X-PLAYLIST-TYPE tag is omitted entirely.
      */
-    public function withHlsPlaylistType(string $type): self
+    public function withHlsPlaylistType(HlsPlaylistType|string $type): self
     {
-        $type = strtoupper($type);
+        if (is_string($type)) {
+            $normalized = HlsPlaylistType::tryFrom(strtoupper($type));
 
-        $allowed = ['VOD', 'EVENT', 'LIVE'];
+            if (! $normalized) {
+                $allowed = implode(', ', array_column(HlsPlaylistType::cases(), 'value'));
 
-        if (! in_array($type, $allowed, true)) {
-            throw new InvalidArgumentException(
-                'HLS playlist type must be one of: '.implode(', ', $allowed).". Got: {$type}"
-            );
+                throw new InvalidArgumentException(
+                    "HLS playlist type must be one of: {$allowed}. Got: {$type}"
+                );
+            }
+
+            $type = $normalized;
         }
 
-        $this->options['hls_playlist_type'] = $type;
+        $this->options['hls_playlist_type'] = $type->value;
 
         return $this;
     }
@@ -506,22 +513,26 @@ class CommandBuilder
     /**
      * Set the protection scheme.
      *
-     * Accepted values: 'cenc' (AES-CTR), 'cbc1', 'cens', 'cbcs' (AES-CBC).
-     * Pattern-based schemes ('cens', 'cbcs') apply to video streams only.
+     * 'cenc' is AES-CTR; 'cbc1' and 'cbcs' are AES-CBC. Pattern-based schemes
+     * ('cens', 'cbcs') apply to video streams only.
      */
-    public function withProtectionScheme(string $scheme): self
+    public function withProtectionScheme(ProtectionScheme|string $scheme): self
     {
-        $scheme = strtolower($scheme);
+        if (is_string($scheme)) {
+            $normalized = ProtectionScheme::tryFrom(strtolower($scheme));
 
-        $allowed = ['cenc', 'cbc1', 'cens', 'cbcs'];
+            if (! $normalized) {
+                $allowed = implode(', ', array_column(ProtectionScheme::cases(), 'value'));
 
-        if (! in_array($scheme, $allowed, true)) {
-            throw new InvalidArgumentException(
-                'Protection scheme must be one of: '.implode(', ', $allowed).". Got: {$scheme}"
-            );
+                throw new InvalidArgumentException(
+                    "Protection scheme must be one of: {$allowed}. Got: {$scheme}"
+                );
+            }
+
+            $scheme = $normalized;
         }
 
-        $this->options['protection_scheme'] = $scheme;
+        $this->options['protection_scheme'] = $scheme->value;
 
         return $this;
     }
@@ -857,6 +868,22 @@ class CommandBuilder
     }
 
     /**
+     * Set request-signing credentials (AES key+IV, or an RSA key path).
+     *
+     * Prefer this over withAesSigningKey()/withAesSigningIv()/withRsaSigningKeyPath()
+     * when possible: SigningCredentials enforces that AES and RSA signing are
+     * mutually exclusive at construction, instead of deferring that check to build().
+     */
+    public function withSigningCredentials(SigningCredentials $credentials): self
+    {
+        foreach ($credentials->toOptions() as $key => $value) {
+            $this->options[$key] = $value;
+        }
+
+        return $this;
+    }
+
+    /**
      * Set the AES signing key (hex string).
      *
      * Requires withAesSigningIv() to also be set. Mutually exclusive with
@@ -1049,8 +1076,8 @@ class CommandBuilder
         $parts = Collection::make();
 
         // Add stream definitions
-        $this->streams->each(function (array $stream) use ($parts) {
-            $streamParts = Collection::make($stream)
+        $this->streams->each(function (Stream $stream) use ($parts) {
+            $streamParts = Collection::make($stream->toDescriptorArray())
                 ->map(function ($value, $key) {
                     $escapedKey = $this->escapeKey($key);
                     $sanitizedValue = $this->sanitizeDescriptorValue($value);
@@ -1093,8 +1120,8 @@ class CommandBuilder
         $arguments = [];
 
         // Add stream definitions
-        $this->streams->each(function (array $stream) use (&$arguments) {
-            $streamParts = Collection::make($stream)
+        $this->streams->each(function (Stream $stream) use (&$arguments) {
+            $streamParts = Collection::make($stream->toDescriptorArray())
                 ->map(function ($value, $key) {
                     $escapedKey = $this->escapeKey($key);
                     $sanitizedValue = $this->sanitizeDescriptorValue($value);
@@ -1165,6 +1192,9 @@ class CommandBuilder
         return $this;
     }
 
+    /**
+     * @return Collection<int, Stream>
+     */
     public function getStreams(): Collection
     {
         return $this->streams;

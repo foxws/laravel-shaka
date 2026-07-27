@@ -14,6 +14,7 @@ use Throwable;
 
 class PackagerResult
 {
+    /** @var array<int, CopyFailure> */
     protected array $failedFiles = [];
 
     protected ?Filesystem $tempFilesystem = null;
@@ -75,10 +76,7 @@ class PackagerResult
         }
 
         if ($this->hasCopyFailures()) {
-            $errors = array_map(
-                fn (array $f) => "{$f['target']}: {$f['error']}",
-                $this->failedFiles
-            );
+            $errors = array_map(strval(...), $this->failedFiles);
 
             throw new RuntimeException(
                 sprintf(
@@ -94,24 +92,24 @@ class PackagerResult
     }
 
     /**
-     * Build primitive file operation descriptors from a list of relative paths.
+     * Build file operation descriptors from a list of relative paths.
      *
      * @param  array<string>  $files
-     * @return array<int, array{absolutePath: string, targetPath: string}>
+     * @return array<int, FileOperation>
      */
     protected function buildFileOperations(array $files, ?string $targetDirectory, string $sourceBasePath): array
     {
-        return array_map(fn (string $relativePath) => [
-            'absolutePath' => $sourceBasePath.DIRECTORY_SEPARATOR.$relativePath,
-            'targetPath' => $targetDirectory ? $targetDirectory.$relativePath : $relativePath,
-        ], $files);
+        return array_map(fn (string $relativePath) => new FileOperation(
+            absolutePath: $sourceBasePath.DIRECTORY_SEPARATOR.$relativePath,
+            targetPath: $targetDirectory ? $targetDirectory.$relativePath : $relativePath,
+        ), $files);
     }
 
     /**
      * Upload files to the target disk, using async S3 promises when the disk
      * is S3-backed, and a sequential retry loop for local/other disks.
      *
-     * @param  array<int, array{absolutePath: string, targetPath: string}>  $fileOps
+     * @param  array<int, FileOperation>  $fileOps
      */
     protected function copyFilesConcurrently(array $fileOps, string $diskName, ?string $visibility): void
     {
@@ -136,7 +134,7 @@ class PackagerResult
      * Adapter-level options (e.g. CacheControl) and the Flysystem path prefix
      * are preserved so behaviour matches what writeStream would produce.
      *
-     * @param  array<int, array{absolutePath: string, targetPath: string}>  $fileOps
+     * @param  array<int, FileOperation>  $fileOps
      */
     protected function uploadFilesViaS3Async(array $fileOps, Disk $disk, ?string $visibility): void
     {
@@ -156,19 +154,19 @@ class PackagerResult
 
         $generator = (function () use ($fileOps, $client, $bucket, $disk, $adapterOptions, $acl, $mimeDetector, &$failed): Generator {
             foreach ($fileOps as $op) {
-                $stream = fopen($op['absolutePath'], 'rb');
+                $stream = fopen($op->absolutePath, 'rb');
 
                 if ($stream === false) {
-                    $failed[] = [
-                        'source' => $op['absolutePath'],
-                        'target' => $op['targetPath'],
-                        'error' => "Failed to open file: {$op['absolutePath']}",
-                    ];
+                    $failed[] = new CopyFailure(
+                        source: $op->absolutePath,
+                        target: $op->targetPath,
+                        error: "Failed to open file: {$op->absolutePath}",
+                    );
 
                     continue;
                 }
 
-                $key = $disk->prefixS3Path($op['targetPath']);
+                $key = $disk->prefixS3Path($op->targetPath);
 
                 $params = array_merge($adapterOptions, [
                     'Bucket' => $bucket,
@@ -192,11 +190,11 @@ class PackagerResult
                             fclose($stream);
                         }
 
-                        $failed[] = [
-                            'source' => $op['absolutePath'],
-                            'target' => $op['targetPath'],
-                            'error' => $reason instanceof Throwable ? $reason->getMessage() : (string) $reason,
-                        ];
+                        $failed[] = new CopyFailure(
+                            source: $op->absolutePath,
+                            target: $op->targetPath,
+                            error: $reason instanceof Throwable ? $reason->getMessage() : (string) $reason,
+                        );
                     }
                 );
             }
@@ -210,7 +208,7 @@ class PackagerResult
     /**
      * Upload files sequentially to the target disk.
      *
-     * @param  array<int, array{absolutePath: string, targetPath: string}>  $fileOps
+     * @param  array<int, FileOperation>  $fileOps
      */
     protected function uploadFilesSequentially(array $fileOps, Disk $disk, ?string $visibility): void
     {
@@ -218,13 +216,13 @@ class PackagerResult
 
         foreach ($fileOps as $op) {
             try {
-                $stream = fopen($op['absolutePath'], 'rb');
+                $stream = fopen($op->absolutePath, 'rb');
 
                 if ($stream === false) {
-                    throw new RuntimeException("Failed to open file: {$op['absolutePath']}");
+                    throw new RuntimeException("Failed to open file: {$op->absolutePath}");
                 }
 
-                $disk->writeStream($op['targetPath'], $stream, $options);
+                $disk->writeStream($op->targetPath, $stream, $options);
 
                 if (is_resource($stream)) {
                     fclose($stream);
@@ -234,11 +232,11 @@ class PackagerResult
                     fclose($stream);
                 }
 
-                $this->failedFiles[] = [
-                    'source' => $op['absolutePath'],
-                    'target' => $op['targetPath'],
-                    'error' => $e->getMessage(),
-                ];
+                $this->failedFiles[] = new CopyFailure(
+                    source: $op->absolutePath,
+                    target: $op->targetPath,
+                    error: $e->getMessage(),
+                );
             }
         }
     }
@@ -275,6 +273,9 @@ class PackagerResult
         return $this->cacheFilesystem;
     }
 
+    /**
+     * @return array<int, CopyFailure>
+     */
     public function getFailedFiles(): array
     {
         return $this->failedFiles;
@@ -303,7 +304,7 @@ class PackagerResult
      *
      * Useful when using key rotation to collect all generated keys.
      *
-     * @return array<int, array{path: string, filename: string, content: string}>
+     * @return array<int, EncryptionKeyFile>
      */
     public function getEncryptionKeys(): array
     {
@@ -322,11 +323,11 @@ class PackagerResult
                     || (bool) preg_match('/^[a-zA-Z_-]+_\d+$/', pathinfo($filename, PATHINFO_FILENAME));
 
                 if ($isKeyFile) {
-                    $keys[] = [
-                        'path' => $basePath.DIRECTORY_SEPARATOR.$relativePath,
-                        'filename' => $filename,
-                        'content' => bin2hex($disk->get($relativePath)),
-                    ];
+                    $keys[] = new EncryptionKeyFile(
+                        path: $basePath.DIRECTORY_SEPARATOR.$relativePath,
+                        filename: $filename,
+                        content: bin2hex($disk->get($relativePath)),
+                    );
                 }
             }
         }

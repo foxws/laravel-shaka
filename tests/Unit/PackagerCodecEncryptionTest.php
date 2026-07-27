@@ -71,7 +71,7 @@ it('supports AES encryption with H.264 codec', function () {
         ->and($options['enable_raw_key_encryption'])->toBeTrue()
         ->and($options)->toHaveKey('hls_key_uri')
         ->and($options['hls_key_uri'])->toBe('h264.key')
-        ->and($keyData['file_path'])->toContain('h264.key');
+        ->and($keyData->filePath)->toContain('h264.key');
 
     // Cleanup
     $tempDirs->deleteAll();
@@ -114,7 +114,7 @@ it('supports AES encryption with HEVC/H.265 codec', function () {
         ->and($options['enable_raw_key_encryption'])->toBeTrue()
         ->and($options)->toHaveKey('hls_key_uri')
         ->and($options['hls_key_uri'])->toBe('hevc.key')
-        ->and($keyData['file_path'])->toContain('hevc.key');
+        ->and($keyData->filePath)->toContain('hevc.key');
 
     // Cleanup
     $tempDirs->deleteAll();
@@ -157,7 +157,7 @@ it('supports AES encryption with AV1 codec', function () {
         ->and($options['enable_raw_key_encryption'])->toBeTrue()
         ->and($options)->toHaveKey('hls_key_uri')
         ->and($options['hls_key_uri'])->toBe('av1.key')
-        ->and($keyData['file_path'])->toContain('av1.key');
+        ->and($keyData->filePath)->toContain('av1.key');
 
     // Cleanup
     $tempDirs->deleteAll();
@@ -362,12 +362,12 @@ it('generates unique encryption keys per codec when needed', function () {
     $keyDataAv1 = $packagerAv1->withAESEncryption('av1_unique.key', 'cbc1', 'av1');
 
     // Verify each got unique keys
-    expect($keyDataH264['key'])->not->toBe($keyDataHevc['key'])
-        ->and($keyDataH264['key'])->not->toBe($keyDataAv1['key'])
-        ->and($keyDataHevc['key'])->not->toBe($keyDataAv1['key'])
-        ->and($keyDataH264['key_id'])->not->toBe($keyDataHevc['key_id'])
-        ->and($keyDataH264['key_id'])->not->toBe($keyDataAv1['key_id'])
-        ->and($keyDataHevc['key_id'])->not->toBe($keyDataAv1['key_id']);
+    expect($keyDataH264->key)->not->toBe($keyDataHevc->key)
+        ->and($keyDataH264->key)->not->toBe($keyDataAv1->key)
+        ->and($keyDataHevc->key)->not->toBe($keyDataAv1->key)
+        ->and($keyDataH264->keyId)->not->toBe($keyDataHevc->keyId)
+        ->and($keyDataH264->keyId)->not->toBe($keyDataAv1->keyId)
+        ->and($keyDataHevc->keyId)->not->toBe($keyDataAv1->keyId);
 
     // Cleanup
     $tempDirs->deleteAll();

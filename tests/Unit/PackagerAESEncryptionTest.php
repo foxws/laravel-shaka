@@ -5,6 +5,8 @@ declare(strict_types=1);
 use Foxws\Shaka\Filesystem\Media;
 use Foxws\Shaka\Filesystem\MediaCollection;
 use Foxws\Shaka\Filesystem\TemporaryDirectories;
+use Foxws\Shaka\Support\EncryptionKey;
+use Foxws\Shaka\Support\EncryptionKeyFile;
 use Foxws\Shaka\Support\Packager;
 use Foxws\Shaka\Support\PackagerResult;
 use Foxws\Shaka\Support\ShakaPackager;
@@ -40,11 +42,10 @@ it('generates AES encryption with default settings', function () {
     $keyData = $packager->withAESEncryption();
 
     // Verify key data structure
-    expect($keyData)->toBeArray()
-        ->toHaveKeys(['key', 'key_id', 'file_path'])
-        ->and(strlen($keyData['key']))->toBe(32)
-        ->and(strlen($keyData['key_id']))->toBe(32)
-        ->and(file_exists($keyData['file_path']))->toBeTrue();
+    expect($keyData)->toBeInstanceOf(EncryptionKey::class)
+        ->and(strlen($keyData->key))->toBe(32)
+        ->and(strlen($keyData->keyId))->toBe(32)
+        ->and(file_exists($keyData->filePath))->toBeTrue();
 
     // Cleanup
     $tempDirs->deleteAll();
@@ -164,7 +165,7 @@ it('supports custom key filename', function () {
     $options = $builder->getOptions();
 
     expect($options['hls_key_uri'])->toBe('custom-key.bin')
-        ->and($keyData['file_path'])->toContain('custom-key.bin');
+        ->and($keyData->filePath)->toContain('custom-key.bin');
 
     // Cleanup
     $tempDirs->deleteAll();
@@ -254,11 +255,11 @@ it('collects all encryption keys after packaging with rotation', function () {
     $keys = $result->getEncryptionKeys();
 
     expect($keys)->toHaveCount(3)
-        ->and($keys[0])->toHaveKeys(['path', 'filename', 'content'])
-        ->and($keys[0]['filename'])->toBe('encryption_0.key')
-        ->and(strlen($keys[0]['content']))->toBe(32) // 16 bytes = 32 hex chars
-        ->and($keys[1]['filename'])->toBe('encryption_1.key')
-        ->and($keys[2]['filename'])->toBe('encryption_2.key');
+        ->and($keys[0])->toBeInstanceOf(EncryptionKeyFile::class)
+        ->and($keys[0]->filename)->toBe('encryption_0.key')
+        ->and(strlen($keys[0]->content))->toBe(32) // 16 bytes = 32 hex chars
+        ->and($keys[1]->filename)->toBe('encryption_1.key')
+        ->and($keys[2]->filename)->toBe('encryption_2.key');
 
     // Cleanup
     array_map('unlink', glob($tempDir.'/*'));
@@ -293,11 +294,11 @@ it('tracks uploaded encryption keys during toDisk', function () {
     $uploadedKeys = $result->getEncryptionKeys();
 
     expect($uploadedKeys)->toHaveCount(2)
-        ->and($uploadedKeys[0])->toHaveKeys(['filename', 'path', 'content'])
-        ->and($uploadedKeys[0]['filename'])->toBe('encryption_0.key')
-        ->and($uploadedKeys[0]['path'])->toEndWith('encryption_0.key')
-        ->and(strlen($uploadedKeys[0]['content']))->toBe(32)
-        ->and($uploadedKeys[1]['filename'])->toBe('encryption_1.key');
+        ->and($uploadedKeys[0])->toBeInstanceOf(EncryptionKeyFile::class)
+        ->and($uploadedKeys[0]->filename)->toBe('encryption_0.key')
+        ->and($uploadedKeys[0]->path)->toEndWith('encryption_0.key')
+        ->and(strlen($uploadedKeys[0]->content))->toBe(32)
+        ->and($uploadedKeys[1]->filename)->toBe('encryption_1.key');
 
     // Verify files were uploaded
     expect(Storage::disk('s3')->exists('encryption_0.key'))->toBeTrue()

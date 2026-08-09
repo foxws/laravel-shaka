@@ -174,8 +174,13 @@ it('does not check free space when the minimum is negative', function () {
 it('throws when the expected job size exceeds free space', function () {
     $tempDirs = new TemporaryDirectories(sys_get_temp_dir().'/test-temp', null, 0, 1.5);
 
-    // 1 TiB, multiplied by the safety factor, safely exceeds any real free space.
-    expect(fn () => $tempDirs->create(1024 ** 4))->toThrow(InsufficientStorageException::class);
+    // Derive an expected size from the machine's actual free space instead
+    // of guessing an absolute number - a hardcoded "big enough" figure like
+    // 1 TiB isn't safely out of reach on a large NVMe-backed CI/dev box.
+    $free = disk_free_space(sys_get_temp_dir());
+    $expectedBytes = (int) ceil($free / 1.5) + 1;
+
+    expect(fn () => $tempDirs->create($expectedBytes))->toThrow(InsufficientStorageException::class);
 });
 
 it('does not check job size when expected bytes is zero', function () {

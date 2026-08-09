@@ -25,6 +25,7 @@ use ReflectionProperty;
  * @method bool makeDirectory(string $path)
  * @method bool setVisibility(string $path, string $visibility)
  * @method array allFiles(string|null $directory = null)
+ * @method int size(string $path)
  */
 class Disk
 {

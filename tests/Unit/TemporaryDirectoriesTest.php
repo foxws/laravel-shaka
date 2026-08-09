@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Foxws\Shaka\Exceptions\InsufficientStorageException;
 use Foxws\Shaka\Filesystem\TemporaryDirectories;
 
 it('creates temporary directory in root path', function () {
@@ -103,5 +104,96 @@ it('handles trailing slashes in root paths', function () {
         ->and($cacheDir)->not->toContain('//');
 
     // Cleanup
+    $tempDirs->deleteAll();
+});
+
+it('throws when free space is below the configured minimum', function () {
+    $tempDirs = new TemporaryDirectories(sys_get_temp_dir().'/test-temp', null, PHP_INT_MAX);
+
+    expect(fn () => $tempDirs->create())->toThrow(InsufficientStorageException::class);
+});
+
+it('applies its own minimum free space check to cache directories', function () {
+    $tempDirs = new TemporaryDirectories(
+        sys_get_temp_dir().'/test-temp',
+        sys_get_temp_dir().'/test-cache',
+        0,
+        1.5,
+        PHP_INT_MAX
+    );
+
+    expect(fn () => $tempDirs->createCache())->toThrow(InsufficientStorageException::class);
+});
+
+it('keeps the temporary and cache minimum free space checks independent', function () {
+    // Only the main root's floor is set: create() throws, createCache() does not.
+    $mainOnly = new TemporaryDirectories(
+        sys_get_temp_dir().'/test-temp',
+        sys_get_temp_dir().'/test-cache',
+        PHP_INT_MAX
+    );
+
+    expect(fn () => $mainOnly->create())->toThrow(InsufficientStorageException::class);
+    expect(is_dir($mainOnly->createCache()))->toBeTrue();
+    $mainOnly->deleteAll();
+
+    // Only the cache root's floor is set: createCache() throws, create() does not.
+    $cacheOnly = new TemporaryDirectories(
+        sys_get_temp_dir().'/test-temp',
+        sys_get_temp_dir().'/test-cache',
+        0,
+        1.5,
+        PHP_INT_MAX
+    );
+
+    expect(is_dir($cacheOnly->create()))->toBeTrue();
+    expect(fn () => $cacheOnly->createCache())->toThrow(InsufficientStorageException::class);
+    $cacheOnly->deleteAll();
+});
+
+it('does not check free space when the minimum is zero', function () {
+    $tempDirs = new TemporaryDirectories(sys_get_temp_dir().'/test-temp', null, 0);
+
+    $directory = $tempDirs->create();
+
+    expect(is_dir($directory))->toBeTrue();
+
+    $tempDirs->deleteAll();
+});
+
+it('does not check free space when the minimum is negative', function () {
+    $tempDirs = new TemporaryDirectories(sys_get_temp_dir().'/test-temp', null, -1);
+
+    $directory = $tempDirs->create();
+
+    expect(is_dir($directory))->toBeTrue();
+
+    $tempDirs->deleteAll();
+});
+
+it('throws when the expected job size exceeds free space', function () {
+    $tempDirs = new TemporaryDirectories(sys_get_temp_dir().'/test-temp', null, 0, 1.5);
+
+    // 1 TiB, multiplied by the safety factor, safely exceeds any real free space.
+    expect(fn () => $tempDirs->create(1024 ** 4))->toThrow(InsufficientStorageException::class);
+});
+
+it('does not check job size when expected bytes is zero', function () {
+    $tempDirs = new TemporaryDirectories(sys_get_temp_dir().'/test-temp', null, 0, 1.5);
+
+    $directory = $tempDirs->create(0);
+
+    expect(is_dir($directory))->toBeTrue();
+
+    $tempDirs->deleteAll();
+});
+
+it('allows a job whose estimated size comfortably fits', function () {
+    $tempDirs = new TemporaryDirectories(sys_get_temp_dir().'/test-temp', null, 0, 1.5);
+
+    $directory = $tempDirs->create(1024);
+
+    expect(is_dir($directory))->toBeTrue();
+
     $tempDirs->deleteAll();
 });

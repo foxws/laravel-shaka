@@ -177,8 +177,11 @@ it('throws when the expected job size exceeds free space', function () {
     // Derive an expected size from the machine's actual free space instead
     // of guessing an absolute number - a hardcoded "big enough" figure like
     // 1 TiB isn't safely out of reach on a large NVMe-backed CI/dev box.
+    // create() re-reads free space itself, so pad well past what we just
+    // measured - other processes on a CI runner can shift free space by a
+    // meaningful amount between our read and its read.
     $free = disk_free_space(sys_get_temp_dir());
-    $expectedBytes = (int) ceil($free / 1.5) + 1;
+    $expectedBytes = (int) ceil(($free + 10 * 1024 ** 3) / 1.5);
 
     expect(fn () => $tempDirs->create($expectedBytes))->toThrow(InsufficientStorageException::class);
 });

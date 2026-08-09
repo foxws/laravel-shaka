@@ -51,6 +51,9 @@ class ShakaServiceProvider extends PackageServiceProvider
             return new TemporaryDirectories(
                 Config::string('laravel-shaka.temporary_files_root', sys_get_temp_dir()),
                 Config::string('laravel-shaka.cache_files_root') ?: null,
+                Config::integer('laravel-shaka.temporary_files_min_free', 0),
+                Config::float('laravel-shaka.temporary_files_size_multiplier', 1.5),
+                Config::integer('laravel-shaka.cache_files_min_free', 0),
             );
         });
 

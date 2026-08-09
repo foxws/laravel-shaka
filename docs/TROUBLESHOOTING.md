@@ -79,6 +79,31 @@ Temporary directory is not writable
    'temporary_files_root' => storage_path('app/packager/temp'),
    ```
 
+### Insufficient Storage Space
+
+**Error:**
+
+```
+InsufficientStorageException: Insufficient storage space in [/cache/temp/packager]: 314572800 bytes free, 1610612736 bytes required.
+```
+
+This is thrown by a deliberate pre-flight check (see [Storage Space
+Guards](CONFIGURATION.md#storage-space-guards)), not a filesystem error - the
+job never started, so nothing needs cleanup.
+
+**Solutions:**
+
+1. If `temporary_files_root` or `cache_files_root` is a size-limited mount
+   (e.g. a tmpfs), free up space or increase its size.
+2. If this happens routinely under concurrent load, the real fix is usually
+   fewer concurrent jobs, not more disk space - lower your queue's
+   concurrency (e.g. Horizon's `maxProcesses`) so
+   `workers x largest expected job footprint` fits comfortably.
+3. If the floor itself is miscalibrated, tune it:
+   `PACKAGER_TEMPORARY_MIN_FREE` / `PACKAGER_CACHE_MIN_FREE` (bytes), and
+   `PACKAGER_TEMPORARY_SIZE_MULTIPLIER` for the job-size-aware check.
+4. To turn a check off entirely, set its env var to `0`.
+
 ### Timeout Errors
 
 **Error:**

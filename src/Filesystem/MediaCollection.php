@@ -32,6 +32,21 @@ class MediaCollection
     }
 
     /**
+     * Sum of the source file sizes (in bytes) of all Media items.
+     * Items whose size can't be determined (e.g. a disk error) are skipped.
+     */
+    public function totalSize(): int
+    {
+        return $this->items->sum(function (Media $media) {
+            try {
+                return (int) $media->getDisk()->size($media->getPath());
+            } catch (\Throwable) {
+                return 0;
+            }
+        });
+    }
+
+    /**
      * Find a Media object by its path.
      */
     public function findByPath(string $path): ?Media

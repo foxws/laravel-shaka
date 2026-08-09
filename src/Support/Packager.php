@@ -244,8 +244,12 @@ class Packager
             return $this->temporaryDirectory;
         }
 
-        // Use the registered TemporaryDirectories service
-        $this->temporaryDirectory = app(TemporaryDirectories::class)->create();
+        // Use the registered TemporaryDirectories service. Pass the combined
+        // size of the configured input media so it can check the root has
+        // enough room for this specific job, not just a static floor.
+        $expectedBytes = $this->mediaCollection?->totalSize() ?? 0;
+
+        $this->temporaryDirectory = app(TemporaryDirectories::class)->create($expectedBytes);
 
         return $this->temporaryDirectory;
     }

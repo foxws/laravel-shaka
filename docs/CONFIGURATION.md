@@ -132,6 +132,79 @@ Configure location for encrypted temporary files:
 PACKAGER_TEMPORARY_ENCRYPTED=/dev/shm
 ```
 
+### Storage Space Guards
+
+Fail fast with a clear exception instead of a job dying mid-packaging when a
+storage-constrained root (e.g. a size-limited tmpfs) runs low on space. All
+three checks are disabled by default (`0`), so upgrading does not change
+behavior for existing installs - set them explicitly to opt in.
+
+```php
+'temporary_files_min_free' => env('PACKAGER_TEMPORARY_MIN_FREE', 0),
+'temporary_files_size_multiplier' => env('PACKAGER_TEMPORARY_SIZE_MULTIPLIER', 1.5),
+'cache_files_min_free' => env('PACKAGER_CACHE_MIN_FREE', 0),
+```
+
+**Environment Variables:**
+
+```env
+PACKAGER_TEMPORARY_MIN_FREE=1073741824       # 1 GiB floor on temporary_files_root
+PACKAGER_TEMPORARY_SIZE_MULTIPLIER=1.5       # safety factor applied to the job's input size
+PACKAGER_CACHE_MIN_FREE=10485760             # 10 MiB floor on cache_files_root
+```
+
+**How the checks work:**
+
+- `temporary_files_min_free` - a static floor checked against `temporary_files_root` before a job starts.
+- `temporary_files_size_multiplier` - before packaging starts, the combined size of the job's source input files (`MediaCollection::totalSize()`) is multiplied by this and checked too, on top of the static floor. Packager repackages/segments already-encoded input rather than re-encoding it, so output size tracks input size closely - this catches jobs whose *own* footprint won't fit, not just a generically-nearly-full root.
+- `cache_files_min_free` - a separate floor for `cache_files_root` (manifests/encryption keys). Kept independent from `temporary_files_min_free` because this root is often a much smaller mount than the main temporary root (see the tmpfs example below) - a multi-GB floor meant for the main root would permanently break a small cache mount.
+
+Both failure modes throw `Foxws\Shaka\Exceptions\InsufficientStorageException`, catchable separately from other packaging failures (e.g. in a queued job's `failed()` method).
+
+**Tuning the multiplier:** `1.5` is a starting point, not a measurement. After a real job runs, compare `du -sh` on its temporary directory against the combined size of its source input files, and adjust `PACKAGER_TEMPORARY_SIZE_MULTIPLIER` from there - especially if you generate separate HLS and DASH segment sets rather than sharing CMAF segments across both, which pushes real usage closer to 2x than 1.5x.
+
+#### Example: `temporary_files_root` on a Podman tmpfs
+
+If you run Horizon/queue workers in Podman and want packaging scratch space
+to live in RAM instead of hitting your NVMe (segments are written once,
+uploaded, then deleted - nothing here needs to survive a restart), mount
+the root as a `tmpfs` in your `.container` quadlet instead of a regular
+volume:
+
+```ini
+# horizon.container (podman quadlet)
+[Container]
+...
+# Was: Volume=app-cache:/cache:rw,z
+Tmpfs=/cache:rw,size=12g,mode=1777
+```
+
+Then point the package at it and set a floor sized to fit comfortably inside
+that tmpfs, leaving headroom for concurrent jobs:
+
+```env
+PACKAGER_TEMPORARY_FILES_ROOT=/cache/temp/packager
+PACKAGER_TEMPORARY_MIN_FREE=1073741824   # 1 GiB
+PACKAGER_TEMPORARY_SIZE_MULTIPLIER=1.5
+```
+
+`cache_files_root` (manifests/keys) typically points at `/dev/shm`, a
+separate tmpfs the container runtime mounts automatically. Keep its floor
+small relative to that mount's actual size (often just tens of MB via a
+container's `ShmSize`):
+
+```env
+PACKAGER_CACHE_FILES_ROOT=/dev/shm
+PACKAGER_CACHE_MIN_FREE=10485760   # 10 MiB
+```
+
+> **A tmpfs `size=` is a quota, not a reservation** - it does not protect you
+> from concurrent jobs collectively exceeding it. Pair this with a
+> concurrency limit on your queue (e.g. Horizon's `maxProcesses`) sized so
+> `workers x largest expected job footprint` stays comfortably under the
+> tmpfs size, and treat `temporary_files_min_free` as a fail-fast safety net
+> for the jobs that slip past that limit, not as the primary defense.
+
 ## Complete Configuration Example
 
 ```php
@@ -201,6 +274,21 @@ return [
 
     'temporary_files_encrypted' => env('PACKAGER_TEMPORARY_ENCRYPTED', '/dev/shm'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Storage Space Guards
+    |--------------------------------------------------------------------------
+    |
+    | Fail fast with a clear exception instead of a job dying mid-packaging
+    | when a storage-constrained root runs low on space. Set to 0 to
+    | disable a given check.
+    |
+    */
+
+    'temporary_files_min_free' => env('PACKAGER_TEMPORARY_MIN_FREE', 0),
+    'temporary_files_size_multiplier' => env('PACKAGER_TEMPORARY_SIZE_MULTIPLIER', 1.5),
+    'cache_files_min_free' => env('PACKAGER_CACHE_MIN_FREE', 0),
+
 ];
 ```
 
@@ -215,6 +303,9 @@ PACKAGER_TIMEOUT=14400
 PACKAGER_LOG_CHANNEL=packager
 PACKAGER_TEMPORARY_FILES_ROOT=/tmp/packager
 PACKAGER_TEMPORARY_ENCRYPTED=/dev/shm
+PACKAGER_TEMPORARY_MIN_FREE=1073741824
+PACKAGER_TEMPORARY_SIZE_MULTIPLIER=1.5
+PACKAGER_CACHE_MIN_FREE=10485760
 ```
 
 ## Verification

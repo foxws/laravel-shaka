@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
+## 2.2.0 - 2026-08-09
+
+### What's Changed
+
+* feat: guard temporary and cache roots against running out of space by @francoism90 in https://github.com/foxws/laravel-shaka/pull/36
+
+**Full Changelog**: https://github.com/foxws/laravel-shaka/compare/2.1.1...2.2.0
+
 ## 2.1.1 - 2026-07-27
 
 **Full Changelog**: https://github.com/foxws/laravel-shaka/compare/2.1.0...2.1.1

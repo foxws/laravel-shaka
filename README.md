@@ -34,12 +34,12 @@ $result = Shaka::fromDisk('s3')
 
 ## Documentation
 
-📚 **[Full Documentation](docs/README.md)**
+📚 **[Full Documentation](https://foxws.github.io/laravel-shaka/)**
 
-- [Quick Reference](docs/QUICK_REFERENCE.md) - Complete API reference
-- [AES Encryption](docs/AES_ENCRYPTION.md) - Encryption with key rotation
-- [Architecture Overview](docs/ARCHITECTURE.md) - Understanding the design
-- [Configuration](docs/CONFIGURATION.md) - Configuring the package
+- [Quick Reference](https://foxws.github.io/laravel-shaka/docs/quick-reference) - Complete API reference
+- [AES Encryption](https://foxws.github.io/laravel-shaka/docs/aes-encryption) - Encryption with key rotation
+- [Architecture Overview](https://foxws.github.io/laravel-shaka/docs/architecture) - Understanding the design
+- [Configuration](https://foxws.github.io/laravel-shaka/docs/configuration) - Configuring the package
 
 ## Requirements
 
@@ -151,7 +151,7 @@ $streamer->withKeyRotationDuration(60); // Rotate every 60 seconds
 $streamer->export()->toDisk('s3')->save();
 ```
 
-See [AES Encryption Guide](docs/AES_ENCRYPTION.md) for complete documentation.
+See [AES Encryption Guide](https://foxws.github.io/laravel-shaka/docs/aes-encryption) for complete documentation.
 
 ### Dynamic URL Resolvers (HLS & DASH)
 
@@ -213,7 +213,7 @@ public function manifest(Video $video)
 - 🔄 Implement dynamic key rotation
 - 📊 Track media access patterns
 
-See [URL Resolver Examples](examples/UrlResolverExamples.php) and [Documentation](docs/URL_RESOLVERS.md) for more details.
+See [URL Resolver Examples](examples/UrlResolverExamples.php) and [Documentation](https://foxws.github.io/laravel-shaka/docs/url-resolvers) for more details.
 
 ## Available Methods
 
@@ -278,7 +278,7 @@ See [URL Resolver Examples](examples/UrlResolverExamples.php) and [Documentation
 - `get()` - Get processed manifest content
 - `toResponse($request)` - Return as HTTP response
 
-See the [Quick Reference](docs/QUICK_REFERENCE.md) for complete API documentation.
+See the [Quick Reference](https://foxws.github.io/laravel-shaka/docs/quick-reference) for complete API documentation.
 
 ## Testing
 

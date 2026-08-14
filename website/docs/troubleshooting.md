@@ -1,16 +1,25 @@
+---
+sidebar_position: 10
+---
+
 # Troubleshooting Guide
 
 Common issues and their solutions when using Laravel Shaka Packager.
 
-## Installation Issues
+## Installation issues
 
-### Binary Not Found
+### Binary not found
 
 **Error:**
 
 ```
-ExecutableNotFoundException: Shaka Packager binary not found at: /usr/local/bin/packager
+RuntimeException: Command execution failed - the underlying `Process` call
+could not find or execute /usr/local/bin/packager
 ```
+
+A missing or non-executable binary surfaces as a `RuntimeException` from the
+underlying `Process` call the first time the packager binary is invoked —
+see [Architecture](./architecture.md#error-handling) for details.
 
 **Solutions:**
 
@@ -36,10 +45,10 @@ ExecutableNotFoundException: Shaka Packager binary not found at: /usr/local/bin/
 3. Verify installation:
 
    ```bash
-   php artisan shaka:verify
+   php artisan shaka:info
    ```
 
-### Binary Not Executable
+### Binary not executable
 
 **Error:**
 
@@ -53,9 +62,9 @@ Binary is not executable
 chmod +x /usr/local/bin/packager
 ```
 
-## Configuration Issues
+## Configuration issues
 
-### Temporary Directory Not Writable
+### Temporary directory not writable
 
 **Error:**
 
@@ -79,7 +88,7 @@ Temporary directory is not writable
    'temporary_files_root' => storage_path('app/packager/temp'),
    ```
 
-### Insufficient Storage Space
+### Insufficient storage space
 
 **Error:**
 
@@ -88,7 +97,7 @@ InsufficientStorageException: Insufficient storage space in [/cache/temp/package
 ```
 
 This is thrown by a deliberate pre-flight check (see [Storage Space
-Guards](CONFIGURATION.md#storage-space-guards)), not a filesystem error - the
+Guards](./configuration.md#storage-space-guards)), not a filesystem error - the
 job never started, so nothing needs cleanup.
 
 **Solutions:**
@@ -104,7 +113,7 @@ job never started, so nothing needs cleanup.
    `PACKAGER_TEMPORARY_SIZE_MULTIPLIER` for the job-size-aware check.
 4. To turn a check off entirely, set its env var to `0`.
 
-### Timeout Errors
+### Timeout errors
 
 **Error:**
 
@@ -128,9 +137,9 @@ RuntimeException: Process timeout exceeded
    $packager->setTimeout(28800); // 8 hours
    ```
 
-## Packaging Issues
+## Packaging issues
 
-### Unknown Field in Stream Descriptor
+### Unknown field in stream descriptor
 
 **Error:**
 
@@ -173,7 +182,7 @@ Shaka::open('input.mp4')  // ← Must call open first
     ->save();
 ```
 
-### No Streams Configured
+### No streams configured
 
 **Error:**
 
@@ -191,9 +200,9 @@ Shaka::open('input.mp4')
     ->save();
 ```
 
-## Encryption Issues
+## Encryption issues
 
-### SAMPLE-AES Not Working in Browser
+### SAMPLE-AES not working in browser
 
 **Problem:** Encrypted HLS doesn't play in web browsers
 
@@ -212,7 +221,10 @@ Shaka::open('input.mp4')
     ->save();
 ```
 
-### Encryption Key Not Found
+See [AES Encryption](./aes-encryption.md#protection-schemes) for the full
+list of protection schemes and device compatibility.
+
+### Encryption key not found
 
 **Error:**
 
@@ -231,9 +243,9 @@ Cannot load key from URI
 
 2. Check CORS settings for cross-origin requests
 
-## Storage Issues
+## Storage issues
 
-### S3 Permission Denied
+### S3 permission denied
 
 **Error:**
 
@@ -266,7 +278,7 @@ S3Exception: Access Denied
    AWS_BUCKET=your-bucket
    ```
 
-### Cannot Copy Files from Temporary Directory
+### Cannot copy files from temporary directory
 
 **Error:**
 
@@ -289,9 +301,9 @@ Shaka::open('input.mp4')
     ->save();
 ```
 
-## Performance Issues
+## Performance issues
 
-### Processing Too Slow
+### Processing too slow
 
 **Solutions:**
 
@@ -309,7 +321,9 @@ Shaka::open('input.mp4')
    ProcessMediaJob::dispatch($inputPath);
    ```
 
-### Memory Issues
+   See [Queue Integration](./queue-integration.md) for a full example.
+
+### Memory issues
 
 **Solutions:**
 
@@ -328,7 +342,7 @@ Shaka::open('input.mp4')
 
 ## Debugging
 
-### Enable Logging
+### Enable logging
 
 ```bash
 # .env
@@ -340,7 +354,7 @@ PACKAGER_LOG_CHANNEL=stack
 tail -f storage/logs/laravel.log
 ```
 
-### Get Raw Command
+### Get raw command
 
 ```php
 $command = Shaka::open('input.mp4')
@@ -351,18 +365,18 @@ $command = Shaka::open('input.mp4')
 dd($command);
 ```
 
-### Test Packager Directly
+### Test packager directly
 
 ```bash
 /usr/local/bin/packager --version
 /usr/local/bin/packager in=input.mp4,stream=video,output=output.mp4
 ```
 
-## Getting Help
+## Getting help
 
 If you're still experiencing issues:
 
-1. Run verification: `php artisan shaka:verify`
+1. Run verification: `php artisan shaka:info`
 2. Check logs in `storage/logs/laravel.log`
 3. Test packager binary directly
 4. Create an issue with:
@@ -372,7 +386,7 @@ If you're still experiencing issues:
    - Packager version
    - Relevant code snippet
 
-## Common Pitfalls
+## Common pitfalls
 
 1. **Forgetting to call `open()`** before adding streams
 2. **Using wrong file extension** for encrypted content (.mp4 vs .ts)

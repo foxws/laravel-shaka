@@ -1,10 +1,14 @@
+---
+sidebar_position: 6
+---
+
 # Architecture Overview
 
 Laravel Shaka implements a clean, testable architecture based on the proven patterns used by PHP-FFmpeg and Laravel FFmpeg.
 
-## Architecture Layers
+## Architecture layers
 
-### 1. Driver Layer (`ShakaPackager`)
+### 1. Driver layer (`ShakaPackager`)
 
 The driver layer handles direct interaction with the Shaka Packager binary:
 
@@ -44,7 +48,7 @@ class ShakaPackager
 - Consistent error handling
 - Centralized logging
 
-### 2. Business Logic Layer (`Packager`)
+### 2. Business logic layer (`Packager`)
 
 The packager layer provides the high-level API:
 
@@ -88,7 +92,7 @@ class Packager
 - Type-safe operations
 - Structured result objects
 
-### 3. Facade Layer (`Shaka` & `MediaOpenerFactory`)
+### 3. Facade layer (`Shaka` & `MediaOpenerFactory`)
 
 The facade layer provides the Laravel-style interface:
 
@@ -127,7 +131,7 @@ class Shaka
 - Multiple disks support
 - Method chaining
 
-## Component Relationships
+## Component relationships
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -162,7 +166,7 @@ class Shaka
         [Shaka Packager Binary]
 ```
 
-## Supporting Classes
+## Supporting classes
 
 ### CommandBuilder
 
@@ -219,7 +223,7 @@ $localPath = $media->getLocalPath();
 $filename = $media->getFilename();
 ```
 
-## Service Provider Registration
+## Service provider registration
 
 The package uses Laravel's service container for dependency injection:
 
@@ -245,7 +249,7 @@ $this->app->scoped(Packager::class, function ($app) {
 });
 ```
 
-## Error Handling
+## Error handling
 
 The package uses a clear exception hierarchy. Note: `ExecutableNotFoundException`
 exists but nothing currently throws it — a missing/non-executable binary
@@ -262,7 +266,7 @@ try {
 }
 ```
 
-## Testing Strategy
+## Testing strategy
 
 The architecture enables easy testing:
 
@@ -275,9 +279,9 @@ $packager = new Packager($driver);
 $result = $packager->open($collection)->export();
 ```
 
-## Extension Points
+## Extension points
 
-### Custom Drivers
+### Custom drivers
 
 Extend the driver for custom behavior:
 
@@ -292,7 +296,7 @@ class CustomPackagerDriver extends ShakaPackager
 }
 ```
 
-### Custom Streams
+### Custom streams
 
 `Stream`'s constructor is `protected` (not `private`) specifically so it stays
 subclassable; mutators use `new static(...)` so a subclass instance survives
@@ -310,7 +314,7 @@ class SubtitleStream extends Stream
 }
 ```
 
-### Custom Results
+### Custom results
 
 Extend result objects:
 
@@ -324,7 +328,7 @@ class DetailedPackagerResult extends PackagerResult
 }
 ```
 
-## Best Practices
+## Best practices
 
 1. **Always use dependency injection** - Get `Packager` from the container
 2. **Use the facade for simple operations** - `Shaka::open()` for quick tasks
@@ -334,7 +338,7 @@ class DetailedPackagerResult extends PackagerResult
 6. **Handle exceptions appropriately** - Different errors need different handling
 7. **Use the verification command** - During deployment: `php artisan shaka:info`
 
-## Performance Considerations
+## Performance considerations
 
 - **Long-running operations** - Adjust timeout based on content
 - **Memory usage** - Large files may require more memory
@@ -342,10 +346,10 @@ class DetailedPackagerResult extends PackagerResult
 - **Temporary files** - Clean up with `cleanupTemporaryFiles()`
 - **Remote disks** - Files are copied locally before processing
 
-## Security Considerations
+## Security considerations
 
 - **Binary path validation** - Driver validates binary existence
 - **Input sanitization** - Use proper escaping for file paths
-- **Encryption** - Use `withEncryption()` for DRM content
+- **Encryption** - Use `withAESEncryption()` for DRM content, see [AES Encryption](./aes-encryption.md)
 - **Access control** - Validate user permissions before processing
 - **Temporary files** - Ensure proper cleanup and permissions

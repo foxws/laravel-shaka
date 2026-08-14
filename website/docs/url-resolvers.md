@@ -1,3 +1,7 @@
+---
+sidebar_position: 8
+---
+
 # Dynamic URL Resolvers
 
 Dynamic URL Resolvers provide a flexible way to customize how URLs are generated for your streaming content. Inspired by Laravel FFMpeg, this package provides two dedicated classes for handling HLS and DASH manifests.
@@ -37,9 +41,9 @@ use Foxws\Shaka\Http\DynamicDASHManifest;
 $manifest = new DynamicDASHManifest('disk-name');
 ```
 
-## HLS Usage
+## HLS usage
 
-### Basic Example
+### Basic example
 
 ```php
 use Foxws\Shaka\Http\DynamicHLSPlaylist;
@@ -64,7 +68,7 @@ $content = $playlist->get();
 return $playlist->toResponse($request);
 ```
 
-### HLS Methods
+### HLS methods
 
 #### `setKeyUrlResolver(callable $resolver): self`
 
@@ -124,9 +128,9 @@ Returns an HTTP response with correct content type (`application/vnd.apple.mpegu
 return $playlist->toResponse($request);
 ```
 
-## DASH Usage
+## DASH usage
 
-### Basic Example
+### Basic example
 
 ```php
 use Foxws\Shaka\Http\DynamicDASHManifest;
@@ -148,7 +152,7 @@ $content = $manifest->get();
 return $manifest->toResponse($request);
 ```
 
-### DASH Methods
+### DASH methods
 
 #### `setMediaUrlResolver(callable $resolver): self`
 
@@ -199,9 +203,9 @@ $playlist->setMediaUrlResolver(fn ($file) => "https://cdn.example.com/{$file}");
 
 Cache is automatically cleared when you set a new resolver.
 
-## Use Cases
+## Use cases
 
-### 1. CDN Integration
+### 1. CDN integration
 
 ```php
 $playlist = (new DynamicHLSPlaylist('videos'))
@@ -211,7 +215,7 @@ $playlist = (new DynamicHLSPlaylist('videos'))
     ->open('master.m3u8');
 ```
 
-### 2. Signed URLs for Security
+### 2. Signed URLs for security
 
 ```php
 $playlist = (new DynamicHLSPlaylist('private'))
@@ -224,7 +228,9 @@ $playlist = (new DynamicHLSPlaylist('private'))
     ->open('master.m3u8');
 ```
 
-### 3. Multi-tenant Applications
+See [AES Encryption](./aes-encryption.md) for how this pairs with encrypted content.
+
+### 3. Multi-tenant applications
 
 ```php
 $tenantId = auth()->user()->tenant_id;
@@ -236,7 +242,7 @@ $playlist = (new DynamicHLSPlaylist('tenants'))
     ->open("tenant-{$tenantId}/master.m3u8");
 ```
 
-### 4. Controller Integration
+### 4. Controller integration
 
 ```php
 namespace App\Http\Controllers;
@@ -269,7 +275,7 @@ class VideoController extends Controller
 }
 ```
 
-### 5. DASH with Multiple CDNs
+### 5. DASH with multiple CDNs
 
 ```php
 $manifest = (new DynamicDASHManifest('videos'))
@@ -309,7 +315,7 @@ return $playlist->toResponse($request);
 
 Additionally, this package provides `DynamicDASHManifest` for DASH content.
 
-## Best Practices
+## Best practices
 
 1. **Use Laravel helpers** - Leverage `route()`, `url()`, and `Storage::url()` for consistency
 2. **Implement authorization** - Always check user permissions when serving media
@@ -320,4 +326,6 @@ Additionally, this package provides `DynamicDASHManifest` for DASH content.
 
 ## Examples
 
-For comprehensive examples, see [UrlResolverExamples.php](../examples/UrlResolverExamples.php).
+For comprehensive examples, see
+[UrlResolverExamples.php](https://github.com/foxws/laravel-shaka/blob/main/examples/UrlResolverExamples.php)
+in the repository.

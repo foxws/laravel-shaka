@@ -34,12 +34,7 @@ $result = Shaka::fromDisk('s3')
 
 ## Documentation
 
-📚 **[Full Documentation](docs/README.md)**
-
-- [Quick Reference](docs/QUICK_REFERENCE.md) - Complete API reference
-- [AES Encryption](docs/AES_ENCRYPTION.md) - Encryption with key rotation
-- [Architecture Overview](docs/ARCHITECTURE.md) - Understanding the design
-- [Configuration](docs/CONFIGURATION.md) - Configuring the package
+See the [full documentation](https://foxws.github.io/laravel-shaka/) (or browse [`docs/`](docs) directly): [Installation](docs/installation.md), [Usage](docs/usage.md), [Quick Reference](docs/quick-reference.md), [Configuration](docs/configuration.md), [Architecture](docs/architecture.md), [AES Encryption](docs/aes-encryption.md), [URL Resolvers](docs/url-resolvers.md), [Queue Integration](docs/queue-integration.md), [Troubleshooting](docs/troubleshooting.md).
 
 ## Requirements
 
@@ -151,7 +146,7 @@ $streamer->withKeyRotationDuration(60); // Rotate every 60 seconds
 $streamer->export()->toDisk('s3')->save();
 ```
 
-See [AES Encryption Guide](docs/AES_ENCRYPTION.md) for complete documentation.
+See [AES Encryption Guide](docs/aes-encryption.md) for complete documentation.
 
 ### Dynamic URL Resolvers (HLS & DASH)
 
@@ -213,7 +208,7 @@ public function manifest(Video $video)
 - 🔄 Implement dynamic key rotation
 - 📊 Track media access patterns
 
-See [URL Resolver Examples](examples/UrlResolverExamples.php) and [Documentation](docs/URL_RESOLVERS.md) for more details.
+See [URL Resolver Examples](examples/UrlResolverExamples.php) and [Documentation](docs/url-resolvers.md) for more details.
 
 ## Available Methods
 
@@ -278,7 +273,7 @@ See [URL Resolver Examples](examples/UrlResolverExamples.php) and [Documentation
 - `get()` - Get processed manifest content
 - `toResponse($request)` - Return as HTTP response
 
-See the [Quick Reference](docs/QUICK_REFERENCE.md) for complete API documentation.
+See the [Quick Reference](docs/quick-reference.md) for complete API documentation.
 
 ## Testing
 

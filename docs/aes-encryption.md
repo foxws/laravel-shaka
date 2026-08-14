@@ -1,8 +1,12 @@
+---
+sidebar_position: 7
+---
+
 # AES Encryption with Different Codecs
 
 This guide demonstrates how to use the `withAESEncryption()` method with various video codecs.
 
-## Quick Start
+## Quick start
 
 ```php
 use Foxws\Shaka\Filesystem\Media;
@@ -27,9 +31,9 @@ $packager->addStream([
 
 `withAESEncryption()` returns an `EncryptionKey` value object with `key`, `keyId`, and `filePath` properties.
 
-## Codec-Specific Examples
+## Codec-specific examples
 
-### H.264/AVC Encryption
+### H.264/AVC encryption
 
 H.264 is the most widely supported codec. Use `cbc1` for maximum compatibility:
 
@@ -52,7 +56,7 @@ $packager->addStream([
 // Key ID: $encryptionKey->keyId
 ```
 
-## Key Rotation
+## Key rotation
 
 Automatic key rotation enhances security by periodically generating new encryption keys:
 
@@ -70,7 +74,7 @@ $packager->withHlsMasterPlaylist('master.m3u8');
 $result = $packager->export();
 ```
 
-### Common Rotation Intervals
+### Common rotation intervals
 
 ```php
 // 30 seconds - high security (Apple HLS recommendation)
@@ -86,7 +90,7 @@ $result = $packager->export();
 ->withKeyRotationDuration(900)
 ```
 
-### How It Works
+### How it works
 
 Shaka Packager automatically:
 
@@ -96,7 +100,7 @@ Shaka Packager automatically:
 
 Players automatically fetch the correct key for each segment.
 
-### Collecting Rotated Keys
+### Collecting rotated keys
 
 After packaging with key rotation, the keys are automatically tracked when uploading:
 
@@ -125,7 +129,7 @@ foreach ($uploadedKeys as $key) {
 
 That's it! `toDisk()` automatically uploads both segments and encryption keys to your **private S3 bucket**.
 
-### Serving Keys with Dynamic URLs
+### Serving keys with dynamic URLs
 
 Use `setKeyUrlResolver()` to generate signed temporary URLs dynamically when serving playlists:
 
@@ -156,9 +160,11 @@ public function playlist(Video $video)
 - Keys remain in private S3 bucket
 - Players fetch keys transparently
 
-## Codec-Specific Examples (continued)
+See [URL Resolvers](./url-resolvers.md) for the full `DynamicHLSPlaylist` and `DynamicDASHManifest` API.
 
-### HEVC/H.265 Encryption
+## Codec-specific examples (continued)
+
+### HEVC/H.265 encryption
 
 HEVC offers better compression. Use `cbcs` for modern devices:
 
@@ -176,7 +182,7 @@ $packager->addStream([
 ]);
 ```
 
-### AV1 Encryption
+### AV1 encryption
 
 AV1 is a modern, royalty-free codec with excellent compression:
 
@@ -194,9 +200,9 @@ $packager->addStream([
 ]);
 ```
 
-## Protection Schemes
+## Protection schemes
 
-### cbc1 (Default - Most Compatible)
+### cbc1 (default - most compatible)
 
 Best for HLS and maximum browser compatibility:
 
@@ -205,7 +211,7 @@ $encryptionKey = $packager->withAESEncryption('encryption.key', 'cbc1');
 // Compatible with: Safari, Chrome, Firefox, Edge, iOS, Android
 ```
 
-### cbcs (Modern Devices)
+### cbcs (modern devices)
 
 For newer platforms with better performance:
 
@@ -214,7 +220,7 @@ $encryptionKey = $packager->withAESEncryption('encryption.key', 'cbcs');
 // Compatible with: iOS 10+, Android 7+, modern browsers
 ```
 
-### cenc (Common Encryption)
+### cenc (common encryption)
 
 DASH standard, widely supported:
 
@@ -223,7 +229,7 @@ $encryptionKey = $packager->withAESEncryption('encryption.key', 'cenc');
 // Compatible with: Most DASH players, EME-enabled browsers
 ```
 
-### SAMPLE-AES (HLS-Specific)
+### SAMPLE-AES (HLS-specific)
 
 For HLS without a protection scheme:
 
@@ -236,7 +242,7 @@ Every method above also accepts a `Foxws\Shaka\Support\ProtectionScheme` enum ca
 (`ProtectionScheme::Cbc1`, `::Cbcs`, `::Cenc`, `::Cens`) instead of a raw string,
 if you'd rather not deal with typos in the scheme name.
 
-## Multi-Codec Packaging
+## Multi-codec packaging
 
 Package multiple codecs with a single encryption key:
 
@@ -274,7 +280,7 @@ $packager->addStream([
 $result = $packager->export();
 ```
 
-## Separate Keys Per Codec
+## Separate keys per codec
 
 For advanced scenarios, use different keys for each codec:
 
@@ -297,7 +303,7 @@ $keyAv1 = $packagerAv1->withAESEncryption('av1.key');
 // Each codec has unique encryption keys
 ```
 
-## HLS with Encryption
+## HLS with encryption
 
 Complete HLS packaging with encryption:
 
@@ -321,7 +327,7 @@ $result = $packager->export();
 // Player will fetch 'encryption.key' to decrypt segments
 ```
 
-## DASH with Encryption
+## DASH with encryption
 
 Complete DASH packaging with encryption:
 
@@ -341,7 +347,7 @@ $packager->builder()
 $result = $packager->export();
 ```
 
-## Key Storage
+## Key storage
 
 The encryption key is stored in two locations:
 
@@ -365,7 +371,7 @@ echo $encryptionKey->key;      // Hex-encoded 128-bit key
 echo $encryptionKey->keyId;    // Hex-encoded key ID
 ```
 
-### Secure Storage with Signed URLs
+### Secure storage with signed URLs
 
 For production use, store keys in a **private S3 bucket** and use `setKeyUrlResolver()` to generate signed URLs dynamically:
 
@@ -409,7 +415,7 @@ public function streamVideo(Video $video)
 
 ## Troubleshooting
 
-### Codec Not Supported
+### Codec not supported
 
 Ensure your input video is actually encoded with the expected codec:
 
@@ -418,16 +424,16 @@ ffmpeg -i video.mp4
 # Look for "Video: h264" or "Video: hevc" or "Video: av1"
 ```
 
-### Protection Scheme Issues
+### Protection scheme issues
 
 Different devices support different protection schemes:
 
 - **Safari/iOS**: Use `cbc1` or null (SAMPLE-AES)
 - **Chrome/Android**: Use `cbc1`, `cbcs`, or `cenc`
-- **DASH Players**: Use `cenc`
-- **HLS Players**: Use `cbc1` or null
+- **DASH players**: Use `cenc`
+- **HLS players**: Use `cbc1` or null
 
-### Key File Not Found
+### Key file not found
 
 Ensure the key file is copied to your export directory:
 
@@ -439,7 +445,9 @@ $encryptionKey = $packager->withAESEncryption('encryption.key');
 // When you export/upload, the key file will be included
 ```
 
-## API Reference
+See the [Troubleshooting](./troubleshooting.md) guide for more issues and solutions.
+
+## API reference
 
 ```php
 /**
@@ -482,7 +490,7 @@ final readonly class EncryptionKey
 `Foxws\Shaka\Support\EncryptionKeyFile` value objects, each with `path`,
 `filename`, and `content` (hex-encoded) properties.
 
-## Related Documentation
+## Related documentation
 
-- [Configuration Guide](../docs/CONFIGURATION.md)
+- [Configuration Guide](./configuration.md)
 - [Shaka Packager Encryption Docs](https://shaka-project.github.io/shaka-packager/html/tutorials/raw_key.html)

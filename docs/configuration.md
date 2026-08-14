@@ -1,8 +1,12 @@
+---
+sidebar_position: 5
+---
+
 # Configuration
 
-Laravel Shaka can be configured via the `config/shaka.php` file.
+Laravel Shaka can be configured via the `config/laravel-shaka.php` file.
 
-## Publishing Configuration
+## Publishing configuration
 
 Publish the configuration file:
 
@@ -10,9 +14,9 @@ Publish the configuration file:
 php artisan vendor:publish --tag="shaka-config"
 ```
 
-## Configuration Options
+## Configuration options
 
-### Packager Binary
+### Packager binary
 
 Configure the path to the Shaka Packager binary:
 
@@ -22,13 +26,13 @@ Configure the path to the Shaka Packager binary:
 ],
 ```
 
-**Environment Variable:**
+**Environment variable:**
 
 ```env
 PACKAGER_PATH=/usr/local/bin/packager
 ```
 
-**Multiple Binary Paths:**
+**Multiple binary paths:**
 The system will search for the first available binary:
 
 ```php
@@ -49,7 +53,7 @@ Set the maximum execution time for packaging operations:
 'timeout' => 60 * 60 * 4, // 4 hours in seconds
 ```
 
-**Environment Variable:**
+**Environment variable:**
 
 ```env
 PACKAGER_TIMEOUT=14400
@@ -70,7 +74,7 @@ Enable logging to track packaging operations:
 'log_channel' => env('PACKAGER_LOG_CHANNEL', false),
 ```
 
-**Environment Variables:**
+**Environment variables:**
 
 ```env
 # Disable logging (default)
@@ -83,7 +87,7 @@ PACKAGER_LOG_CHANNEL=stack
 PACKAGER_LOG_CHANNEL=packager
 ```
 
-**Custom Log Channel:**
+**Custom log channel:**
 Define a custom channel in `config/logging.php`:
 
 ```php
@@ -97,7 +101,7 @@ Define a custom channel in `config/logging.php`:
 ],
 ```
 
-### Temporary Files
+### Temporary files
 
 Configure where temporary files are stored:
 
@@ -105,7 +109,7 @@ Configure where temporary files are stored:
 'temporary_files_root' => env('PACKAGER_TEMPORARY_FILES_ROOT', storage_path('app/packager/temp')),
 ```
 
-**Environment Variable:**
+**Environment variable:**
 
 ```env
 PACKAGER_TEMPORARY_FILES_ROOT=/tmp/packager
@@ -118,7 +122,7 @@ PACKAGER_TEMPORARY_FILES_ROOT=/tmp/packager
 - Clean up regularly with `cleanupTemporaryFiles()`
 - Use `/dev/shm` for faster processing (RAM disk)
 
-### Encrypted Files
+### Encrypted files
 
 Configure location for encrypted temporary files:
 
@@ -126,13 +130,13 @@ Configure location for encrypted temporary files:
 'temporary_files_encrypted' => env('PACKAGER_TEMPORARY_ENCRYPTED', '/dev/shm'),
 ```
 
-**Environment Variable:**
+**Environment variable:**
 
 ```env
 PACKAGER_TEMPORARY_ENCRYPTED=/dev/shm
 ```
 
-### Storage Space Guards
+### Storage space guards
 
 Fail fast with a clear exception instead of a job dying mid-packaging when a
 storage-constrained root (e.g. a size-limited tmpfs) runs low on space. All
@@ -145,7 +149,7 @@ behavior for existing installs - set them explicitly to opt in.
 'cache_files_min_free' => env('PACKAGER_CACHE_MIN_FREE', 0),
 ```
 
-**Environment Variables:**
+**Environment variables:**
 
 ```env
 PACKAGER_TEMPORARY_MIN_FREE=1073741824       # 1 GiB floor on temporary_files_root
@@ -163,7 +167,7 @@ Both failure modes throw `Foxws\Shaka\Exceptions\InsufficientStorageException`, 
 
 **Tuning the multiplier:** `1.5` is a starting point, not a measurement. After a real job runs, compare `du -sh` on its temporary directory against the combined size of its source input files, and adjust `PACKAGER_TEMPORARY_SIZE_MULTIPLIER` from there - especially if you generate separate HLS and DASH segment sets rather than sharing CMAF segments across both, which pushes real usage closer to 2x than 1.5x.
 
-#### Example: `temporary_files_root` on a Podman tmpfs
+#### Example: temporary_files_root on a Podman tmpfs
 
 If you run Horizon/queue workers in Podman and want packaging scratch space
 to live in RAM instead of hitting your NVMe (segments are written once,
@@ -205,7 +209,7 @@ PACKAGER_CACHE_MIN_FREE=10485760   # 10 MiB
 > tmpfs size, and treat `temporary_files_min_free` as a fail-fast safety net
 > for the jobs that slip past that limit, not as the primary defense.
 
-## Complete Configuration Example
+## Complete configuration example
 
 ```php
 <?php
@@ -292,7 +296,7 @@ return [
 ];
 ```
 
-## Environment Configuration
+## Environment configuration
 
 Example `.env` configuration:
 
@@ -313,7 +317,7 @@ PACKAGER_CACHE_MIN_FREE=10485760
 After configuration, verify your setup:
 
 ```bash
-php artisan shaka:verify
+php artisan shaka:info
 ```
 
 This command checks:
@@ -323,7 +327,7 @@ This command checks:
 - Timeout is configured
 - Logger is properly set up
 
-## Runtime Configuration
+## Runtime configuration
 
 You can also configure the packager at runtime:
 
@@ -353,7 +357,7 @@ $packager = Packager::create(
 );
 ```
 
-## Driver Configuration
+## Driver configuration
 
 Modify driver settings after instantiation:
 
@@ -369,7 +373,7 @@ $driver->setLogger(Log::channel('debug'));
 
 ## Troubleshooting
 
-### Binary Not Found
+### Binary not found
 
 If you see "Executable not found" errors:
 
@@ -378,7 +382,7 @@ If you see "Executable not found" errors:
 3. Ensure it's executable: `chmod +x /usr/local/bin/packager`
 4. Update config with correct path
 
-### Timeout Errors
+### Timeout errors
 
 If operations timeout:
 
@@ -387,7 +391,7 @@ If operations timeout:
 3. Consider queueing long operations
 4. Optimize video settings (resolution, bitrate)
 
-### Permission Errors
+### Permission errors
 
 If you see permission errors:
 
@@ -396,7 +400,7 @@ If you see permission errors:
 3. Verify binary is executable
 4. Check SELinux/AppArmor policies
 
-### Logging Issues
+### Logging issues
 
 If logging doesn't work:
 
@@ -404,3 +408,5 @@ If logging doesn't work:
 2. Check log directory permissions
 3. Ensure channel is properly configured
 4. Test with a simple log entry
+
+See the [Troubleshooting](./troubleshooting.md) guide for more issues and solutions.

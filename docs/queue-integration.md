@@ -1,8 +1,12 @@
+---
+sidebar_position: 9
+---
+
 # Queue Integration Guide
 
 This guide explains how to integrate Laravel Shaka Packager with Laravel's queue system for processing media in the background.
 
-## Basic Queue Job
+## Basic queue job
 
 Create a job to handle media packaging:
 
@@ -43,7 +47,7 @@ class PackageMediaJob implements ShouldQueue
 }
 ```
 
-## Dispatching the Job
+## Dispatching the job
 
 ```php
 use App\Jobs\PackageMediaJob;
@@ -60,7 +64,7 @@ PackageMediaJob::dispatch('videos/input.mp4', 'processed/')
     ->delay(now()->addMinutes(5));
 ```
 
-## Job with Progress Tracking
+## Job with progress tracking
 
 ```php
 <?php
@@ -125,7 +129,7 @@ class PackageMediaWithProgressJob implements ShouldQueue
 }
 ```
 
-## Batch Processing
+## Batch processing
 
 Process multiple files in a batch:
 
@@ -154,9 +158,9 @@ $batch = Bus::batch($jobs)
     ->dispatch();
 ```
 
-## Configuration Recommendations
+## Configuration recommendations
 
-### Queue Configuration
+### Queue configuration
 
 Update `config/queue.php`:
 
@@ -172,7 +176,7 @@ Update `config/queue.php`:
 ],
 ```
 
-### Horizon Configuration (Optional)
+### Horizon configuration (optional)
 
 If using Laravel Horizon, add to `config/horizon.php`:
 
@@ -194,17 +198,20 @@ If using Laravel Horizon, add to `config/horizon.php`:
 ],
 ```
 
-## Best Practices
+See [Configuration](./configuration.md) for tuning `temporary_files_min_free`
+and related storage guards when running concurrent queue workers.
 
-1. **Set Appropriate Timeouts**: Media packaging can take time, set realistic timeouts
-2. **Limit Concurrent Jobs**: Packaging is resource-intensive, limit concurrent processes
-3. **Monitor Memory**: Use memory limits to prevent server issues
-4. **Implement Retries**: Network issues with remote storage may require retries
-5. **Use Job Chaining**: Chain cleanup jobs after packaging
-6. **Track Progress**: Use events or database updates to track progress
-7. **Clean Up Temporary Files**: Always clean up after success or failure
+## Best practices
 
-## Example with Cleanup
+1. **Set appropriate timeouts**: Media packaging can take time, set realistic timeouts
+2. **Limit concurrent jobs**: Packaging is resource-intensive, limit concurrent processes
+3. **Monitor memory**: Use memory limits to prevent server issues
+4. **Implement retries**: Network issues with remote storage may require retries
+5. **Use job chaining**: Chain cleanup jobs after packaging
+6. **Track progress**: Use events or database updates to track progress
+7. **Clean up temporary files**: Always clean up after success or failure
+
+## Example with cleanup
 
 ```php
 public function handle(): void

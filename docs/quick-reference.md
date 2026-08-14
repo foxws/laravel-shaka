@@ -1,8 +1,12 @@
-# Shaka Packager - Quick Reference Guide
+---
+sidebar_position: 4
+---
 
-## Fluent API with fromDisk Support
+# Quick Reference
 
-### Basic Usage
+## Fluent API with fromDisk support
+
+### Basic usage
 
 ```php
 use Foxws\Shaka\Facades\Shaka;
@@ -15,7 +19,7 @@ $result = Shaka::open('input.mp4')
     ->export();
 ```
 
-### Using Different Disks
+### Using different disks
 
 ```php
 // From S3, save to a different disk (e.g., local, s3, etc.)
@@ -35,47 +39,48 @@ $result = Shaka::openFromDisk('s3', 'videos/input.mp4')
     ->save();
 ```
 
-## Available Methods
+## Available methods
 
-### Disk Management
+### Disk management
 
 - `fromDisk(string $disk)` - Set the disk to use
 - `openFromDisk(string $disk, $paths)` - Set disk and open files in one call
 - `getDisk()` - Get current disk instance
 
-### Media Management
+### Media management
 
 - `open($paths)` - Open one or more media files
 - `get()` - Get the MediaCollection
 - `streams()` - Get auto-generated Stream objects
 
-### Stream Configuration
+### Stream configuration
 
 - `addVideoStream(string $input, string $output, array $options = [])` - Add video stream
 - `addAudioStream(string $input, string $output, array $options = [])` - Add audio stream
 - `addTextStream(string $input, string $output, array $options = [])` - Add text/caption/subtitle stream
 - `addStream(Stream|array $stream)` - Add custom stream with full control
 
-### Output Configuration
+### Output configuration
 
 - `withMpdOutput(string $path)` - Set DASH manifest output
 - `withBaseUrls(string|array $urls)` - Set DASH `<BaseURL>` element(s) under `<MPD>`
 - `withHlsMasterPlaylist(string $path)` - Set HLS master playlist output
 - `withSegmentDuration(int $seconds)` - Set segment duration
-- `withEncryption(array $config)` - Enable encryption
+- `withAESEncryption(string $keyFilename = 'key', ProtectionScheme|string|null $protectionScheme = 'cbc1', ?string $label = null): EncryptionKey` - Enable AES-128 encryption (does not return `$this` — breaks the fluent chain)
+- `withKeyRotationDuration(int $seconds)` - Enable key rotation for encryption
 - `toDisk(string $disk)` - Set the target disk for output
 - `toPath(string $path)` - Set the target output path (subdirectory)
 - `withVisibility(string $visibility)` - Set file visibility (e.g., 'public', 'private')
 
-### Execution & Utilities
+### Execution & utilities
 
-- `export()` - Export the packaging operation (returns result object)
+- `export()` - Execute the packaging operation (returns result object)
 - `save(?string $path = null)` - Save outputs to disk (optionally to a specific path)
 - `getCommand()` - Get the final command string (for debugging)
 - `dd()` - Dump the final command and end the script
 - `afterSaving(callable $callback)` - Register a callback to run after saving
 
-### Dynamic URL Resolvers
+### Dynamic URL resolvers
 
 **DynamicHLSPlaylist:**
 
@@ -97,9 +102,11 @@ $result = Shaka::openFromDisk('s3', 'videos/input.mp4')
 - `get()` - Get processed manifest content
 - `toResponse($request)` - Return as HTTP response
 
-## Common Patterns
+See [URL Resolvers](./url-resolvers.md) for full documentation of both classes.
 
-### Adding Captions/Subtitles (WebVTT)
+## Common patterns
+
+### Adding captions/subtitles (WebVTT)
 
 ```php
 Shaka::fromDisk('s3')
@@ -116,7 +123,7 @@ Shaka::fromDisk('s3')
     ->export();
 ```
 
-### Adaptive Bitrate Streaming
+### Adaptive bitrate streaming
 
 ```php
 Shaka::fromDisk('s3')
@@ -136,7 +143,7 @@ Shaka::fromDisk('s3')
     ->export();
 ```
 
-### HLS with Encryption
+### HLS with encryption
 
 ```php
 Shaka::fromDisk('s3')
@@ -151,7 +158,10 @@ Shaka::fromDisk('s3')
     ->export();
 ```
 
-### Multiple Files
+See [AES Encryption](./aes-encryption.md) for the recommended
+`withAESEncryption()` API.
+
+### Multiple files
 
 ```php
 Shaka::fromDisk('videos')
@@ -163,7 +173,7 @@ Shaka::fromDisk('videos')
     ->export();
 ```
 
-### Error Handling
+### Error handling
 
 ```php
 try {
@@ -183,7 +193,7 @@ try {
 
 ## Configuration
 
-### config/shaka.php
+### config/laravel-shaka.php
 
 ```php
 return [
@@ -204,14 +214,16 @@ return [
 - Default: 30
 - Raise further only after measuring: this bounds an async promise pool (`GuzzleHttp\Promise\EachPromise`), so throughput scales with concurrency until you saturate the destination's write throughput or the local disk read I/O for segment files. Against a local/self-hosted S3-compatible store (low latency, high bandwidth) higher values pay off faster than against real AWS S3 over the WAN — but there's no universally correct number, watch upload duration and destination-side load before pushing past 30-50.
 
-## Artisan Commands
+See the full [Configuration](./configuration.md) page for every available option.
+
+## Artisan commands
 
 ```bash
 # Verify packager installation
-php artisan shaka:verify
+php artisan shaka:info
 ```
 
-## Direct Driver Usage
+## Direct driver usage
 
 ```php
 use Foxws\Shaka\Support\Packager\ShakaPackager;
@@ -221,7 +233,7 @@ $version = $driver->getVersion();
 $driver->setTimeout(7200);
 ```
 
-## CommandBuilder Direct Usage
+## CommandBuilder direct usage
 
 ```php
 use Foxws\Shaka\Support\Packager\CommandBuilder;
@@ -235,7 +247,7 @@ $packager = app(Packager::class);
 $result = $packager->packageWithBuilder($builder);
 ```
 
-## Stream Objects
+## Stream objects
 
 ```php
 use Foxws\Shaka\Support\Packager\Stream;
@@ -253,7 +265,7 @@ $audioStream = Stream::audio($media)
 $commandString = $videoStream->toCommandString();
 ```
 
-## Examples Location
+## Examples location
 
 - Basic examples: `examples/PackagerExamples.php`
 - Fluent API examples: `examples/FluentBuilderExamples.php`

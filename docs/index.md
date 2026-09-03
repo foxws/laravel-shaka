@@ -28,7 +28,7 @@ $result = Shaka::fromDisk('s3')
 - **Multiple disks** - Works with local, S3, and custom filesystems
 - **Adaptive bitrate** - Create multi-quality streams easily
 - **Encryption & DRM** - Built-in support for content protection
-- **HLS & DASH** - Support for both streaming protocols
+- **HLS & DASH** - Both manifests packaged from the same CMAF segments in one export, no double encoding
 - **Testable** - Clean architecture with mockable components
 - **Type-safe** - Full PHP 8.1+ type declarations
 

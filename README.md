@@ -28,7 +28,7 @@ $result = Shaka::fromDisk('s3')
 - 📁 **Multiple Disks** - Works with local, S3, and custom filesystems
 - 🎯 **Adaptive Bitrate** - Create multi-quality streams easily
 - 🔒 **Encryption & DRM** - Built-in support for content protection
-- 📺 **HLS & DASH** - Support for both streaming protocols
+- 📺 **HLS & DASH** - Both manifests packaged from the same CMAF segments in one export, no double encoding
 - 🧪 **Testable** - Clean architecture with mockable components
 - 📝 **Type-Safe** - Full PHP 8.1+ type declarations
 
@@ -103,6 +103,27 @@ $result = Shaka::open('input.mp4')
     ->export()
     ->save();
 ```
+
+### Dual DASH + HLS Output (CMAF)
+
+Video and audio streams are packaged as CMAF (fragmented MP4) by default, so the
+same set of segments can be described by both a DASH manifest and an HLS master
+playlist. Chaining `withMpdOutput()` and `withHlsMasterPlaylist()` on the same
+builder packages both from a single `export()` — one packaging pass, no extra
+transcoding, just an additional manifest file:
+
+```php
+$result = Shaka::open('input.mp4')
+    ->addVideoStream('input.mp4', 'video.mp4')
+    ->addAudioStream('input.mp4', 'audio.mp4')
+    ->withMpdOutput('manifest.mpd')
+    ->withHlsMasterPlaylist('master.m3u8')
+    ->export()
+    ->save();
+```
+
+If you only need one format, only set the corresponding output — Shaka Packager
+only generates the manifest(s) you ask for.
 
 ### Working with Different Disks
 

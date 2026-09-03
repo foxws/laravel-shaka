@@ -34,6 +34,27 @@ $result = Shaka::open('input.mp4')
     ->save();
 ```
 
+## Dual DASH + HLS output (CMAF)
+
+Video and audio streams are packaged as CMAF (fragmented MP4) by default, so the
+same set of segments can be described by both a DASH manifest and an HLS master
+playlist. Chaining `withMpdOutput()` and `withHlsMasterPlaylist()` on the same
+builder packages both from a single `export()` — one packaging pass, no extra
+transcoding, just an additional manifest file:
+
+```php
+$result = Shaka::open('input.mp4')
+    ->addVideoStream('input.mp4', 'video.mp4')
+    ->addAudioStream('input.mp4', 'audio.mp4')
+    ->withMpdOutput('manifest.mpd')
+    ->withHlsMasterPlaylist('master.m3u8')
+    ->export()
+    ->save();
+```
+
+If you only need one format, only set the corresponding output — Shaka Packager
+only generates the manifest(s) you ask for.
+
 ## Working with different disks
 
 `fromDisk()` sets the source disk, and `toDisk()`/`toPath()` control where

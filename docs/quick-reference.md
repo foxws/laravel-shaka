@@ -1,5 +1,6 @@
 ---
-sidebar_position: 4
+section: Reference
+order: 2
 ---
 
 # Quick Reference
@@ -43,64 +44,78 @@ $result = Shaka::openFromDisk('s3', 'videos/input.mp4')
 
 ### Disk management
 
-- `fromDisk(string $disk)` - Set the disk to use
-- `openFromDisk(string $disk, $paths)` - Set disk and open files in one call
-- `getDisk()` - Get current disk instance
+| Method | What it does |
+| --- | --- |
+| `fromDisk(string $disk)` | Set the disk to read from |
+| `openFromDisk(string $disk, $paths)` | Set the disk and open files in one call |
+| `getDisk()` | Get the current disk instance |
 
 ### Media management
 
-- `open($paths)` - Open one or more media files
-- `get()` - Get the MediaCollection
-- `streams()` - Get auto-generated Stream objects
+| Method | What it does |
+| --- | --- |
+| `open($paths)` | Open one or more media files |
+| `get()` | Get the `MediaCollection` |
+| `streams()` | Get the auto-generated `Stream` objects |
 
 ### Stream configuration
 
-- `addVideoStream(string $input, string $output, array $options = [])` - Add video stream
-- `addAudioStream(string $input, string $output, array $options = [])` - Add audio stream
-- `addTextStream(string $input, string $output, array $options = [])` - Add text/caption/subtitle stream
-- `addStream(Stream|array $stream)` - Add custom stream with full control
+| Method | What it does |
+| --- | --- |
+| `addVideoStream(string $input, string $output, array $options = [])` | Add a video stream |
+| `addAudioStream(string $input, string $output, array $options = [])` | Add an audio stream |
+| `addTextStream(string $input, string $output, array $options = [])` | Add a text/caption/subtitle stream |
+| `addStream(Stream\|array $stream)` | Add a custom stream, with full control |
 
 ### Output configuration
 
-- `withMpdOutput(string $path)` - Set DASH manifest output
-- `withBaseUrls(string|array $urls)` - Set DASH `<BaseURL>` element(s) under `<MPD>`
-- `withHlsMasterPlaylist(string $path)` - Set HLS master playlist output
-- `withSegmentDuration(int $seconds)` - Set segment duration
-- `withAESEncryption(string $keyFilename = 'key', ProtectionScheme|string|null $protectionScheme = 'cbc1', ?string $label = null): EncryptionKey` - Enable AES-128 encryption (does not return `$this` — breaks the fluent chain)
-- `withKeyRotationDuration(int $seconds)` - Enable key rotation for encryption
-- `toDisk(string $disk)` - Set the target disk for output
-- `toPath(string $path)` - Set the target output path (subdirectory)
-- `withVisibility(string $visibility)` - Set file visibility (e.g., 'public', 'private')
+| Method | What it does |
+| --- | --- |
+| `withMpdOutput(string $path)` | Set the DASH manifest output |
+| `withBaseUrls(string\|array $urls)` | Set the DASH `<BaseURL>` element(s) under `<MPD>` |
+| `withHlsMasterPlaylist(string $path)` | Set the HLS master playlist output |
+| `withSegmentDuration(int $seconds)` | Set the segment duration |
+| `withAESEncryption(string $keyFilename = 'key', ProtectionScheme\|string\|null $protectionScheme = 'cbc1', ?string $label = null): EncryptionKey` | Turn on AES-128 encryption. Returns an `EncryptionKey`, not `$this` — this breaks the fluent chain. |
+| `withKeyRotationDuration(int $seconds)` | Turn on key rotation for encryption |
+| `toDisk(string $disk)` | Set the target disk for output |
+| `toPath(string $path)` | Set the target output path (subdirectory) |
+| `withVisibility(string $visibility)` | Set file visibility (e.g., `public`, `private`) |
 
 ### Execution & utilities
 
-- `export()` - Execute the packaging operation (returns result object)
-- `save(?string $path = null)` - Save outputs to disk (optionally to a specific path)
-- `getCommand()` - Get the final command string (for debugging)
-- `dd()` - Dump the final command and end the script
-- `afterSaving(callable $callback)` - Register a callback to run after saving
+| Method | What it does |
+| --- | --- |
+| `export()` | Run the packaging operation (returns a result object) |
+| `save(?string $path = null)` | Save outputs to disk (optionally to a specific path) |
+| `getCommand()` | Get the final command string, for debugging |
+| `dd()` | Dump the final command and stop the script |
+| `afterSaving(callable $callback)` | Register a callback to run after saving |
 
 ### Dynamic URL resolvers
 
 **DynamicHLSPlaylist:**
 
-- `new DynamicHLSPlaylist(?string $disk)` - Create HLS playlist processor
-- `open(string $path)` - Open a playlist file
-- `setKeyUrlResolver(callable $resolver)` - Set resolver for encryption key URLs
-- `setMediaUrlResolver(callable $resolver)` - Set resolver for media segment URLs
-- `setPlaylistUrlResolver(callable $resolver)` - Set resolver for sub-playlist URLs
-- `get()` - Get processed playlist content
-- `all()` - Get all processed playlists (master + segments)
-- `toResponse($request)` - Return as HTTP response
+| Method | What it does |
+| --- | --- |
+| `new DynamicHLSPlaylist(?string $disk)` | Create an HLS playlist processor |
+| `open(string $path)` | Open a playlist file |
+| `setKeyUrlResolver(callable $resolver)` | Set the resolver for encryption key URLs |
+| `setMediaUrlResolver(callable $resolver)` | Set the resolver for media segment URLs |
+| `setPlaylistUrlResolver(callable $resolver)` | Set the resolver for sub-playlist URLs |
+| `get()` | Get the processed playlist content |
+| `all()` | Get every processed playlist (master + segments) |
+| `toResponse($request)` | Return as an HTTP response |
 
 **DynamicDASHManifest:**
 
-- `new DynamicDASHManifest(?string $disk)` - Create DASH manifest processor
-- `open(string $path)` - Open a manifest file
-- `setMediaUrlResolver(callable $resolver)` - Set resolver for media segment URLs
-- `setInitUrlResolver(callable $resolver)` - Set resolver for initialization segment URLs
-- `get()` - Get processed manifest content
-- `toResponse($request)` - Return as HTTP response
+| Method | What it does |
+| --- | --- |
+| `new DynamicDASHManifest(?string $disk)` | Create a DASH manifest processor |
+| `open(string $path)` | Open a manifest file |
+| `setMediaUrlResolver(callable $resolver)` | Set the resolver for media segment URLs |
+| `setInitUrlResolver(callable $resolver)` | Set the resolver for initialization segment URLs |
+| `get()` | Get the processed manifest content |
+| `toResponse($request)` | Return as an HTTP response |
 
 See [URL Resolvers](./url-resolvers.md) for full documentation of both classes.
 
@@ -158,8 +173,7 @@ Shaka::fromDisk('s3')
     ->export();
 ```
 
-See [AES Encryption](./aes-encryption.md) for the recommended
-`withAESEncryption()` API.
+See [AES Encryption](./aes-encryption.md) for the recommended `withAESEncryption()` API.
 
 ### Multiple files
 
@@ -209,10 +223,10 @@ return [
 
 **concurrency_workers**
 
-- Maximum number of concurrent S3 uploads when copying packaged files to an S3-backed disk.
+- The maximum number of concurrent S3 uploads when copying packaged files to an S3-backed disk.
 - Ignored for local disks.
-- Default: 30
-- Raise further only after measuring: this bounds an async promise pool (`GuzzleHttp\Promise\EachPromise`), so throughput scales with concurrency until you saturate the destination's write throughput or the local disk read I/O for segment files. Against a local/self-hosted S3-compatible store (low latency, high bandwidth) higher values pay off faster than against real AWS S3 over the WAN — but there's no universally correct number, watch upload duration and destination-side load before pushing past 30-50.
+- Default: 30.
+- Only raise it after measuring: it bounds an async promise pool (`GuzzleHttp\Promise\EachPromise`), so throughput scales with concurrency until you saturate either the destination's write throughput or the local disk's read speed for segment files. Against a local/self-hosted S3-compatible store (low latency, high bandwidth), higher values pay off faster than against real AWS S3 over the internet — there's no universally correct number, so watch upload duration and destination-side load before pushing past 30-50.
 
 See the full [Configuration](./configuration.md) page for every available option.
 

@@ -1,10 +1,11 @@
 ---
-sidebar_position: 10
+section: Advanced
+order: 2
 ---
 
 # Troubleshooting Guide
 
-Common issues and their solutions when using Laravel Shaka Packager.
+Common issues you might run into with Laravel Shaka Packager, and how to fix them.
 
 ## Installation issues
 
@@ -17,9 +18,7 @@ RuntimeException: Command execution failed - the underlying `Process` call
 could not find or execute /usr/local/bin/packager
 ```
 
-A missing or non-executable binary surfaces as a `RuntimeException` from the
-underlying `Process` call the first time the packager binary is invoked —
-see [Architecture](./architecture.md#error-handling) for details.
+A missing or non-executable binary surfaces as a `RuntimeException` from the underlying `Process` call, the first time the packager binary is actually invoked — see [Architecture](./architecture.md#error-handling) for more detail.
 
 **Solutions:**
 
@@ -35,14 +34,14 @@ see [Architecture](./architecture.md#error-handling) for details.
    brew install shaka-packager
    ```
 
-2. Update config path:
+2. Update the config path:
 
    ```bash
    # .env
    PACKAGER_PATH=/path/to/packager
    ```
 
-3. Verify installation:
+3. Verify the installation:
 
    ```bash
    php artisan shaka:info
@@ -74,14 +73,14 @@ Temporary directory is not writable
 
 **Solutions:**
 
-1. Create directory:
+1. Create the directory:
 
    ```bash
    mkdir -p storage/app/packager/temp
    chmod 755 storage/app/packager/temp
    ```
 
-2. Update config:
+2. Update the config:
 
    ```php
    // config/laravel-shaka.php
@@ -96,22 +95,14 @@ Temporary directory is not writable
 InsufficientStorageException: Insufficient storage space in [/cache/temp/packager]: 314572800 bytes free, 1610612736 bytes required.
 ```
 
-This is thrown by a deliberate pre-flight check (see [Storage Space
-Guards](./configuration.md#storage-space-guards)), not a filesystem error - the
-job never started, so nothing needs cleanup.
+This comes from a deliberate pre-flight check (see [Storage Space Guards](./configuration.md#storage-space-guards)), not a filesystem error — the job never actually started, so there's nothing to clean up.
 
 **Solutions:**
 
-1. If `temporary_files_root` or `cache_files_root` is a size-limited mount
-   (e.g. a tmpfs), free up space or increase its size.
-2. If this happens routinely under concurrent load, the real fix is usually
-   fewer concurrent jobs, not more disk space - lower your queue's
-   concurrency (e.g. Horizon's `maxProcesses`) so
-   `workers x largest expected job footprint` fits comfortably.
-3. If the floor itself is miscalibrated, tune it:
-   `PACKAGER_TEMPORARY_MIN_FREE` / `PACKAGER_CACHE_MIN_FREE` (bytes), and
-   `PACKAGER_TEMPORARY_SIZE_MULTIPLIER` for the job-size-aware check.
-4. To turn a check off entirely, set its env var to `0`.
+1. If `temporary_files_root` or `cache_files_root` points at a size-limited mount (like a tmpfs), free up space or increase its size.
+2. If this happens routinely under load, the real fix is usually fewer concurrent jobs rather than more disk space — lower your queue's concurrency (for example, Horizon's `maxProcesses`) so `workers x largest expected job footprint` fits comfortably.
+3. If the floor itself is set wrong, tune it: `PACKAGER_TEMPORARY_MIN_FREE` / `PACKAGER_CACHE_MIN_FREE` (in bytes), and `PACKAGER_TEMPORARY_SIZE_MULTIPLIER` for the job-size-aware check.
+4. To turn a check off entirely, set its environment variable to `0`.
 
 ### Timeout errors
 
@@ -123,14 +114,14 @@ RuntimeException: Process timeout exceeded
 
 **Solutions:**
 
-1. Increase timeout in config:
+1. Increase the timeout in the config:
 
    ```php
    // config/laravel-shaka.php
    'timeout' => 60 * 60 * 8, // 8 hours
    ```
 
-2. Or set dynamically:
+2. Or set it dynamically:
 
    ```php
    $packager = app(ShakaPackager::class);
@@ -156,7 +147,7 @@ Unknown field in stream descriptor: filename_with,comma.mp4
    PACKAGER_FORCE_GENERIC_INPUT=true
    ```
 
-2. Or sanitize filename manually:
+2. Or sanitize the filename manually:
 
    ```php
    use Foxws\Shaka\Support\MediaHelper;
@@ -175,7 +166,7 @@ InvalidArgumentException: MediaCollection cannot be empty
 **Solution:**
 
 ```php
-// Ensure you call open() before adding streams
+// Make sure you call open() before adding streams
 Shaka::open('input.mp4')  // ← Must call open first
     ->addVideoStream('input.mp4', 'output.mp4')
     ->export()
@@ -204,9 +195,9 @@ Shaka::open('input.mp4')
 
 ### SAMPLE-AES not working in browser
 
-**Problem:** Encrypted HLS doesn't play in web browsers
+**Problem:** Encrypted HLS doesn't play in web browsers.
 
-**Solution:** Use `cbc1` protection scheme for browser compatibility:
+**Solution:** Use the `cbc1` protection scheme instead, for browser compatibility:
 
 ```php
 Shaka::open('input.mp4')
@@ -221,8 +212,7 @@ Shaka::open('input.mp4')
     ->save();
 ```
 
-See [AES Encryption](./aes-encryption.md#protection-schemes) for the full
-list of protection schemes and device compatibility.
+See [AES Encryption](./aes-encryption.md#protection-schemes) for the full list of protection schemes and which devices support each one.
 
 ### Encryption key not found
 
@@ -234,14 +224,14 @@ Cannot load key from URI
 
 **Solutions:**
 
-1. Ensure key file is accessible:
+1. Make sure the key file is reachable:
 
    ```php
    // Make sure the key URL is publicly accessible
    ->setKeyUrlResolver(fn ($key) => Storage::disk('public')->url($key))
    ```
 
-2. Check CORS settings for cross-origin requests
+2. Check your CORS settings for cross-origin requests.
 
 ## Storage issues
 
@@ -255,7 +245,7 @@ S3Exception: Access Denied
 
 **Solutions:**
 
-1. Check IAM permissions:
+1. Check your IAM permissions:
 
    ```json
    {
@@ -269,7 +259,7 @@ S3Exception: Access Denied
    }
    ```
 
-2. Verify credentials in `.env`:
+2. Verify your credentials in `.env`:
 
    ```bash
    AWS_ACCESS_KEY_ID=your-key
@@ -286,7 +276,7 @@ S3Exception: Access Denied
 RuntimeException: Cannot copy files: temporary directory not set
 ```
 
-**Solution:** This occurs when using `packageWithBuilder()` directly. Use the full fluent API instead:
+**Solution:** This happens when calling `packageWithBuilder()` directly. Use the full fluent API instead:
 
 ```php
 // ✗ Wrong
@@ -307,15 +297,15 @@ Shaka::open('input.mp4')
 
 **Solutions:**
 
-1. Use local disk for temporary files:
+1. Use a local, fast disk for temporary files:
 
    ```php
    'temporary_files_root' => '/dev/shm/packager', // RAM disk
    ```
 
-2. Reduce quality/bitrate settings
-3. Use fewer ABR variants
-4. Process in background queue:
+2. Reduce quality/bitrate settings.
+3. Use fewer adaptive-bitrate variants.
+4. Move processing to a background queue:
 
    ```php
    ProcessMediaJob::dispatch($inputPath);
@@ -327,14 +317,14 @@ Shaka::open('input.mp4')
 
 **Solutions:**
 
-1. Increase PHP memory limit:
+1. Increase the PHP memory limit:
 
    ```ini
    memory_limit = 512M
    ```
 
-2. Process smaller chunks
-3. Use queue workers with memory limit:
+2. Process smaller chunks at a time.
+3. Run queue workers with a memory limit:
 
    ```bash
    php artisan queue:work --memory=512
@@ -350,11 +340,11 @@ PACKAGER_LOG_CHANNEL=stack
 ```
 
 ```php
-// Check logs
+// Check the logs
 tail -f storage/logs/laravel.log
 ```
 
-### Get raw command
+### Get the raw command
 
 ```php
 $command = Shaka::open('input.mp4')
@@ -365,7 +355,7 @@ $command = Shaka::open('input.mp4')
 dd($command);
 ```
 
-### Test packager directly
+### Test the packager binary directly
 
 ```bash
 /usr/local/bin/packager --version
@@ -374,23 +364,23 @@ dd($command);
 
 ## Getting help
 
-If you're still experiencing issues:
+If you're still stuck:
 
-1. Run verification: `php artisan shaka:info`
-2. Check logs in `storage/logs/laravel.log`
-3. Test packager binary directly
-4. Create an issue with:
-   - Error message
-   - PHP version
-   - Laravel version
-   - Packager version
-   - Relevant code snippet
+1. Run the verification command: `php artisan shaka:info`
+2. Check the logs in `storage/logs/laravel.log`
+3. Test the packager binary directly
+4. Open an issue with:
+   - The error message
+   - Your PHP version
+   - Your Laravel version
+   - The packager version
+   - A relevant code snippet
 
 ## Common pitfalls
 
-1. **Forgetting to call `open()`** before adding streams
-2. **Using wrong file extension** for encrypted content (.mp4 vs .ts)
-3. **Not setting timeout** for large files
-4. **Special characters in filenames** without sanitization
-5. **Incorrect disk configuration** in filesystems.php
-6. **Mixing input/output paths** from different contexts
+1. Forgetting to call `open()` before adding streams.
+2. Using the wrong file extension for encrypted content (`.mp4` vs `.ts`).
+3. Not setting a timeout for large files.
+4. Special characters in filenames, without sanitizing them first.
+5. Wrong disk configuration in `filesystems.php`.
+6. Mixing up input and output paths from different contexts.

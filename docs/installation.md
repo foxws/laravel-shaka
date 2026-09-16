@@ -1,5 +1,6 @@
 ---
-sidebar_position: 2
+section: Getting Started
+order: 1
 ---
 
 # Installation
@@ -8,7 +9,7 @@ sidebar_position: 2
 
 - PHP 8.3 or higher
 - Laravel 12.x or higher
-- Shaka Packager binary installed on your system or Docker container
+- The Shaka Packager binary, installed on your system or available in a Docker container
 
 ## Install the package
 
@@ -24,21 +25,21 @@ php artisan vendor:publish --tag="shaka-config"
 
 ## Installing Shaka Packager
 
-Install the Shaka Packager binary on your system. Visit the [Shaka Packager releases](https://github.com/shaka-project/shaka-packager/releases) page for installation instructions.
+The package itself doesn't include Shaka Packager — you need the binary installed separately. Visit the [Shaka Packager releases](https://github.com/shaka-project/shaka-packager/releases) page for install instructions for your platform.
 
 ## Verify installation
 
-After installation, verify that Shaka Packager is properly configured:
+Once everything is installed, check that it's set up correctly:
 
 ```bash
 php artisan shaka:info
 ```
 
-This will check:
+This command checks that:
 
-- Binary exists and is executable
-- Can retrieve version information
-- Configuration is properly set up
-- Temporary directory is accessible
+- The binary exists and can be run
+- The binary's version can be read
+- The configuration is valid
+- The temporary directory is accessible
 
 Continue to [Usage](./usage.md) to start packaging media.

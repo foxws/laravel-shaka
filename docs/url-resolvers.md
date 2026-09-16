@@ -1,29 +1,36 @@
 ---
-sidebar_position: 8
+section: Usage
+order: 2
 ---
 
 # Dynamic URL Resolvers
 
-Dynamic URL Resolvers provide a flexible way to customize how URLs are generated for your streaming content. Inspired by Laravel FFMpeg, this package provides two dedicated classes for handling HLS and DASH manifests.
+URL resolvers let you control how URLs are generated for your streaming content, instead of the raw paths inside a playlist or manifest being used as-is. This is inspired by Laravel FFMpeg, and the package ships two classes for it: one for HLS, one for DASH.
 
 ## Overview
 
-When serving adaptive streaming content (DASH/HLS), you often need to customize URLs for:
+When serving adaptive streaming content, different pieces of the playlist or manifest need their own URLs:
 
-- **HLS**:
-  - Encryption Keys - DRM keys for encrypted segments
-  - Media Segments - `.ts` video/audio chunks
-  - Playlists - `.m3u8` playlist files
+**HLS:**
 
-- **DASH**:
-  - Media Segments - Video/audio segments
-  - Initialization Segments - Init segments for each representation
+| Piece | What it is |
+| --- | --- |
+| Encryption keys | DRM keys for encrypted segments |
+| Media segments | `.ts` video/audio chunks |
+| Playlists | `.m3u8` playlist files |
+
+**DASH:**
+
+| Piece | What it is |
+| --- | --- |
+| Media segments | Video/audio segments |
+| Initialization segments | Init segment for each representation |
 
 ## Classes
 
 ### DynamicHLSPlaylist
 
-Process and customize HLS playlists (`.m3u8` files).
+Processes and rewrites HLS playlists (`.m3u8` files).
 
 ```php
 use Foxws\Shaka\Http\DynamicHLSPlaylist;
@@ -33,7 +40,7 @@ $playlist = new DynamicHLSPlaylist('disk-name');
 
 ### DynamicDASHManifest
 
-Process and customize DASH manifests (`.mpd` files).
+Processes and rewrites DASH manifests (`.mpd` files).
 
 ```php
 use Foxws\Shaka\Http\DynamicDASHManifest;
@@ -61,71 +68,34 @@ $playlist = (new DynamicHLSPlaylist('videos'))
     })
     ->open('master.m3u8');
 
-// Get processed content
+// Get the processed content
 $content = $playlist->get();
 
-// Or return as HTTP response
+// Or return it as an HTTP response
 return $playlist->toResponse($request);
 ```
 
 ### HLS methods
 
-#### `setKeyUrlResolver(callable $resolver): self`
+| Method | What it does |
+| --- | --- |
+| `setKeyUrlResolver(callable $resolver)` | Sets the resolver for encryption key URLs, used in `#EXT-X-KEY` tags. |
+| `setMediaUrlResolver(callable $resolver)` | Sets the resolver for media segment URLs (`.ts` files). |
+| `setPlaylistUrlResolver(callable $resolver)` | Sets the resolver for sub-playlist URLs (`.m3u8` files). |
+| `get(): string` | Returns the processed playlist content as a string. |
+| `all(): Collection` | Returns a collection of every processed playlist (master + variants). |
+| `toResponse($request)` | Returns an HTTP response with the correct content type (`application/vnd.apple.mpegurl`). |
 
-Set resolver for encryption key URLs in `#EXT-X-KEY` tags.
+A resolver is just a callback that receives a filename and returns a URL, for example:
 
 ```php
 $playlist->setKeyUrlResolver(function (string $key) {
     return "https://keys.example.com/{$key}";
 });
-```
 
-#### `setMediaUrlResolver(callable $resolver): self`
-
-Set resolver for media segment URLs (`.ts` files).
-
-```php
 $playlist->setMediaUrlResolver(function (string $filename) {
     return "https://cdn.example.com/segments/{$filename}";
 });
-```
-
-#### `setPlaylistUrlResolver(callable $resolver): self`
-
-Set resolver for sub-playlist URLs (`.m3u8` files).
-
-```php
-$playlist->setPlaylistUrlResolver(function (string $filename) {
-    return "https://example.com/playlists/{$filename}";
-});
-```
-
-#### `get(): string`
-
-Returns the processed playlist content as a string.
-
-```php
-$content = $playlist->get();
-```
-
-#### `all(): Collection`
-
-Returns a collection of all processed playlists (master + variants).
-
-```php
-$allPlaylists = $playlist->all();
-
-foreach ($allPlaylists as $path => $content) {
-    // Process each playlist
-}
-```
-
-#### `toResponse($request)`
-
-Returns an HTTP response with correct content type (`application/vnd.apple.mpegurl`).
-
-```php
-return $playlist->toResponse($request);
 ```
 
 ## DASH usage
@@ -145,63 +115,34 @@ $manifest = (new DynamicDASHManifest('videos'))
     })
     ->open('manifest.mpd');
 
-// Get processed content
+// Get the processed content
 $content = $manifest->get();
 
-// Or return as HTTP response
+// Or return it as an HTTP response
 return $manifest->toResponse($request);
 ```
 
 ### DASH methods
 
-#### `setMediaUrlResolver(callable $resolver): self`
-
-Set resolver for media segment URLs and `BaseURL` elements.
-
-```php
-$manifest->setMediaUrlResolver(function (string $filename) {
-    return "https://cdn.example.com/media/{$filename}";
-});
-```
-
-#### `setInitUrlResolver(callable $resolver): self`
-
-Set resolver for initialization segment URLs.
-
-```php
-$manifest->setInitUrlResolver(function (string $filename) {
-    return "https://cdn.example.com/init/{$filename}";
-});
-```
-
-#### `get(): string`
-
-Returns the processed manifest content as a string.
-
-```php
-$content = $manifest->get();
-```
-
-#### `toResponse($request)`
-
-Returns an HTTP response with correct content type (`application/dash+xml`).
-
-```php
-return $manifest->toResponse($request);
-```
+| Method | What it does |
+| --- | --- |
+| `setMediaUrlResolver(callable $resolver)` | Sets the resolver for media segment URLs and `BaseURL` elements. |
+| `setInitUrlResolver(callable $resolver)` | Sets the resolver for initialization segment URLs. |
+| `get(): string` | Returns the processed manifest content as a string. |
+| `toResponse($request)` | Returns an HTTP response with the correct content type (`application/dash+xml`). |
 
 ## Performance
 
-Both classes automatically cache resolved URLs for optimal performance. Each unique filename is only resolved once per instance.
+Both classes cache resolved URLs automatically. Each unique filename is only resolved once per instance, so calling a resolver twice for the same file costs nothing extra:
 
 ```php
-// First call - resolver is executed
+// First call - the resolver runs
 $playlist->setMediaUrlResolver(fn ($file) => "https://cdn.example.com/{$file}");
 
-// Subsequent calls for the same file use cached result
+// Later calls for the same file reuse the cached result
 ```
 
-Cache is automatically cleared when you set a new resolver.
+Setting a new resolver clears the cache automatically.
 
 ## Use cases
 
@@ -291,7 +232,7 @@ $manifest = (new DynamicDASHManifest('videos'))
 
 ## Comparison with Laravel FFMpeg
 
-This implementation follows Laravel FFMpeg's pattern:
+This implementation follows the same pattern as Laravel FFMpeg's dynamic playlist classes:
 
 **Laravel FFMpeg:**
 ```php
@@ -313,19 +254,17 @@ $playlist = (new DynamicHLSPlaylist('videos'))
 return $playlist->toResponse($request);
 ```
 
-Additionally, this package provides `DynamicDASHManifest` for DASH content.
+The API is intentionally the same shape. On top of it, this package also provides `DynamicDASHManifest` for DASH content.
 
 ## Best practices
 
-1. **Use Laravel helpers** - Leverage `route()`, `url()`, and `Storage::url()` for consistency
-2. **Implement authorization** - Always check user permissions when serving media
-3. **Use signed URLs for sensitive content** - Implement time-limited access with `temporaryUrl()`
-4. **Handle errors gracefully** - Consider what happens if a resolver fails
-5. **Test your resolvers** - Unit test your URL generation logic
-6. **Cache appropriately** - URL resolution is automatically cached per instance
+1. **Use Laravel helpers** - Reach for `route()`, `url()`, and `Storage::url()` so URLs stay consistent with the rest of your app.
+2. **Check authorization** - Always verify the user can view the media before serving a resolver-built URL.
+3. **Sign URLs for sensitive content** - Use `temporaryUrl()` for time-limited access.
+4. **Handle resolver failures** - Think through what should happen if a resolver throws or returns nothing.
+5. **Test your resolvers** - Unit test the URL-generation logic on its own.
+6. **Let caching do its job** - URL resolution is already cached per instance, so you don't need to add your own layer.
 
 ## Examples
 
-For comprehensive examples, see
-[UrlResolverExamples.php](https://github.com/foxws/laravel-shaka/blob/main/examples/UrlResolverExamples.php)
-in the repository.
+For more complete examples, see [UrlResolverExamples.php](https://github.com/foxws/laravel-shaka/blob/main/examples/UrlResolverExamples.php) in the repository.

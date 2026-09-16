@@ -2,6 +2,21 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
+## 2.2.1 - 2026-09-16
+
+### What's Changed
+
+* build(deps): bump actions/upload-pages-artifact from 3 to 5 by @dependabot[bot] in https://github.com/foxws/laravel-shaka/pull/42
+* build(deps): bump actions/checkout from 4 to 7 by @dependabot[bot] in https://github.com/foxws/laravel-shaka/pull/41
+* build(deps): bump actions/deploy-pages from 4 to 5 by @dependabot[bot] in https://github.com/foxws/laravel-shaka/pull/40
+* build(deps): bump pnpm/action-setup from 4 to 6 by @dependabot[bot] in https://github.com/foxws/laravel-shaka/pull/39
+* build(deps): bump actions/setup-node from 4 to 7 by @dependabot[bot] in https://github.com/foxws/laravel-shaka/pull/38
+* docs: document CMAF-based dual DASH + HLS output by @francoism90 in https://github.com/foxws/laravel-shaka/pull/44
+* docs: switch front matter to laravel-docs format, simplify prose by @francoism90 in https://github.com/foxws/laravel-shaka/pull/45
+* Remove old Docusaurus website and deploy-docs workflow by @francoism90 in https://github.com/foxws/laravel-shaka/pull/46
+
+**Full Changelog**: https://github.com/foxws/laravel-shaka/compare/2.2.0...2.2.1
+
 ## 2.2.0 - 2026-08-09
 
 ### What's Changed

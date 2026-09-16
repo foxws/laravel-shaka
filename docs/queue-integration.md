@@ -1,10 +1,11 @@
 ---
-sidebar_position: 9
+section: Usage
+order: 3
 ---
 
 # Queue Integration Guide
 
-This guide explains how to integrate Laravel Shaka Packager with Laravel's queue system for processing media in the background.
+Packaging a video can take a while, so it's usually best done in a background job rather than during a web request. This guide shows how to run Laravel Shaka Packager through Laravel's queue system.
 
 ## Basic queue job
 
@@ -52,14 +53,14 @@ class PackageMediaJob implements ShouldQueue
 ```php
 use App\Jobs\PackageMediaJob;
 
-// Dispatch to default queue
+// Dispatch to the default queue
 PackageMediaJob::dispatch('videos/input.mp4', 'processed/');
 
-// Dispatch to specific queue
+// Dispatch to a specific queue
 PackageMediaJob::dispatch('videos/input.mp4', 'processed/')
     ->onQueue('media-processing');
 
-// Dispatch with delay
+// Dispatch with a delay
 PackageMediaJob::dispatch('videos/input.mp4', 'processed/')
     ->delay(now()->addMinutes(5));
 ```
@@ -106,7 +107,7 @@ class PackageMediaWithProgressJob implements ShouldQueue
                 ->withHlsMasterPlaylist('master.m3u8')
                 ->export()
                 ->afterSaving(function ($exporter, $result) {
-                    // Notify user of completion
+                    // Notify the user that packaging is done
                     if ($this->userId) {
                         // Send notification
                     }
@@ -131,7 +132,7 @@ class PackageMediaWithProgressJob implements ShouldQueue
 
 ## Batch processing
 
-Process multiple files in a batch:
+Process several files together as one batch:
 
 ```php
 use App\Jobs\PackageMediaJob;
@@ -150,10 +151,10 @@ $batch = Bus::batch($jobs)
         // All jobs completed successfully
     })
     ->catch(function (Batch $batch, Throwable $e) {
-        // First batch job failure
+        // The first job in the batch failed
     })
     ->finally(function (Batch $batch) {
-        // The batch has finished executing
+        // The batch has finished running
     })
     ->dispatch();
 ```
@@ -178,7 +179,7 @@ Update `config/queue.php`:
 
 ### Horizon configuration (optional)
 
-If using Laravel Horizon, add to `config/horizon.php`:
+If you use Laravel Horizon, add this to `config/horizon.php`:
 
 ```php
 'environments' => [
@@ -187,7 +188,7 @@ If using Laravel Horizon, add to `config/horizon.php`:
             'connection' => 'redis',
             'queue' => ['media'],
             'balance' => 'auto',
-            'maxProcesses' => 2, // Limit concurrent packaging
+            'maxProcesses' => 2, // Limit how many packaging jobs run at once
             'maxTime' => 0,
             'maxJobs' => 0,
             'memory' => 512,
@@ -198,18 +199,17 @@ If using Laravel Horizon, add to `config/horizon.php`:
 ],
 ```
 
-See [Configuration](./configuration.md) for tuning `temporary_files_min_free`
-and related storage guards when running concurrent queue workers.
+See [Configuration](./configuration.md) for tuning `temporary_files_min_free` and related storage guards when several queue workers run at the same time.
 
 ## Best practices
 
-1. **Set appropriate timeouts**: Media packaging can take time, set realistic timeouts
-2. **Limit concurrent jobs**: Packaging is resource-intensive, limit concurrent processes
-3. **Monitor memory**: Use memory limits to prevent server issues
-4. **Implement retries**: Network issues with remote storage may require retries
-5. **Use job chaining**: Chain cleanup jobs after packaging
-6. **Track progress**: Use events or database updates to track progress
-7. **Clean up temporary files**: Always clean up after success or failure
+1. **Set a realistic timeout** - Packaging can take a while; size the timeout to your content.
+2. **Limit how many jobs run at once** - Packaging is resource-intensive, so cap concurrent jobs.
+3. **Watch memory usage** - Set memory limits so a runaway job doesn't take down the server.
+4. **Add retries** - Network issues with remote storage may need a retry rather than an immediate failure.
+5. **Chain follow-up jobs** - For example, run a cleanup job right after packaging.
+6. **Track progress** - Use events or database updates so users can see where a job stands.
+7. **Always clean up temporary files** - Whether the job succeeds or fails.
 
 ## Example with cleanup
 

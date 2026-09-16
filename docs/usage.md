@@ -1,5 +1,6 @@
 ---
-sidebar_position: 3
+section: Usage
+order: 1
 ---
 
 # Usage
@@ -19,8 +20,7 @@ $result = Shaka::open('input.mp4')
 
 ## Adaptive bitrate streaming
 
-Add multiple video streams with different bandwidths to produce a
-multi-quality adaptive stream:
+Add several video streams with different bandwidths to produce one adaptive stream with multiple quality levels:
 
 ```php
 $result = Shaka::open('input.mp4')
@@ -36,11 +36,7 @@ $result = Shaka::open('input.mp4')
 
 ## Dual DASH + HLS output (CMAF)
 
-Video and audio streams are packaged as CMAF (fragmented MP4) by default, so the
-same set of segments can be described by both a DASH manifest and an HLS master
-playlist. Chaining `withMpdOutput()` and `withHlsMasterPlaylist()` on the same
-builder packages both from a single `export()` — one packaging pass, no extra
-transcoding, just an additional manifest file:
+By default, video and audio are packaged as CMAF (fragmented MP4). That means the same set of segments can be described by both a DASH manifest and an HLS master playlist. Chain `withMpdOutput()` and `withHlsMasterPlaylist()` on the same builder to package both from a single `export()` call — one packaging pass, no extra transcoding, just an extra manifest file:
 
 ```php
 $result = Shaka::open('input.mp4')
@@ -52,14 +48,11 @@ $result = Shaka::open('input.mp4')
     ->save();
 ```
 
-If you only need one format, only set the corresponding output — Shaka Packager
-only generates the manifest(s) you ask for.
+If you only need one format, only set that one — Shaka Packager only generates the manifest(s) you ask for.
 
 ## Working with different disks
 
-`fromDisk()` sets the source disk, and `toDisk()`/`toPath()` control where
-the packaged output is saved. Each can be a different Laravel filesystem
-disk (local, S3, or any custom disk):
+`fromDisk()` sets where the source file is read from. `toDisk()` and `toPath()` control where the packaged output is written. Each can point at a different Laravel filesystem disk — local, S3, or any custom disk:
 
 ```php
 $result = Shaka::fromDisk('s3')
@@ -75,17 +68,16 @@ $result = Shaka::fromDisk('s3')
 
 ## HLS with encryption
 
-`withAESEncryption()` returns an `EncryptionKey` value object (not `$this`), so
-it breaks the fluent chain — call it on its own line:
+`withAESEncryption()` returns an `EncryptionKey` value object, not `$this` — so it breaks the fluent chain. Call it on its own line:
 
 ```php
-// Basic encryption with auto-generated AES-128 key
+// Basic encryption with an auto-generated AES-128 key
 $streamer = Shaka::open('input.mp4')
     ->addVideoStream('input.mp4', 'video.mp4')
     ->addAudioStream('input.mp4', 'audio.mp4')
     ->withHlsMasterPlaylist('master.m3u8');
 
-$encryptionKey = $streamer->withAESEncryption(); // Auto-generates key with 'cbc1' scheme
+$encryptionKey = $streamer->withAESEncryption(); // Auto-generates a key with the 'cbc1' scheme
 
 $streamer->export()->save();
 
@@ -101,13 +93,11 @@ $streamer->withKeyRotationDuration(60); // Rotate every 60 seconds
 $streamer->export()->toDisk('s3')->save();
 ```
 
-See the [AES Encryption guide](./aes-encryption.md) for complete documentation,
-including codec-specific examples and key storage details.
+See the [AES Encryption guide](./aes-encryption.md) for the full picture, including codec-specific examples and where keys are stored.
 
 ## Dynamic URL resolvers (HLS & DASH)
 
-Serve encrypted streaming content with S3 signed URLs by resolving key,
-media, and playlist/manifest URLs on demand:
+Serve encrypted streaming content behind S3 signed URLs by resolving key, media, and playlist/manifest URLs on demand, at request time:
 
 **HLS example:**
 
@@ -157,8 +147,7 @@ public function manifest(Video $video)
 }
 ```
 
-See the [URL Resolvers guide](./url-resolvers.md) for the full API and more
-use cases (CDN integration, multi-tenant applications, dynamic key rotation).
+See the [URL Resolvers guide](./url-resolvers.md) for the full API and more use cases (CDN integration, multi-tenant apps, dynamic key rotation).
 
 ## Next steps
 

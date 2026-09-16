@@ -1,16 +1,17 @@
 ---
-sidebar_position: 6
+section: Reference
+order: 3
 ---
 
 # Architecture Overview
 
-Laravel Shaka implements a clean, testable architecture based on the proven patterns used by PHP-FFmpeg and Laravel FFmpeg.
+Laravel Shaka is built as a set of clean, testable layers, following the same pattern used by PHP-FFmpeg and Laravel FFmpeg.
 
 ## Architecture layers
 
 ### 1. Driver layer (`ShakaPackager`)
 
-The driver layer handles direct interaction with the Shaka Packager binary:
+This layer talks directly to the Shaka Packager binary:
 
 ```php
 namespace Foxws\Shaka\Support\Packager;
@@ -32,25 +33,25 @@ class ShakaPackager
 }
 ```
 
-**Responsibilities:**
+**What it's responsible for:**
 
-- Binary path detection and validation
-- Command execution with timeout handling
-- Process management via Laravel's Process facade
-- Version checking
+- Finding and validating the binary path
+- Running commands, with timeout handling
+- Process management via Laravel's `Process` facade
+- Checking the binary's version
 - Error handling and exceptions
 - Logger integration
 
-**Benefits:**
+**Why it's split out:**
 
-- Separation of concerns
-- Easy to mock for testing
-- Consistent error handling
-- Centralized logging
+- Keeps binary execution separate from business logic
+- Easy to mock in tests
+- Error handling stays consistent
+- Logging is centralized
 
 ### 2. Business logic layer (`Packager`)
 
-The packager layer provides the high-level API:
+This layer is the high-level API you actually call:
 
 ```php
 namespace Foxws\Shaka\Support\Packager;
@@ -77,24 +78,24 @@ class Packager
 }
 ```
 
-**Responsibilities:**
+**What it's responsible for:**
 
 - Managing media collections
-- Building commands via CommandBuilder
-- Translating high-level API to binary commands
+- Building commands via `CommandBuilder`
+- Translating the high-level API into binary commands
 - Logging packaging operations
 - Returning structured results
 
-**Benefits:**
+**Why it's split out:**
 
-- Fluent, chainable API
-- Business logic separate from binary execution
-- Type-safe operations
-- Structured result objects
+- Gives you a fluent, chainable API
+- Keeps business logic separate from binary execution
+- Type-safe operations throughout
+- Returns structured result objects instead of raw output
 
 ### 3. Facade layer (`Shaka` & `MediaOpenerFactory`)
 
-The facade layer provides the Laravel-style interface:
+This layer provides the Laravel-style interface you interact with day to day:
 
 ```php
 namespace Foxws\Shaka;
@@ -117,19 +118,19 @@ class Shaka
 }
 ```
 
-**Responsibilities:**
+**What it's responsible for:**
 
 - Managing filesystem disks
 - Opening media files
-- Forwarding calls to Packager
-- Providing convenient helpers
+- Forwarding calls through to `Packager`
+- Providing convenient helper methods
 
-**Benefits:**
+**Why it's split out:**
 
-- Clean, intuitive API
-- Laravel conventions
-- Multiple disks support
-- Method chaining
+- A clean, intuitive entry point
+- Follows Laravel conventions
+- Supports multiple disks
+- Supports method chaining
 
 ## Component relationships
 
@@ -170,7 +171,7 @@ class Shaka
 
 ### CommandBuilder
 
-Builds packager command strings fluently:
+Builds packager command strings, fluently:
 
 ```php
 $builder = CommandBuilder::make()
@@ -184,8 +185,7 @@ $command = $builder->build();
 
 ### Stream
 
-Represents a single, immutable stream configuration. `setOutput()`/`setOptions()`/`addOption()`
-return a new instance rather than mutating the current one:
+Represents a single, immutable stream configuration. `setOutput()`, `setOptions()`, and `addOption()` each return a new instance rather than changing the current one:
 
 ```php
 $stream = Stream::video($media)
@@ -198,13 +198,13 @@ $commandString = $stream->toCommandString();
 
 ### PackagerResult
 
-Structured result from packaging operations:
+The structured result returned from a packaging operation:
 
 ```php
 $result = $packager->export();
 
 $output = $result->getOutput();
-$result->toDisk('s3'); // Copy temp output to a target disk
+$result->toDisk('s3'); // Copy the temp output to a target disk
 
 $result->hasCopyFailures();
 $result->getFailedFiles();      // array<int, CopyFailure>
@@ -213,7 +213,7 @@ $result->getEncryptionKeys();   // array<int, EncryptionKeyFile>
 
 ### Media & MediaCollection
 
-Represents input media files:
+Represents your input media files:
 
 ```php
 $media = Media::make($disk, 'video.mp4');
@@ -251,10 +251,7 @@ $this->app->scoped(Packager::class, function ($app) {
 
 ## Error handling
 
-The package uses a clear exception hierarchy. Note: `ExecutableNotFoundException`
-exists but nothing currently throws it — a missing/non-executable binary
-surfaces as a `RuntimeException` from the underlying `Process` call instead,
-the first time the packager binary is actually invoked:
+The package uses a clear exception hierarchy. One thing worth knowing: `ExecutableNotFoundException` exists, but nothing currently throws it. A missing or non-executable binary instead surfaces as a `RuntimeException` from the underlying `Process` call, the first time the packager binary is actually invoked:
 
 ```php
 try {
@@ -268,7 +265,7 @@ try {
 
 ## Testing strategy
 
-The architecture enables easy testing:
+This layered design makes testing straightforward:
 
 ```php
 // Mock the driver
@@ -298,11 +295,7 @@ class CustomPackagerDriver extends ShakaPackager
 
 ### Custom streams
 
-`Stream`'s constructor is `protected` (not `private`) specifically so it stays
-subclassable; mutators use `new static(...)` so a subclass instance survives
-`with*()` calls. Give your subclass its own named constructor rather than
-overriding `make()` — its signature (`Media $media, string $type = 'video'`)
-won't accept an incompatible override:
+`Stream`'s constructor is `protected`, not `private`, specifically so it can be subclassed. Its mutator methods use `new static(...)` so a subclass instance survives `with*()` calls. Give your subclass its own named constructor rather than overriding `make()` — its signature (`Media $media, string $type = 'video'`) won't accept an incompatible override:
 
 ```php
 class SubtitleStream extends Stream
@@ -316,7 +309,7 @@ class SubtitleStream extends Stream
 
 ### Custom results
 
-Extend result objects:
+Extend the result objects:
 
 ```php
 class DetailedPackagerResult extends PackagerResult
@@ -330,26 +323,26 @@ class DetailedPackagerResult extends PackagerResult
 
 ## Best practices
 
-1. **Always use dependency injection** - Get `Packager` from the container
-2. **Use the facade for simple operations** - `Shaka::open()` for quick tasks
-3. **Use the driver directly only when needed** - For low-level control
-4. **Enable logging in production** - Track packaging operations
-5. **Set appropriate timeouts** - Based on your content size
-6. **Handle exceptions appropriately** - Different errors need different handling
-7. **Use the verification command** - During deployment: `php artisan shaka:info`
+1. **Use dependency injection** - Get `Packager` from the container rather than constructing it yourself.
+2. **Use the facade for simple operations** - `Shaka::open()` covers most day-to-day tasks.
+3. **Only reach for the driver directly when you need low-level control.**
+4. **Enable logging in production** - It makes packaging operations easy to trace.
+5. **Set timeouts that match your content** - Larger files need more time.
+6. **Handle exceptions by type** - Different errors call for different handling.
+7. **Run the verification command during deployment** - `php artisan shaka:info`.
 
 ## Performance considerations
 
-- **Long-running operations** - Adjust timeout based on content
-- **Memory usage** - Large files may require more memory
-- **Parallel processing** - Consider queuing for multiple files
-- **Temporary files** - Clean up with `cleanupTemporaryFiles()`
-- **Remote disks** - Files are copied locally before processing
+- **Long-running operations** - Set the timeout based on your content.
+- **Memory usage** - Large files may need more memory.
+- **Parallel processing** - Consider a queue for handling multiple files.
+- **Temporary files** - Clean up with `cleanupTemporaryFiles()`.
+- **Remote disks** - Files are copied locally before processing starts.
 
 ## Security considerations
 
-- **Binary path validation** - Driver validates binary existence
-- **Input sanitization** - Use proper escaping for file paths
-- **Encryption** - Use `withAESEncryption()` for DRM content, see [AES Encryption](./aes-encryption.md)
-- **Access control** - Validate user permissions before processing
-- **Temporary files** - Ensure proper cleanup and permissions
+- **Binary path validation** - The driver validates that the binary exists.
+- **Input sanitization** - Use proper escaping for file paths.
+- **Encryption** - Use `withAESEncryption()` for DRM content, see [AES Encryption](./aes-encryption.md).
+- **Access control** - Check user permissions before processing.
+- **Temporary files** - Make sure they're cleaned up and permissioned correctly.

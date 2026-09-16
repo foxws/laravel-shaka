@@ -1,11 +1,17 @@
 ---
-slug: /
-sidebar_position: 1
+title: Introduction
+metadata:
+  role: Media
+  eyebrow: "Video · HLS/DASH · Shaka Packager"
+  desc: "Package adaptive streaming video (HLS, DASH) with a fluent Laravel API."
+  requires: "PHP ^8.3"
+  laravel: "12.x / 13.x"
+  licence: MIT
 ---
 
 # Introduction
 
-A Laravel integration for [Google's Shaka Packager](https://github.com/shaka-project/shaka-packager), enabling you to create adaptive streaming content (HLS, DASH) with a fluent, Laravel-style API.
+Laravel Shaka connects your Laravel app to [Google's Shaka Packager](https://github.com/shaka-project/shaka-packager). It turns a video file into adaptive streaming formats — HLS and DASH — using a simple, chainable API that feels like the rest of Laravel.
 
 ```php
 use Foxws\Shaka\Facades\Shaka;
@@ -24,13 +30,13 @@ $result = Shaka::fromDisk('s3')
 
 ## Features
 
-- **Fluent API** - Laravel-style chainable methods
-- **Multiple disks** - Works with local, S3, and custom filesystems
-- **Adaptive bitrate** - Create multi-quality streams easily
-- **Encryption & DRM** - Built-in support for content protection
-- **HLS & DASH** - Both manifests packaged from the same CMAF segments in one export, no double encoding
-- **Testable** - Clean architecture with mockable components
-- **Type-safe** - Full PHP 8.1+ type declarations
+- **Fluent API** - Chain methods together, the same way you'd chain an Eloquent query.
+- **Multiple disks** - Read source files from, and write output to, local disk, S3, or any Laravel filesystem disk.
+- **Adaptive bitrate** - Produce several quality levels from one video so players can switch between them.
+- **Encryption & DRM** - Built-in support for protecting your content.
+- **HLS & DASH** - Both manifest formats are built from the same packaged segments in one pass, so there's no extra encoding step.
+- **Testable** - The package is split into small, mockable pieces, so your own tests stay fast.
+- **Type-safe** - Fully typed for PHP 8.3+.
 
 ## See also
 

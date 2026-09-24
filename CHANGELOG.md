@@ -2,6 +2,15 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
+## 2.3.0 - 2026-09-24
+
+### What's Changed
+
+* Allow guzzlehttp/promises ^3.0 alongside ^2.0 by @francoism90 in https://github.com/foxws/laravel-shaka/pull/47
+* Boost skills and upload performance by @francoism90 in https://github.com/foxws/laravel-shaka/pull/48
+
+**Full Changelog**: https://github.com/foxws/laravel-shaka/compare/2.2.1...2.3.0
+
 ## 2.2.1 - 2026-09-16
 
 ### What's Changed

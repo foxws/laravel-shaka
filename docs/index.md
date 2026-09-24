@@ -3,49 +3,64 @@ title: Introduction
 metadata:
   role: Media
   eyebrow: "Video · HLS/DASH · Shaka Packager"
-  desc: "Package adaptive streaming video (HLS, DASH) with a fluent Laravel API."
+  desc: "Package video into HLS and DASH streams with a fluent Laravel API."
   requires: "PHP ^8.3"
   laravel: "12.x / 13.x"
+  runtime: "Shaka Packager"
   licence: MIT
+  used_by:
+    name: Stry
+    desc: "A self-hosted video streaming app."
+    href: "https://github.com/francoism90/stry"
 ---
 
 # Introduction
 
-Laravel Shaka connects your Laravel app to [Google's Shaka Packager](https://github.com/shaka-project/shaka-packager). It turns a video file into adaptive streaming formats — HLS and DASH — using a simple, chainable API that feels like the rest of Laravel.
+This package runs [Shaka Packager](https://github.com/shaka-project/shaka-packager) from Laravel. It turns video and audio files into HLS and DASH streams, reads the source from any Laravel disk, and writes the result to any disk.
 
 ```php
 use Foxws\Shaka\Facades\Shaka;
 
-$result = Shaka::fromDisk('s3')
-    ->open('videos/input.mp4')
-    ->addVideoStream('videos/input.mp4', 'video_1080p.mp4', ['bandwidth' => '5000000'])
-    ->addVideoStream('videos/input.mp4', 'video_720p.mp4', ['bandwidth' => '3000000'])
-    ->addAudioStream('videos/input.mp4', 'audio.mp4')
+Shaka::fromDisk('media')
+    ->open('videos/clip.mp4')
+    ->addVideoStream('videos/clip.mp4', 'video.mp4')
+    ->addAudioStream('videos/clip.mp4', 'audio.mp4')
+    ->withMpdOutput('index.mpd')
     ->withHlsMasterPlaylist('master.m3u8')
-    ->withSegmentDuration(6)
     ->export()
-    ->toDisk('export')
+    ->toDisk('s3')
+    ->toPath('streams/clip/')
     ->save();
 ```
 
+## What it does, and what it doesn't
+
+Shaka Packager **packages**. It cuts already-encoded video into segments and writes the playlists that players read. It does not re-encode, so it's fast, and the output is about the same size as the input.
+
+It can't make a 720p version out of a 1080p file. If you need several qualities, either encode them first (for example with FFmpeg) and add each file as a stream, or use [Laravel Streamer](https://github.com/foxws/laravel-streamer), which encodes and packages in one step.
+
 ## Features
 
-- **Fluent API** - Chain methods together, the same way you'd chain an Eloquent query.
-- **Multiple disks** - Read source files from, and write output to, local disk, S3, or any Laravel filesystem disk.
-- **Adaptive bitrate** - Produce several quality levels from one video so players can switch between them.
-- **Encryption & DRM** - Built-in support for protecting your content.
-- **HLS & DASH** - Both manifest formats are built from the same packaged segments in one pass, so there's no extra encoding step.
-- **Testable** - The package is split into small, mockable pieces, so your own tests stay fast.
-- **Type-safe** - Fully typed for PHP 8.3+.
+- Read input from, and write output to, any Laravel disk: local, S3 or your own.
+- Build DASH and HLS from the same segments in one run.
+- Encrypt with AES and a generated key.
+- Serve private streams by signing every URL in a playlist when it's requested.
+- Upload to S3 in parallel, with multipart uploads for large files.
 
-## See also
+## Requirements
 
-- [Installation](./installation.md) - Get the package and Shaka Packager binary set up
-- [Usage](./usage.md) - Walk through the core API
-- [Quick Reference](./quick-reference.md) - Complete API reference
-- [Configuration](./configuration.md) - Configuring the package
-- [Architecture](./architecture.md) - Understanding the driver-based design
-- [AES Encryption](./aes-encryption.md) - Encryption with key rotation
-- [URL Resolvers](./url-resolvers.md) - Dynamic URL customization for CDN/signed URLs
-- [Queue Integration](./queue-integration.md) - Process media in background queues
-- [Troubleshooting](./troubleshooting.md) - Common issues and solutions
+- PHP 8.3 or higher
+- Laravel 12 or 13
+- The Shaka Packager binary
+
+## Pages
+
+- [Installation](installation.md)
+- [Usage](usage.md)
+- [URL Resolvers](url-resolvers.md)
+- [Queues](queue-integration.md)
+- [Encryption](aes-encryption.md)
+- [Configuration](configuration.md)
+- [Quick Reference](quick-reference.md)
+- [How It Works](architecture.md)
+- [Troubleshooting](troubleshooting.md)

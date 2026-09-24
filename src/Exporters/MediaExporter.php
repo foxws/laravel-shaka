@@ -111,8 +111,16 @@ class MediaExporter
         }
     }
 
+    /**
+     * Run the packager and copy the output to the target disk. A given
+     * $path works the same as calling toPath() first.
+     */
     public function save(?string $path = null): MediaOpener
     {
+        if (filled($path)) {
+            $this->toPath($path);
+        }
+
         // Execute the packaging operation (writes to temporary directory)
         $result = $this->packager->export();
 

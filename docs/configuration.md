@@ -200,6 +200,37 @@ PACKAGER_CACHE_MIN_FREE=10485760   # 10 MiB
 
 > A tmpfs `size=` is a quota, not a reservation — it doesn't stop concurrent jobs from collectively going over it. Pair this with a concurrency limit on your queue (for example, Horizon's `maxProcesses`) sized so `workers x largest expected job footprint` stays comfortably under the tmpfs size. Treat `temporary_files_min_free` as a fail-fast safety net for jobs that slip past that limit, not as the main defense.
 
+### Concurrency workers
+
+The maximum number of S3 uploads that can run at once when copying packaged
+files to an S3-backed disk.
+
+```php
+'concurrency_workers' => env('PACKAGER_CONCURRENCY_WORKERS', 30),
+```
+
+### Multipart uploads
+
+Files at or above `multipart_threshold` bytes are uploaded to S3-backed disks
+as a multipart upload, sending `multipart_concurrency` parts of
+`multipart_part_size` bytes in parallel for each file. This speeds up large
+single-file outputs and is required for objects over 5 GB. Part size must be
+at least 5 MB. If a multipart upload fails, it's aborted so its parts don't
+keep taking up storage.
+
+```php
+'multipart_threshold' => env('PACKAGER_MULTIPART_THRESHOLD', 64 * 1024 * 1024),
+'multipart_part_size' => env('PACKAGER_MULTIPART_PART_SIZE', 16 * 1024 * 1024),
+'multipart_concurrency' => env('PACKAGER_MULTIPART_CONCURRENCY', 5),
+```
+
+A file with a large multipart upload can have up to `concurrency_workers x
+multipart_concurrency` requests in flight at once.
+
+When the target is a local disk, output files are moved with `rename()` instead
+of being copied, which is near-instant when the temporary directory is on the
+same filesystem.
+
 ## Complete configuration example
 
 ```php

@@ -5,12 +5,6 @@ order: 1
 
 # Installation
 
-## Requirements
-
-- PHP 8.3 or higher
-- Laravel 12.x or higher
-- The Shaka Packager binary, installed on your system or available in a Docker container
-
 ## Install the package
 
 ```bash
@@ -23,23 +17,40 @@ Publish the config file:
 php artisan vendor:publish --tag="shaka-config"
 ```
 
-## Installing Shaka Packager
+This creates `config/laravel-shaka.php`. See [Configuration](configuration.md) for every option.
 
-The package itself doesn't include Shaka Packager — you need the binary installed separately. Visit the [Shaka Packager releases](https://github.com/shaka-project/shaka-packager/releases) page for install instructions for your platform.
+To upload to S3, also install the Flysystem S3 adapter if your app doesn't have it yet:
 
-## Verify installation
+```bash
+composer require league/flysystem-aws-s3-v3
+```
 
-Once everything is installed, check that it's set up correctly:
+## Install Shaka Packager
+
+The package doesn't ship the binary. Download it from the [Shaka Packager releases](https://github.com/shaka-project/shaka-packager/releases) page, for example on Linux:
+
+```bash
+curl -fsSL -o /usr/local/bin/packager \
+    https://github.com/shaka-project/shaka-packager/releases/latest/download/packager-linux-x64
+chmod +x /usr/local/bin/packager
+```
+
+If the binary isn't on your `PATH` as `packager`, set its location:
+
+```env
+PACKAGER_PATH=/opt/shaka/packager
+```
+
+## Check the setup
 
 ```bash
 php artisan shaka:info
 ```
 
-This command checks that:
+This runs `packager --version` and shows the binary, its version, the timeout, the temporary directory and the log channel. It fails if the binary can't run or the temporary directory isn't writable. A temporary directory that doesn't exist yet is fine; it's created on first use.
 
-- The binary exists and can be run
-- The binary's version can be read
-- The configuration is valid
-- The temporary directory is accessible
+## Laravel Boost
 
-Continue to [Usage](./usage.md) to start packaging media.
+The package includes a [Laravel Boost](https://github.com/laravel/boost) skill. Run `php artisan boost:install` (or `boost:update`) after installing, and your AI agent learns how to package, encrypt and serve streams with it.
+
+Next: [Usage](usage.md).

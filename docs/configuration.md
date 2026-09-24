@@ -5,430 +5,83 @@ order: 1
 
 # Configuration
 
-Laravel Shaka is configured through the `config/laravel-shaka.php` file.
-
-## Publishing configuration
-
-Publish the configuration file:
+Publish the config file to change the defaults:
 
 ```bash
 php artisan vendor:publish --tag="shaka-config"
 ```
 
-## Configuration options
+This creates `config/laravel-shaka.php`. Most options can also be set in `.env`.
 
-### Packager binary
+## Binary and process
 
-Set the path to the Shaka Packager binary:
+| Key | Env | Default | Purpose |
+| --- | --- | --- | --- |
+| `packager.binaries` | `PACKAGER_PATH` | `packager` | Path to the Shaka Packager binary, or its name on `PATH`. |
+| `timeout` | `PACKAGER_TIMEOUT` | `14400` | Seconds before the process is stopped. See [Queues](queue-integration.md). |
+| `log_channel` | `PACKAGER_LOG_CHANNEL` | your `LOG_CHANNEL` | Channel for packager logs. `false` turns logging off, `null` uses the default channel. Keys are redacted from logs. |
 
-```php
-'packager' => [
-    'binaries' => env('PACKAGER_PATH', '/usr/local/bin/packager'),
-],
-```
+## Packaging defaults
 
-**Environment variable:**
+| Key | Env | Default | Purpose |
+| --- | --- | --- | --- |
+| `segment_duration` | `PACKAGER_SEGMENT_DURATION` | `6` | Segment length in seconds. Shorter segments seek faster but mean more requests. |
+| `packager_options` | | `null` | An array of Shaka Packager options added to every run, such as `['allow_codec_switching' => true]`. Set it in the config file; an `.env` string is ignored. |
+| `force_generic_input` | `PACKAGER_FORCE_GENERIC_INPUT` | `true` | Links each input as `input.<ext>` in a temporary folder, so names with commas or other special characters don't break the command. |
 
-```env
-PACKAGER_PATH=/usr/local/bin/packager
-```
+## Temporary files
 
-**Multiple binary paths:**
+Shaka Packager writes its whole output locally before it's uploaded. Inputs from remote disks are downloaded here too.
 
-You can also give it a list — the package uses the first one it finds:
+| Key | Env | Default | Purpose |
+| --- | --- | --- | --- |
+| `temporary_files_root` | `PACKAGER_TEMPORARY_FILES_ROOT` | `storage/app/packager/temp` | Where inputs and output are written. Needs room for the full output of every job running at the same time. |
+| `cache_files_root` | `PACKAGER_CACHE_FILES_ROOT` | `/dev/shm` | Where encryption keys are written. A RAM disk keeps keys off the physical disk. Set it to an empty string to use `temporary_files_root`. |
 
-```php
-'packager' => [
-    'binaries' => [
-        '/usr/local/bin/packager',
-        '/usr/bin/packager',
-        '/opt/shaka-packager/packager',
-    ],
-],
-```
+### Storage guards
 
-### Timeout
+A job that runs out of space fails halfway, after doing most of the work. These checks stop it before it starts, with a `Foxws\Shaka\Exceptions\InsufficientStorageException`. All of them are off by default.
 
-Set the maximum time a packaging operation is allowed to run:
+| Key | Env | Default | Purpose |
+| --- | --- | --- | --- |
+| `temporary_files_min_free` | `PACKAGER_TEMPORARY_MIN_FREE` | `0` | Minimum free bytes in `temporary_files_root`. |
+| `temporary_files_size_multiplier` | `PACKAGER_TEMPORARY_SIZE_MULTIPLIER` | `1.5` | The job's input size is multiplied by this and must also fit. |
+| `cache_files_min_free` | `PACKAGER_CACHE_MIN_FREE` | `0` | Minimum free bytes in `cache_files_root`. |
 
-```php
-'timeout' => 60 * 60 * 4, // 4 hours in seconds
-```
+Shaka Packager doesn't re-encode, so the output is about as large as the input. The multiplier adds room for container overhead. To tune it, compare the size of a finished job's temporary folder (`du -sh`) with the size of its input.
 
-**Environment variable:**
+The two roots have separate floors because they're often very different sizes. `/dev/shm` may only have a few dozen MB, while `temporary_files_root` may have many GB.
 
-```env
-PACKAGER_TIMEOUT=14400
-```
+### Example: a RAM disk for temporary files
 
-**Things to keep in mind:**
-
-| Factor | Effect on timeout |
-| --- | --- |
-| Longer videos | Need more time |
-| 4K content | Takes noticeably longer than 1080p |
-| Multiple quality variants | Multiply the total processing time |
-| Server's PHP `max_execution_time` | Should also be able to cover the job |
-
-### Logging
-
-Turn on logging to track packaging operations:
-
-```php
-'log_channel' => env('PACKAGER_LOG_CHANNEL', false),
-```
-
-**Environment variables:**
-
-```env
-# Disable logging (default)
-PACKAGER_LOG_CHANNEL=false
-
-# Use the default log channel
-PACKAGER_LOG_CHANNEL=stack
-
-# Use a custom channel
-PACKAGER_LOG_CHANNEL=packager
-```
-
-**Custom log channel:**
-
-Define a custom channel in `config/logging.php`:
-
-```php
-'channels' => [
-    'packager' => [
-        'driver' => 'daily',
-        'path' => storage_path('logs/packager.log'),
-        'level' => 'debug',
-        'days' => 14,
-    ],
-],
-```
-
-### Temporary files
-
-Set where temporary files are stored during packaging:
-
-```php
-'temporary_files_root' => env('PACKAGER_TEMPORARY_FILES_ROOT', storage_path('app/packager/temp')),
-```
-
-**Environment variable:**
-
-```env
-PACKAGER_TEMPORARY_FILES_ROOT=/tmp/packager
-```
-
-**Things to keep in mind:**
-
-- Remote files (S3, etc.) are copied here before processing starts.
-- Make sure there's enough disk space.
-- Clean up regularly with `cleanupTemporaryFiles()`.
-- For faster processing, point this at `/dev/shm` (a RAM disk).
-
-### Encrypted files
-
-Set where encrypted temporary files are stored:
-
-```php
-'temporary_files_encrypted' => env('PACKAGER_TEMPORARY_ENCRYPTED', '/dev/shm'),
-```
-
-**Environment variable:**
-
-```env
-PACKAGER_TEMPORARY_ENCRYPTED=/dev/shm
-```
-
-### Storage space guards
-
-These settings make packaging fail fast with a clear exception, instead of a job dying part-way through, when a size-limited storage location (for example a size-limited tmpfs) is running low on space. All three checks are off by default (`0`), so upgrading the package doesn't change behavior for existing installs until you turn them on.
-
-```php
-'temporary_files_min_free' => env('PACKAGER_TEMPORARY_MIN_FREE', 0),
-'temporary_files_size_multiplier' => env('PACKAGER_TEMPORARY_SIZE_MULTIPLIER', 1.5),
-'cache_files_min_free' => env('PACKAGER_CACHE_MIN_FREE', 0),
-```
-
-**Environment variables:**
-
-```env
-PACKAGER_TEMPORARY_MIN_FREE=1073741824       # 1 GiB floor on temporary_files_root
-PACKAGER_TEMPORARY_SIZE_MULTIPLIER=1.5       # safety factor applied to the job's input size
-PACKAGER_CACHE_MIN_FREE=10485760             # 10 MiB floor on cache_files_root
-```
-
-**How each check works:**
-
-| Setting | What it checks |
-| --- | --- |
-| `temporary_files_min_free` | A fixed floor checked against `temporary_files_root` before a job starts. |
-| `temporary_files_size_multiplier` | Before packaging starts, the combined size of the job's own input files is multiplied by this number and checked as well, on top of the fixed floor. Packager repackages/segments input that's already encoded, rather than re-encoding it, so output size tracks input size closely — this catches a job whose *own* footprint won't fit, not just a root that happens to be nearly full for other reasons. |
-| `cache_files_min_free` | A separate floor for `cache_files_root` (manifests and encryption keys). It's kept independent of `temporary_files_min_free` because this root is often a much smaller mount than the main temporary root (see the tmpfs example below) — a multi-GB floor sized for the main root would permanently break a small cache mount. |
-
-Both checks throw `Foxws\Shaka\Exceptions\InsufficientStorageException`, which you can catch separately from other packaging failures (for example, in a queued job's `failed()` method).
-
-**Tuning the multiplier:** `1.5` is a starting point, not a measurement. After a real job runs, compare `du -sh` on its temporary directory against the combined size of its source input files, and adjust `PACKAGER_TEMPORARY_SIZE_MULTIPLIER` from there. If you generate separate HLS and DASH segment sets instead of sharing CMAF segments across both, expect real usage closer to 2x than 1.5x.
-
-#### Example: temporary_files_root on a Podman tmpfs
-
-If you run Horizon/queue workers in Podman and want packaging scratch space to live in RAM instead of hitting your NVMe drive (segments are written once, uploaded, then deleted — nothing here needs to survive a restart), mount the root as a `tmpfs` in your `.container` quadlet instead of a regular volume:
+Segments are written once, uploaded and deleted, so they don't need to survive a restart. In a Podman Quadlet you can mount the temporary root as `tmpfs`:
 
 ```ini
-# horizon.container (podman quadlet)
 [Container]
-...
-# Was: Volume=app-cache:/cache:rw,z
 Tmpfs=/cache:rw,size=12g,mode=1777
 ```
 
-Then point the package at it, and set a floor sized to fit comfortably inside that tmpfs, leaving headroom for concurrent jobs:
-
 ```env
 PACKAGER_TEMPORARY_FILES_ROOT=/cache/temp/packager
-PACKAGER_TEMPORARY_MIN_FREE=1073741824   # 1 GiB
-PACKAGER_TEMPORARY_SIZE_MULTIPLIER=1.5
-```
-
-`cache_files_root` (manifests/keys) typically points at `/dev/shm`, a separate tmpfs the container runtime mounts automatically. Keep its floor small relative to that mount's actual size (often just tens of MB, via a container's `ShmSize`):
-
-```env
-PACKAGER_CACHE_FILES_ROOT=/dev/shm
-PACKAGER_CACHE_MIN_FREE=10485760   # 10 MiB
-```
-
-> A tmpfs `size=` is a quota, not a reservation — it doesn't stop concurrent jobs from collectively going over it. Pair this with a concurrency limit on your queue (for example, Horizon's `maxProcesses`) sized so `workers x largest expected job footprint` stays comfortably under the tmpfs size. Treat `temporary_files_min_free` as a fail-fast safety net for jobs that slip past that limit, not as the main defense.
-
-### Concurrency workers
-
-The maximum number of S3 uploads that can run at once when copying packaged
-files to an S3-backed disk.
-
-```php
-'concurrency_workers' => env('PACKAGER_CONCURRENCY_WORKERS', 30),
-```
-
-### Multipart uploads
-
-Files at or above `multipart_threshold` bytes are uploaded to S3-backed disks
-as a multipart upload, sending `multipart_concurrency` parts of
-`multipart_part_size` bytes in parallel for each file. This speeds up large
-single-file outputs and is required for objects over 5 GB. Part size must be
-at least 5 MB. If a multipart upload fails, it's aborted so its parts don't
-keep taking up storage.
-
-```php
-'multipart_threshold' => env('PACKAGER_MULTIPART_THRESHOLD', 64 * 1024 * 1024),
-'multipart_part_size' => env('PACKAGER_MULTIPART_PART_SIZE', 16 * 1024 * 1024),
-'multipart_concurrency' => env('PACKAGER_MULTIPART_CONCURRENCY', 5),
-```
-
-A file with a large multipart upload can have up to `concurrency_workers x
-multipart_concurrency` requests in flight at once.
-
-When the target is a local disk, output files are moved with `rename()` instead
-of being copied, which is near-instant when the temporary directory is on the
-same filesystem.
-
-## Complete configuration example
-
-```php
-<?php
-
-return [
-
-    /*
-    |--------------------------------------------------------------------------
-    | Shaka Packager Binary
-    |--------------------------------------------------------------------------
-    |
-    | Path to the Shaka Packager binary. Can be a string or array of paths.
-    | The system will use the first available binary.
-    |
-    */
-
-    'packager' => [
-        'binaries' => env('PACKAGER_PATH', '/usr/local/bin/packager'),
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Timeout
-    |--------------------------------------------------------------------------
-    |
-    | Maximum execution time in seconds for packaging operations.
-    | Adjust based on your content size and quality requirements.
-    |
-    */
-
-    'timeout' => env('PACKAGER_TIMEOUT', 60 * 60 * 4), // 4 hours
-
-    /*
-    |--------------------------------------------------------------------------
-    | Logging
-    |--------------------------------------------------------------------------
-    |
-    | Log channel for packaging operations. Set to false to disable logging.
-    | Use your default log channel or define a custom one.
-    |
-    */
-
-    'log_channel' => env('PACKAGER_LOG_CHANNEL', false),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Temporary Files
-    |--------------------------------------------------------------------------
-    |
-    | Root directory for temporary files during packaging operations.
-    | Remote files are downloaded here before processing.
-    |
-    */
-
-    'temporary_files_root' => env('PACKAGER_TEMPORARY_FILES_ROOT', storage_path('app/packager/temp')),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Encrypted Temporary Files
-    |--------------------------------------------------------------------------
-    |
-    | Directory for encrypted temporary files. Using /dev/shm (RAM disk)
-    | provides better performance for encryption operations.
-    |
-    */
-
-    'temporary_files_encrypted' => env('PACKAGER_TEMPORARY_ENCRYPTED', '/dev/shm'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Storage Space Guards
-    |--------------------------------------------------------------------------
-    |
-    | Fail fast with a clear exception instead of a job dying mid-packaging
-    | when a storage-constrained root runs low on space. Set to 0 to
-    | disable a given check.
-    |
-    */
-
-    'temporary_files_min_free' => env('PACKAGER_TEMPORARY_MIN_FREE', 0),
-    'temporary_files_size_multiplier' => env('PACKAGER_TEMPORARY_SIZE_MULTIPLIER', 1.5),
-    'cache_files_min_free' => env('PACKAGER_CACHE_MIN_FREE', 0),
-
-];
-```
-
-## Environment configuration
-
-Example `.env` configuration:
-
-```env
-# Shaka Packager Configuration
-PACKAGER_PATH=/usr/local/bin/packager
-PACKAGER_TIMEOUT=14400
-PACKAGER_LOG_CHANNEL=packager
-PACKAGER_TEMPORARY_FILES_ROOT=/tmp/packager
-PACKAGER_TEMPORARY_ENCRYPTED=/dev/shm
 PACKAGER_TEMPORARY_MIN_FREE=1073741824
-PACKAGER_TEMPORARY_SIZE_MULTIPLIER=1.5
 PACKAGER_CACHE_MIN_FREE=10485760
 ```
 
-## Verification
+A `tmpfs` size is a limit, not a reservation. Several jobs together can still fill it, so also limit how many run at once.
 
-After configuring the package, verify your setup:
+## Uploads
 
-```bash
-php artisan shaka:info
-```
+These apply when the target is an S3 disk. On a local disk, files are moved with `rename()` instead.
 
-This command checks that:
+| Key | Env | Default | Purpose |
+| --- | --- | --- | --- |
+| `concurrency_workers` | `PACKAGER_CONCURRENCY_WORKERS` | `30` | How many files upload at the same time. |
+| `multipart_threshold` | `PACKAGER_MULTIPART_THRESHOLD` | `67108864` (64 MB) | Files this size or larger use a multipart upload. |
+| `multipart_part_size` | `PACKAGER_MULTIPART_PART_SIZE` | `16777216` (16 MB) | Size of each part. At least 5 MB. |
+| `multipart_concurrency` | `PACKAGER_MULTIPART_CONCURRENCY` | `5` | Parts uploaded at the same time, per file. |
 
-- The binary path is valid and executable
-- The binary's version can be read
-- The timeout is configured
-- The logger is set up correctly
+A single upload is limited to 5 GB, so multipart is needed for larger files. It's also faster for big files, because parts go up in parallel. A failed multipart upload is cancelled, so its parts don't stay in the bucket.
 
-## Runtime configuration
+For a local S3-compatible store (MinIO, RustFS, Garage), higher `concurrency_workers` values usually help. Against AWS over the internet, measure before going past 30 to 50.
 
-You can also configure the packager at runtime instead of (or on top of) the config file:
-
-```php
-use Foxws\Shaka\Support\Packager\Packager;
-use Foxws\Shaka\Support\Packager\ShakaPackager;
-
-// Create with custom configuration
-$driver = new ShakaPackager(
-    binaryPath: '/custom/path/packager',
-    logger: Log::channel('custom'),
-    timeout: 7200
-);
-
-$packager = new Packager($driver, Log::channel('custom'));
-```
-
-Or using the static `create()` method:
-
-```php
-$packager = Packager::create(
-    logger: Log::channel('packager'),
-    configuration: [
-        'packager' => ['binaries' => '/custom/path/packager'],
-        'timeout' => 7200,
-    ]
-);
-```
-
-## Driver configuration
-
-You can also change driver settings after it's been created:
-
-```php
-$driver = app(ShakaPackager::class);
-
-// Change timeout
-$driver->setTimeout(7200);
-
-// Change logger
-$driver->setLogger(Log::channel('debug'));
-```
-
-## Troubleshooting
-
-### Binary not found
-
-If you see an "Executable not found" error:
-
-1. Check that the binary exists: `which packager`
-2. Check its permissions: `ls -l /usr/local/bin/packager`
-3. Make sure it's executable: `chmod +x /usr/local/bin/packager`
-4. Update the config with the correct path
-
-### Timeout errors
-
-If operations time out:
-
-1. Increase the timeout in the config
-2. Check your server's PHP `max_execution_time`
-3. Move long operations onto a queue
-4. Reduce video settings (resolution, bitrate)
-
-### Permission errors
-
-If you see permission errors:
-
-1. Check the temporary directory's permissions
-2. Make sure the web server user can write to it
-3. Confirm the binary is executable
-4. Check SELinux/AppArmor policies
-
-### Logging issues
-
-If logging isn't working:
-
-1. Confirm the log channel exists in `config/logging.php`
-2. Check the log directory's permissions
-3. Make sure the channel is configured correctly
-4. Test it with a simple log entry
-
-See the [Troubleshooting](./troubleshooting.md) guide for more issues and solutions.
+The disk's own options are kept, such as `CacheControl` from `options` in `config/filesystems.php`.

@@ -3,234 +3,101 @@ section: Usage
 order: 3
 ---
 
-# Queue Integration Guide
+# Queues
 
-Packaging a video can take a while, so it's usually best done in a background job rather than during a web request. This guide shows how to run Laravel Shaka Packager through Laravel's queue system.
+Packaging a long video takes minutes, so run it in a queued job, not in a request.
 
-## Basic queue job
-
-Create a job to handle media packaging:
+## A packaging job
 
 ```php
-<?php
-
 namespace App\Jobs;
 
+use App\Models\Video;
 use Foxws\Shaka\Facades\Shaka;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use Illuminate\Foundation\Queue\Queueable;
+use Throwable;
 
-class PackageMediaJob implements ShouldQueue
+class PackageVideo implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Queueable;
 
-    public function __construct(
-        public string $inputPath,
-        public string $outputPath,
-        public string $disk = 's3'
-    ) {}
+    public $timeout = 3600;
+
+    public $tries = 2;
+
+    public function __construct(public Video $video) {}
 
     public function handle(): void
     {
-        Shaka::fromDisk($this->disk)
-            ->open($this->inputPath)
-            ->addVideoStream($this->inputPath, 'video_1080p.mp4', ['bandwidth' => '5000000'])
-            ->addVideoStream($this->inputPath, 'video_720p.mp4', ['bandwidth' => '3000000'])
-            ->addAudioStream($this->inputPath, 'audio.mp4')
-            ->withHlsMasterPlaylist('master.m3u8')
-            ->export()
-            ->toPath($this->outputPath)
-            ->save();
-    }
-}
-```
-
-## Dispatching the job
-
-```php
-use App\Jobs\PackageMediaJob;
-
-// Dispatch to the default queue
-PackageMediaJob::dispatch('videos/input.mp4', 'processed/');
-
-// Dispatch to a specific queue
-PackageMediaJob::dispatch('videos/input.mp4', 'processed/')
-    ->onQueue('media-processing');
-
-// Dispatch with a delay
-PackageMediaJob::dispatch('videos/input.mp4', 'processed/')
-    ->delay(now()->addMinutes(5));
-```
-
-## Job with progress tracking
-
-```php
-<?php
-
-namespace App\Jobs;
-
-use Foxws\Shaka\Facades\Shaka;
-use Illuminate\Bus\Batchable;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-
-class PackageMediaWithProgressJob implements ShouldQueue
-{
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    public int $timeout = 7200; // 2 hours
-    public int $tries = 3;
-
-    public function __construct(
-        public string $inputPath,
-        public string $outputPath,
-        public ?int $userId = null
-    ) {}
-
-    public function handle(): void
-    {
-        if ($this->batch()?->cancelled()) {
-            return;
-        }
+        $packager = Shaka::fromDisk('media')->open($this->video->path);
 
         try {
-            Shaka::fromDisk('s3')
-                ->open($this->inputPath)
-                ->addVideoStream($this->inputPath, 'video.mp4')
-                ->addAudioStream($this->inputPath, 'audio.mp4')
+            $packager
+                ->addVideoStream($this->video->path, 'video.mp4')
+                ->addAudioStream($this->video->path, 'audio.mp4')
+                ->withMpdOutput('index.mpd')
                 ->withHlsMasterPlaylist('master.m3u8')
                 ->export()
-                ->afterSaving(function ($exporter, $result) {
-                    // Notify the user that packaging is done
-                    if ($this->userId) {
-                        // Send notification
-                    }
-                })
-                ->toPath($this->outputPath)
+                ->toDisk('s3')
+                ->toPath("streams/{$this->video->id}/")
+                ->afterSaving(fn () => $this->video->markAsReady())
                 ->save();
-        } catch (\Exception $e) {
-            $this->fail($e);
+        } finally {
+            $packager->cleanupTemporaryFiles();
         }
     }
 
-    public function failed(\Throwable $exception): void
+    public function failed(Throwable $exception): void
     {
-        // Handle job failure
-        \Log::error('Media packaging failed', [
-            'input' => $this->inputPath,
-            'error' => $exception->getMessage(),
-        ]);
+        $this->video->markAsFailed();
     }
 }
 ```
 
-## Batch processing
-
-Process several files together as one batch:
-
 ```php
-use App\Jobs\PackageMediaJob;
-use Illuminate\Bus\Batch;
-use Illuminate\Support\Facades\Bus;
-
-$jobs = [];
-
-foreach ($mediaFiles as $file) {
-    $jobs[] = new PackageMediaJob($file, 'processed/');
-}
-
-$batch = Bus::batch($jobs)
-    ->name('Media Packaging Batch')
-    ->then(function (Batch $batch) {
-        // All jobs completed successfully
-    })
-    ->catch(function (Batch $batch, Throwable $e) {
-        // The first job in the batch failed
-    })
-    ->finally(function (Batch $batch) {
-        // The batch has finished running
-    })
-    ->dispatch();
+PackageVideo::dispatch($video)->onQueue('media');
 ```
 
-## Configuration recommendations
+## Timeouts
 
-### Queue configuration
+Three timeouts need to line up:
 
-Update `config/queue.php`:
+1. `PACKAGER_TIMEOUT` stops the Shaka Packager process. The default is 14400 seconds (4 hours).
+2. The job's `$timeout` stops the worker. Keep it at or above `PACKAGER_TIMEOUT`, or the worker is killed while Shaka Packager still runs.
+3. The queue connection's `retry_after` must be **longer** than the job's `$timeout`. Otherwise another worker picks up the same job while the first one is still packaging.
 
 ```php
-'connections' => [
-    'media-processing' => [
-        'driver' => 'redis',
-        'connection' => 'default',
-        'queue' => 'media',
-        'retry_after' => 7200, // 2 hours
-        'block_for' => null,
-    ],
+// config/queue.php
+'media' => [
+    'driver' => 'redis',
+    'connection' => 'default',
+    'queue' => 'media',
+    'retry_after' => 3660,
 ],
 ```
 
-### Horizon configuration (optional)
+## How many at once
 
-If you use Laravel Horizon, add this to `config/horizon.php`:
+Packaging mostly uses disk and network, and every running job needs space in `temporary_files_root` for its whole output. Limit how many run at the same time. With Horizon:
 
 ```php
-'environments' => [
-    'production' => [
-        'media-processing' => [
-            'connection' => 'redis',
-            'queue' => ['media'],
-            'balance' => 'auto',
-            'maxProcesses' => 2, // Limit how many packaging jobs run at once
-            'maxTime' => 0,
-            'maxJobs' => 0,
-            'memory' => 512,
-            'tries' => 3,
-            'timeout' => 7200,
-        ],
-    ],
+// config/horizon.php
+'supervisor-media' => [
+    'connection' => 'media',
+    'queue' => ['media'],
+    'maxProcesses' => 2,
+    'timeout' => 3600,
+    'tries' => 2,
 ],
 ```
 
-See [Configuration](./configuration.md) for tuning `temporary_files_min_free` and related storage guards when several queue workers run at the same time.
+If `temporary_files_root` is a size-limited mount, turn on the [storage guards](configuration.md). A job then fails right away instead of halfway through.
 
-## Best practices
+## Long-running workers
 
-1. **Set a realistic timeout** - Packaging can take a while; size the timeout to your content.
-2. **Limit how many jobs run at once** - Packaging is resource-intensive, so cap concurrent jobs.
-3. **Watch memory usage** - Set memory limits so a runaway job doesn't take down the server.
-4. **Add retries** - Network issues with remote storage may need a retry rather than an immediate failure.
-5. **Chain follow-up jobs** - For example, run a cleanup job right after packaging.
-6. **Track progress** - Use events or database updates so users can see where a job stands.
-7. **Always clean up temporary files** - Whether the job succeeds or fails.
+Queue workers live for many jobs, so:
 
-## Example with cleanup
-
-```php
-public function handle(): void
-{
-    try {
-        Shaka::fromDisk('s3')
-            ->open($this->inputPath)
-            ->addVideoStream($this->inputPath, 'video.mp4')
-            ->withHlsMasterPlaylist('master.m3u8')
-            ->export()
-            ->toPath($this->outputPath)
-            ->save();
-
-        // Clean up temporary files
-        Shaka::cleanupTemporaryFiles();
-    } catch (\Exception $e) {
-        // Clean up on error too
-        Shaka::cleanupTemporaryFiles();
-        throw $e;
-    }
-}
-```
+- Always call `cleanupTemporaryFiles()` in `finally`. A failed job otherwise leaves its files behind.
+- Don't change the shared driver with `app(ShakaPackager::class)->setTimeout()` inside a job. The driver is a singleton, so the change sticks for every later job in that worker.
+- Use `WithoutOverlapping` or `ShouldBeUnique` if the same video can be queued twice.

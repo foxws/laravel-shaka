@@ -1,300 +1,74 @@
-# Laravel Shaka Packager
+# Laravel Shaka
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/foxws/laravel-shaka.svg?style=flat-square)](https://packagist.org/packages/foxws/laravel-shaka)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/foxws/laravel-shaka/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/foxws/laravel-shaka/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/foxws/laravel-shaka/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/foxws/laravel-shaka/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
+[![GitHub Tests Action Status](https://github.com/foxws/laravel-shaka/actions/workflows/run-tests.yml/badge.svg)](https://github.com/foxws/laravel-shaka/actions?query=workflow%3Arun-tests+branch%3Amain)
+[![GitHub Code Style Action Status](https://github.com/foxws/laravel-shaka/actions/workflows/fix-php-code-style-issues.yml/badge.svg)](https://github.com/foxws/laravel-shaka/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/foxws/laravel-shaka.svg?style=flat-square)](https://packagist.org/packages/foxws/laravel-shaka)
 
-A Laravel integration for [Google's Shaka Packager](https://github.com/shaka-project/shaka-packager), enabling you to create adaptive streaming content (HLS, DASH) with a fluent, Laravel-style API.
+Runs [Shaka Packager](https://github.com/shaka-project/shaka-packager) from Laravel to turn video into HLS and DASH streams. Read the source from any Laravel disk, and write the result to any disk.
 
-```php
-use Foxws\Shaka\Facades\Shaka;
+Shaka Packager packages already-encoded video; it doesn't re-encode. That makes it fast, but it can't create extra qualities. To encode and package in one step, see [Laravel Streamer](https://github.com/foxws/laravel-streamer).
 
-$result = Shaka::fromDisk('s3')
-    ->open('videos/input.mp4')
-    ->addVideoStream('videos/input.mp4', 'video_1080p.mp4', ['bandwidth' => '5000000'])
-    ->addVideoStream('videos/input.mp4', 'video_720p.mp4', ['bandwidth' => '3000000'])
-    ->addAudioStream('videos/input.mp4', 'audio.mp4')
-    ->withHlsMasterPlaylist('master.m3u8')
-    ->withSegmentDuration(6)
-    ->export()
-    ->toDisk('export')
-    ->save();
-```
-
-## Features
-
-- 🎬 **Fluent API** - Laravel-style chainable methods
-- 📁 **Multiple Disks** - Works with local, S3, and custom filesystems
-- 🎯 **Adaptive Bitrate** - Create multi-quality streams easily
-- 🔒 **Encryption & DRM** - Built-in support for content protection
-- 📺 **HLS & DASH** - Both manifests packaged from the same CMAF segments in one export, no double encoding
-- 🧪 **Testable** - Clean architecture with mockable components
-- 📝 **Type-Safe** - Full PHP 8.1+ type declarations
-
-## Documentation
-
-See the [full documentation](https://foxws.github.io/laravel-shaka/) (or browse [`docs/`](docs) directly): [Installation](docs/installation.md), [Usage](docs/usage.md), [Quick Reference](docs/quick-reference.md), [Configuration](docs/configuration.md), [Architecture](docs/architecture.md), [AES Encryption](docs/aes-encryption.md), [URL Resolvers](docs/url-resolvers.md), [Queue Integration](docs/queue-integration.md), [Troubleshooting](docs/troubleshooting.md).
+See the [full documentation](docs): [Installation](docs/installation.md), [Usage](docs/usage.md), [URL Resolvers](docs/url-resolvers.md), [Queues](docs/queue-integration.md), [Encryption](docs/aes-encryption.md), [Configuration](docs/configuration.md), [Quick Reference](docs/quick-reference.md), [How It Works](docs/architecture.md), [Troubleshooting](docs/troubleshooting.md).
 
 ## Requirements
 
 - PHP 8.3 or higher
-- Laravel 12.x or higher
-- Shaka Packager binary installed on your system or Docker container
+- Laravel 12 or 13
+- The [Shaka Packager](https://github.com/shaka-project/shaka-packager/releases) binary
 
 ## Installation
-
-Install the package via composer:
 
 ```bash
 composer require foxws/laravel-shaka
 ```
 
-Publish the config file:
-
 ```bash
 php artisan vendor:publish --tag="shaka-config"
 ```
 
-### Installing Shaka Packager
-
-Install Shaka Packager binary on your system. Visit the [Shaka Packager releases](https://github.com/shaka-project/shaka-packager/releases) page for installation instructions.
-
-### Verify Installation
-
-After installation, verify that Shaka Packager is properly configured:
+Install the `packager` binary, then check the setup:
 
 ```bash
 php artisan shaka:info
 ```
 
-This will check:
+See [Installation](docs/installation.md) for details.
 
-- Binary exists and is executable
-- Can retrieve version information
-- Configuration is properly set up
-- Temporary directory is accessible
-
-## Quick Start
-
-### Basic Usage
+## Quick start
 
 ```php
 use Foxws\Shaka\Facades\Shaka;
 
-$result = Shaka::open('input.mp4')
-    ->addVideoStream('input.mp4', 'video.mp4')
-    ->addAudioStream('input.mp4', 'audio.mp4')
-    ->withHlsMasterPlaylist('master.m3u8')
-    ->export()
-    ->save();
-```
+$packager = Shaka::fromDisk('media')->open('videos/clip.mp4');
 
-### Adaptive Bitrate Streaming
-
-```php
-$result = Shaka::open('input.mp4')
-    ->addVideoStream('input.mp4', 'video_1080p.mp4', ['bandwidth' => '5000000'])
-    ->addVideoStream('input.mp4', 'video_720p.mp4', ['bandwidth' => '3000000'])
-    ->addVideoStream('input.mp4', 'video_480p.mp4', ['bandwidth' => '1500000'])
-    ->addAudioStream('input.mp4', 'audio.mp4')
-    ->withHlsMasterPlaylist('master.m3u8')
-    ->withSegmentDuration(6)
-    ->export()
-    ->save();
-```
-
-### Dual DASH + HLS Output (CMAF)
-
-Video and audio streams are packaged as CMAF (fragmented MP4) by default, so the
-same set of segments can be described by both a DASH manifest and an HLS master
-playlist. Chaining `withMpdOutput()` and `withHlsMasterPlaylist()` on the same
-builder packages both from a single `export()` — one packaging pass, no extra
-transcoding, just an additional manifest file:
-
-```php
-$result = Shaka::open('input.mp4')
-    ->addVideoStream('input.mp4', 'video.mp4')
-    ->addAudioStream('input.mp4', 'audio.mp4')
-    ->withMpdOutput('manifest.mpd')
-    ->withHlsMasterPlaylist('master.m3u8')
-    ->export()
-    ->save();
-```
-
-If you only need one format, only set the corresponding output — Shaka Packager
-only generates the manifest(s) you ask for.
-
-### Working with Different Disks
-
-```php
-$result = Shaka::fromDisk('s3')
-    ->open('videos/input.mp4')
-    ->addVideoStream('videos/input.mp4', 'video.mp4')
-    ->addAudioStream('videos/input.mp4', 'audio.mp4')
-    ->withHlsMasterPlaylist('master.m3u8')
-    ->export()
-    ->toDisk('export') // Save output to a different disk (e.g., local, s3, etc.)
-    ->toPath('exports/') // (Optional) Save to a subdirectory on the target disk
-    ->save();
-```
-
-### HLS with Encryption
-
-`withAESEncryption()` returns an `EncryptionKey` value object (not `$this`), so
-it breaks the fluent chain — call it on its own line:
-
-```php
-// Basic encryption with auto-generated AES-128 key
-$streamer = Shaka::open('input.mp4')
-    ->addVideoStream('input.mp4', 'video.mp4')
-    ->addAudioStream('input.mp4', 'audio.mp4')
-    ->withHlsMasterPlaylist('master.m3u8');
-
-$encryptionKey = $streamer->withAESEncryption(); // Auto-generates key with 'cbc1' scheme
-
-$streamer->export()->save();
-
-// With key rotation (generates key_0.key, key_1.key, etc.)
-$streamer = Shaka::open('input.mp4')
-    ->addVideoStream('input.mp4', 'video.mp4')
-    ->addAudioStream('input.mp4', 'audio.mp4')
-    ->withHlsMasterPlaylist('master.m3u8');
-
-$encryptionKey = $streamer->withAESEncryption();
-$streamer->withKeyRotationDuration(60); // Rotate every 60 seconds
-
-$streamer->export()->toDisk('s3')->save();
-```
-
-See [AES Encryption Guide](docs/aes-encryption.md) for complete documentation.
-
-### Dynamic URL Resolvers (HLS & DASH)
-
-Serve encrypted streaming content with S3 signed URLs:
-
-**HLS Example:**
-
-```php
-use Foxws\Shaka\Http\DynamicHLSPlaylist;
-use Illuminate\Support\Facades\Storage;
-
-public function playlist(Video $video)
-{
-    return (new DynamicHLSPlaylist('s3'))
-        ->open("videos/{$video->id}/master.m3u8")
-        ->setKeyUrlResolver(fn ($key) => Storage::disk('s3')->temporaryUrl(
-            "videos/{$video->id}/{$key}",
-            now()->addHour()
-        ))
-        ->setMediaUrlResolver(fn ($file) => Storage::disk('s3')->temporaryUrl(
-            "videos/{$video->id}/{$file}",
-            now()->addHours(2)
-        ))
-        ->toResponse(request());
+try {
+    $packager
+        ->addVideoStream('videos/clip.mp4', 'video.mp4')
+        ->addAudioStream('videos/clip.mp4', 'audio.mp4')
+        ->withMpdOutput('index.mpd')
+        ->withHlsMasterPlaylist('master.m3u8')
+        ->export()
+        ->toDisk('s3')
+        ->toPath('streams/clip/')
+        ->save();
+} finally {
+    $packager->cleanupTemporaryFiles();
 }
 ```
 
-**DASH Example:**
+This writes one set of segments with both a DASH manifest and an HLS playlist, and uploads them to `streams/clip/` on the `s3` disk.
+
+To serve a private stream, rewrite the playlist with signed URLs when it's requested:
 
 ```php
-use Foxws\Shaka\Http\DynamicDASHManifest;
-use Illuminate\Support\Facades\Storage;
-
-public function manifest(Video $video)
-{
-    return (new DynamicDASHManifest('s3'))
-        ->open("videos/{$video->id}/manifest.mpd")
-        ->setKeyUrlResolver(fn ($key) => Storage::disk('s3')->temporaryUrl(
-            "videos/{$video->id}/{$key}",
-            now()->addHour()
-        ))
-        ->setMediaUrlResolver(fn ($file) => Storage::disk('s3')->temporaryUrl(
-            "videos/{$video->id}/{$file}",
-            now()->addHours(2)
-        ))
-        ->setInitUrlResolver(fn ($file) => Storage::disk('s3')->temporaryUrl(
-            "videos/{$video->id}/{$file}",
-            now()->addHours(2)
-        ))
-        ->toResponse(request());
-}
+return Shaka::dynamicHLSPlaylist('s3')
+    ->setMediaUrlResolver(fn (string $path) => Storage::disk('s3')->temporaryUrl("streams/clip/{$path}", now()->addHour()))
+    ->open('streams/clip/master.m3u8')
+    ->toResponse($request);
 ```
 
-**Use cases for URL resolvers:**
-
-- 🔐 Generate signed URLs for secure content delivery
-- 🌐 Integrate with CDN services
-- 🏢 Support multi-tenant applications
-- 🔄 Implement dynamic key rotation
-- 📊 Track media access patterns
-
-See [URL Resolver Examples](examples/UrlResolverExamples.php) and [Documentation](docs/url-resolvers.md) for more details.
-
-## Available Methods
-
-### Disk Management
-
-- `fromDisk(string $disk)` - Set the disk to use
-- `openFromDisk(string $disk, $paths)` - Set disk and open files in one call
-- `getDisk()` - Get the current disk instance
-
-### Media Management
-
-- `open($paths)` - Open one or more media files
-- `get()` - Get the MediaCollection
-- `streams()` - Get auto-generated Stream objects
-
-### Stream Configuration
-
-- `addVideoStream(string $input, string $output, array $options = [])` - Add video stream
-- `addAudioStream(string $input, string $output, array $options = [])` - Add audio stream
-- `addTextStream(string $input, string $output, array $options = [])` - Add text/caption/subtitle stream
-- `addStream(Stream|array $stream)` - Add custom stream, from a `Stream` value object or a raw `['in' => ..., 'stream' => ..., 'output' => ...]` array
-
-### Output Configuration
-
-- `withHlsMasterPlaylist(string $path)` - Set HLS master playlist output
-- `withMpdOutput(string $path)` - Set DASH manifest output
-- `withBaseUrls(string|array $urls)` - Set DASH `<BaseURL>` element(s) under `<MPD>`
-- `withSegmentDuration(int $seconds)` - Set segment duration
-- `withAESEncryption(string $keyFilename = 'key', ProtectionScheme|string|null $protectionScheme = 'cbc1', ?string $label = null): EncryptionKey` - Enable AES-128 encryption (does not return `$this` — breaks the fluent chain)
-- `withKeyRotationDuration(int $seconds)` - Enable key rotation for encryption
-- `toDisk(string $disk)` - Set the target disk for output
-- `toPath(string $path)` - Set the target output path (subdirectory)
-- `withVisibility(string $visibility)` - Set file visibility (e.g., 'public', 'private')
-
-### Execution & Utilities
-
-- `export()` - Execute the packaging operation (returns result object)
-- `save(?string $path = null)` - Save outputs to disk (optionally to a specific path)
-- `getCommand()` - Get the final command string (for debugging)
-- `dd()` - Dump the final command and end the script
-- `afterSaving(callable $callback)` - Register a callback to run after saving
-
-### Dynamic URL Resolvers
-
-**DynamicHLSPlaylist:**
-
-- `new DynamicHLSPlaylist(?string $disk)` - Create HLS playlist processor
-- `open(string $path)` - Open a playlist file
-- `setKeyUrlResolver(callable $resolver)` - Set resolver for encryption key URLs
-- `setMediaUrlResolver(callable $resolver)` - Set resolver for media segment URLs
-- `setPlaylistUrlResolver(callable $resolver)` - Set resolver for sub-playlist URLs
-- `get()` - Get processed playlist content
-- `all()` - Get all processed playlists (master + segments)
-- `toResponse($request)` - Return as HTTP response
-
-**DynamicDASHManifest:**
-
-- `new DynamicDASHManifest(?string $disk)` - Create DASH manifest processor
-- `open(string $path)` - Open a manifest file
-- `setMediaUrlResolver(callable $resolver)` - Set resolver for media segment URLs
-- `setInitUrlResolver(callable $resolver)` - Set resolver for initialization segment URLs
-- `get()` - Get processed manifest content
-- `toResponse($request)` - Return as HTTP response
-
-See the [Quick Reference](docs/quick-reference.md) for complete API documentation.
+See [URL Resolvers](docs/url-resolvers.md) and [Encryption](docs/aes-encryption.md).
 
 ## Testing
 
@@ -302,31 +76,24 @@ See the [Quick Reference](docs/quick-reference.md) for complete API documentatio
 composer test
 ```
 
-## Changelog
+## Links
 
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
+- [CHANGELOG](CHANGELOG.md)
+- [Security policy](../../security/policy)
+- [Laravel Streamer](https://github.com/foxws/laravel-streamer), for encoding and packaging in one step
+- [Shaka Packager documentation](https://shaka-project.github.io/shaka-packager/html/)
 
-## Contributing
+## Credits
 
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
+- [francoism90](https://github.com/francoism90)
+- [All Contributors](../../contributors)
 
-## Security Vulnerabilities
+This package started from ideas in [Laravel FFMpeg](https://github.com/protonemedia/laravel-ffmpeg) and [shaka-php](https://github.com/quasarstream/shaka-php).
 
-If you discover a security vulnerability, please report it via a private channel (e.g., email or GitHub issues) rather than publicly disclosing it.
+Used by [Stry](https://github.com/francoism90/stry), a self-hosted video streaming app.
 
-## Acknowledgments
-
-This package was inspired by and learned from:
-
-- [Laravel FFmpeg](https://github.com/protonemedia/laravel-ffmpeg) - Architecture patterns and Laravel integration approach.
-- [quasarstream/shaka-php](https://github.com/quasarstream/shaka-php) - Shaka Packager wrapper implementation and command building logic.
-
-Much of the existing logic and design patterns from these excellent packages helped shape this implementation. Many thanks to their authors and contributors!
-
-## Projects Built on Laravel Shaka Packager
-
-- [Stry](https://github.com/francoism90/stry) - A modern streaming platform built on top of Laravel Shaka Packager.
+AI, specifically [Claude](https://claude.com/product/claude-code), was used to help build this package. All AI-assisted output is reviewed by me, and I retain final say over everything that is implemented and released.
 
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+MIT. See [License File](LICENSE.md).

@@ -88,7 +88,7 @@ class Packager
         if ($this->logger) {
             $this->logger->debug('Opened media collection', [
                 'count' => $mediaCollection->count(),
-                'paths' => $mediaCollection->getLocalPaths(),
+                'paths' => $mediaCollection->collection()->map->getPath()->all(),
             ]);
         }
 

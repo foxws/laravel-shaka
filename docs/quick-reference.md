@@ -71,7 +71,7 @@ Called on the result of `export()`.
 | `toPath($path)` | Folder on that disk. Defaults to the root. |
 | `withVisibility($visibility)` | `public` or `private`. |
 | `afterSaving($callback)` | Runs after upload, with `($exporter, $result)`. |
-| `save()` | Run Shaka Packager and upload the output. |
+| `save($path = null)` | Run Shaka Packager and upload the output. A path works like `toPath()`. |
 | `getCommand()` | The command as a string, without running it. |
 | `dd()` | Dump the command and stop. |
 

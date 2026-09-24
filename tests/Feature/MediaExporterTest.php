@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 use Foxws\Shaka\Exporters\MediaExporter;
 use Foxws\Shaka\Facades\Shaka;
+use Foxws\Shaka\Filesystem\Media;
+use Foxws\Shaka\Filesystem\MediaCollection;
+use Foxws\Shaka\Support\Packager;
+use Foxws\Shaka\Support\PackagerResult;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
@@ -93,4 +97,18 @@ it('can handle multiple export destinations', function () {
 
     expect($exporter1)->toBeInstanceOf(MediaExporter::class);
     expect($exporter2)->toBeInstanceOf(MediaExporter::class);
+});
+
+it('saves to the path given to save()', function () {
+    $outputDirectory = sys_get_temp_dir().'/test-save-path-'.bin2hex(random_bytes(4));
+    mkdir($outputDirectory);
+    file_put_contents("{$outputDirectory}/index.mpd", '<MPD/>');
+
+    $packager = Mockery::mock(Packager::class);
+    $packager->shouldReceive('export')->andReturn(new PackagerResult('ok', null, $outputDirectory));
+    $packager->shouldReceive('getMediaCollection')->andReturn(MediaCollection::make([Media::make('local', 'video.mp4', false)]));
+
+    (new MediaExporter($packager))->toDisk('export')->save('streams/clip');
+
+    Storage::disk('export')->assertExists('streams/clip/index.mpd');
 });

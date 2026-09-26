@@ -2,6 +2,17 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
+## 2.3.2 - 2026-09-26
+
+<!-- Release notes generated using configuration in .github/release.yml at 2.3.2 -->
+### What's Changed
+
+#### Other Changes
+
+* Document forwarded methods for static analysis by @francoism90 in https://github.com/foxws/laravel-shaka/pull/51
+
+**Full Changelog**: https://github.com/foxws/laravel-shaka/compare/2.3.1...2.3.2
+
 ## 2.3.1 - 2026-09-24
 
 <!-- Release notes generated using configuration in .github/release.yml at main -->

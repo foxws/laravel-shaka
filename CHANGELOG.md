@@ -2,6 +2,18 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
+## 2.4.0 - 2026-10-02
+
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+### What's Changed
+
+#### Other Changes
+
+* docs: add the foxws.nl homepage group and a hero lead by @francoism90 in https://github.com/foxws/laravel-shaka/pull/52
+* Raise PHPStan to level 8, and fail clearly on missing files and invalid keys by @francoism90 in https://github.com/foxws/laravel-shaka/pull/53
+
+**Full Changelog**: https://github.com/foxws/laravel-shaka/compare/2.3.2...2.4.0
+
 ## 2.3.2 - 2026-09-26
 
 <!-- Release notes generated using configuration in .github/release.yml at 2.3.2 -->

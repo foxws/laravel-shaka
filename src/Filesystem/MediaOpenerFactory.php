@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Foxws\Shaka\Filesystem;
 
 use Closure;
-use Foxws\Shaka\Exceptions\RuntimeException;
+use Foxws\Shaka\Exceptions\MissingPackagerException;
 use Foxws\Shaka\MediaOpener;
 use Foxws\Shaka\Support\Packager;
 use Illuminate\Support\Traits\ForwardsCalls;
@@ -37,7 +37,7 @@ class MediaOpenerFactory
         }
 
         $resolver = $this->packagerResolver
-            ?? throw new RuntimeException('MediaOpenerFactory needs a packager or a packager resolver.');
+            ?? throw MissingPackagerException::noResolver();
 
         return ($resolver)();
     }

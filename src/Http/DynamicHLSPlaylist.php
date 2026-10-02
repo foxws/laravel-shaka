@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Foxws\Shaka\Http;
 
+use Foxws\Shaka\Exceptions\ManifestNotOpenedException;
 use Foxws\Shaka\Exceptions\MediaNotFoundException;
 use Foxws\Shaka\Filesystem\Disk;
 use Foxws\Shaka\Filesystem\Media;
@@ -349,7 +350,7 @@ class DynamicHLSPlaylist implements Responsable
      */
     protected function openedMedia(): Media
     {
-        return $this->media ?? throw new \RuntimeException('No playlist file opened. Call open() first.');
+        return $this->media ?? throw ManifestNotOpenedException::playlist();
     }
 
     /**
@@ -357,6 +358,6 @@ class DynamicHLSPlaylist implements Responsable
      */
     protected function read(string $path): string
     {
-        return $this->disk->get($path) ?? throw new MediaNotFoundException("The playlist file {$path} doesn't exist on its disk.");
+        return $this->disk->get($path) ?? throw MediaNotFoundException::playlistFile($path);
     }
 }

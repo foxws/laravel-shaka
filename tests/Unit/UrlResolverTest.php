@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Foxws\Shaka\Exceptions\ManifestNotOpenedException;
 use Foxws\Shaka\Exceptions\MediaNotFoundException;
 use Foxws\Shaka\Http\DynamicDASHManifest;
 use Foxws\Shaka\Http\DynamicHLSPlaylist;
@@ -138,3 +139,7 @@ it('explains that an opened dash manifest does not exist', function () {
 
     (new DynamicDASHManifest('local'))->open('missing/manifest.mpd')->get();
 })->throws(MediaNotFoundException::class, "The manifest file missing/manifest.mpd doesn't exist on its disk.");
+
+it('explains that a playlist must be opened first', function () {
+    (new DynamicHLSPlaylist)->all();
+})->throws(ManifestNotOpenedException::class, 'No playlist file opened. Call open() first.');

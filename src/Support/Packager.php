@@ -7,7 +7,7 @@ namespace Foxws\Shaka\Support;
 use Foxws\Shaka\Events\PackagingCompleted;
 use Foxws\Shaka\Events\PackagingFailed;
 use Foxws\Shaka\Events\PackagingStarted;
-use Foxws\Shaka\Exceptions\RuntimeException;
+use Foxws\Shaka\Exceptions\EncryptionKeyFileException;
 use Foxws\Shaka\Filesystem\MediaCollection;
 use Foxws\Shaka\Filesystem\TemporaryDirectories;
 use Illuminate\Support\Collection;
@@ -386,7 +386,7 @@ class Packager
         $encryptionKey = EncryptionKey::generateAndWrite($keyFilename);
 
         // Store cache directory for later use in PackagerResult
-        $this->cacheDirectory = dirname($encryptionKey->filePath ?? throw new RuntimeException('The encryption key was generated without a key file.'));
+        $this->cacheDirectory = dirname($encryptionKey->filePath ?? throw EncryptionKeyFileException::missing());
 
         // Set individual encryption options directly on the builder
         $this->builder()->withOption('enable_raw_key_encryption', true);

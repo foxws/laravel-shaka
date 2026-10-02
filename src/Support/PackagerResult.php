@@ -8,6 +8,7 @@ use Aws\CommandInterface;
 use Aws\Exception\MultipartUploadException;
 use Aws\S3\MultipartUploader;
 use Aws\S3\S3ClientInterface;
+use Foxws\Shaka\Exceptions\EncryptionKeyFileException;
 use Foxws\Shaka\Filesystem\Disk;
 use Generator;
 use GuzzleHttp\Promise\Create;
@@ -441,7 +442,7 @@ class PackagerResult
                     $keys[] = new EncryptionKeyFile(
                         path: $basePath.DIRECTORY_SEPARATOR.$relativePath,
                         filename: $filename,
-                        content: bin2hex($disk->get($relativePath) ?? throw new RuntimeException("Can't read the key file {$relativePath}.")),
+                        content: bin2hex($disk->get($relativePath) ?? throw EncryptionKeyFileException::unreadable($relativePath)),
                     );
                 }
             }

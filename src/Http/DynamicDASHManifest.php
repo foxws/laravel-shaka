@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Foxws\Shaka\Http;
 
+use Foxws\Shaka\Exceptions\ManifestNotOpenedException;
+use Foxws\Shaka\Exceptions\ManifestProcessingException;
 use Foxws\Shaka\Exceptions\MediaNotFoundException;
 use Foxws\Shaka\Filesystem\Disk;
 use Foxws\Shaka\Filesystem\Media;
@@ -284,7 +286,7 @@ class DynamicDASHManifest implements Responsable
      */
     protected function openedMedia(): Media
     {
-        return $this->media ?? throw new \RuntimeException('No manifest file opened. Call open() first.');
+        return $this->media ?? throw ManifestNotOpenedException::manifest();
     }
 
     /**
@@ -292,7 +294,7 @@ class DynamicDASHManifest implements Responsable
      */
     protected function read(string $path): string
     {
-        return $this->disk->get($path) ?? throw new MediaNotFoundException("The manifest file {$path} doesn't exist on its disk.");
+        return $this->disk->get($path) ?? throw MediaNotFoundException::manifestFile($path);
     }
 
     /**
@@ -302,6 +304,6 @@ class DynamicDASHManifest implements Responsable
     protected function replace(string $pattern, callable $callback, string $subject): string
     {
         return preg_replace_callback($pattern, $callback, $subject)
-            ?? throw new \RuntimeException('Processing the DASH manifest failed: '.preg_last_error_msg());
+            ?? throw ManifestProcessingException::regexFailed(preg_last_error_msg());
     }
 }

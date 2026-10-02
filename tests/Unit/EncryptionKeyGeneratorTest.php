@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Foxws\Shaka\Exceptions\InvalidEncryptionKeyException;
 use Foxws\Shaka\Filesystem\TemporaryDirectories;
 use Foxws\Shaka\Support\EncryptionKey;
 use Foxws\Shaka\Support\EncryptionKeyGenerator;
@@ -51,7 +52,7 @@ it('formats encryption config without label', function () {
 
 it('refuses to write an empty key file for a key that is not hex', function () {
     EncryptionKeyGenerator::writeKeyFile('test', 'encryption.key', 'not-a-hex-key');
-})->throws(InvalidArgumentException::class, 'The encryption key must be a non-empty hex string.');
+})->throws(InvalidEncryptionKeyException::class, 'The encryption key must be a non-empty hex string.');
 
 it('writes key file to disk', function () {
     $key = EncryptionKeyGenerator::generateKey();

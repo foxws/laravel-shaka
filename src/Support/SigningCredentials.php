@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Foxws\Shaka\Support;
 
+use Foxws\Shaka\Exceptions\InvalidSigningCredentialsException;
 use InvalidArgumentException;
 
 /**
@@ -47,9 +48,11 @@ final readonly class SigningCredentials
      */
     public function toOptions(): array
     {
-        return $this->isAes()
-            ? ['aes_signing_key' => $this->aesSigningKey, 'aes_signing_iv' => $this->aesSigningIv]
-            : ['rsa_signing_key_path' => $this->rsaSigningKeyPath];
+        if ($this->aesSigningKey !== null && $this->aesSigningIv !== null) {
+            return ['aes_signing_key' => $this->aesSigningKey, 'aes_signing_iv' => $this->aesSigningIv];
+        }
+
+        return ['rsa_signing_key_path' => $this->rsaSigningKeyPath ?? throw InvalidSigningCredentialsException::missingKey()];
     }
 
     private static function assertHex(string $label, string $hex): void

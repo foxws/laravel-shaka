@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Foxws\Shaka\Filesystem;
 
 use Closure;
+use Foxws\Shaka\Exceptions\MissingPackagerException;
 use Foxws\Shaka\MediaOpener;
 use Foxws\Shaka\Support\Packager;
 use Illuminate\Support\Traits\ForwardsCalls;
@@ -35,7 +36,8 @@ class MediaOpenerFactory
             return $this->packager;
         }
 
-        $resolver = $this->packagerResolver;
+        $resolver = $this->packagerResolver
+            ?? throw MissingPackagerException::noResolver();
 
         return ($resolver)();
     }
@@ -50,6 +52,7 @@ class MediaOpenerFactory
      *
      * @param  string  $method
      * @param  array  $parameters
+     * @param  array<int, mixed>  $parameters
      * @return mixed
      */
     public function __call($method, $parameters)

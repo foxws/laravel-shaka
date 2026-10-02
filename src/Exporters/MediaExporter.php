@@ -9,13 +9,14 @@ use Foxws\Shaka\Filesystem\Media;
 use Foxws\Shaka\MediaOpener;
 use Foxws\Shaka\Support\Packager;
 use Foxws\Shaka\Support\PackagerResult;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Traits\ForwardsCalls;
 
 class MediaExporter
 {
     use ForwardsCalls;
 
-    protected ?Packager $packager = null;
+    protected Packager $packager;
 
     protected ?Disk $toDisk = null;
 
@@ -23,6 +24,7 @@ class MediaExporter
 
     protected ?string $toPath = null;
 
+    /** @var array<int, callable>|null */
     protected ?array $afterSavingCallbacks = [];
 
     public function __construct(Packager $packager)
@@ -44,6 +46,9 @@ class MediaExporter
         return $this->toDisk = $disk->clone();
     }
 
+    /**
+     * @param  Disk|Filesystem|string  $disk
+     */
     public function toDisk($disk): self
     {
         $this->toDisk = Disk::make($disk);
@@ -98,7 +103,7 @@ class MediaExporter
         return $outputMedia;
     }
 
-    protected function runAfterSavingCallbacks(PackagerResult $result)
+    protected function runAfterSavingCallbacks(PackagerResult $result): void
     {
         if (empty($this->afterSavingCallbacks)) {
             return;
@@ -147,6 +152,10 @@ class MediaExporter
     /**
      * Forwards the call to the driver object and returns the result
      * if it's something different than the driver object itself.
+     *
+     * @param  array<int, mixed>  $arguments
+     * @param  string  $method
+     * @return mixed
      */
     public function __call($method, $arguments)
     {

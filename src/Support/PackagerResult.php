@@ -8,6 +8,7 @@ use Aws\CommandInterface;
 use Aws\Exception\MultipartUploadException;
 use Aws\S3\MultipartUploader;
 use Aws\S3\S3ClientInterface;
+use Foxws\Shaka\Exceptions\EncryptionKeyFileException;
 use Foxws\Shaka\Filesystem\Disk;
 use Generator;
 use GuzzleHttp\Promise\Create;
@@ -27,6 +28,9 @@ class PackagerResult
 
     protected ?Filesystem $cacheFilesystem = null;
 
+    /**
+     * @param  array<string, mixed>  $configuration
+     */
     public function __construct(
         protected string $output,
         protected ?Disk $sourceDisk = null,
@@ -47,9 +51,9 @@ class PackagerResult
     {
         $targetDisk = Disk::make($disk);
 
-        if (! $this->temporaryDirectory) {
-            throw new RuntimeException('Cannot copy files: temporary directory not set');
-        }
+        $temporaryDirectory = $this->temporaryDirectory
+            ?? throw new RuntimeException('Cannot copy files: temporary directory not set');
+        $cacheDirectory = $this->cacheDirectory;
 
         $targetDirectory = $outputPath ?: $this->getSourceDirectory();
 
@@ -57,8 +61,8 @@ class PackagerResult
         $cacheDisk = $this->getCacheFilesystem();
 
         $fileOps = array_merge(
-            $tempDisk ? $this->buildFileOperations($tempDisk->allFiles(), $targetDirectory, $this->temporaryDirectory) : [],
-            $cacheDisk ? $this->buildFileOperations($cacheDisk->allFiles(), $targetDirectory, $this->cacheDirectory) : [],
+            $tempDisk ? $this->buildFileOperations($tempDisk->allFiles(), $targetDirectory, $temporaryDirectory) : [],
+            $cacheDisk && $cacheDirectory !== null ? $this->buildFileOperations($cacheDisk->allFiles(), $targetDirectory, $cacheDirectory) : [],
         );
 
         throw_if(
@@ -70,14 +74,14 @@ class PackagerResult
         $this->copyFilesConcurrently($fileOps, $targetDisk, $visibility, move: $cleanup);
 
         if ($cleanup) {
-            if ($tempDisk && is_dir($this->temporaryDirectory)) {
+            if ($tempDisk && is_dir($temporaryDirectory)) {
                 $tempDisk->deleteDirectory('/');
-                @rmdir($this->temporaryDirectory);
+                @rmdir($temporaryDirectory);
             }
 
-            if ($cacheDisk && $this->cacheDirectory && is_dir($this->cacheDirectory)) {
+            if ($cacheDisk && $cacheDirectory !== null && is_dir($cacheDirectory)) {
                 $cacheDisk->deleteDirectory('/');
-                @rmdir($this->cacheDirectory);
+                @rmdir($cacheDirectory);
             }
         }
 
@@ -418,14 +422,16 @@ class PackagerResult
      */
     public function getEncryptionKeys(): array
     {
+        // A list of pairs rather than an array keyed by directory: two unset
+        // directories would otherwise collapse into the same "" key.
         $disks = array_filter([
-            $this->temporaryDirectory => $this->getTempFilesystem(),
-            $this->cacheDirectory => $this->getCacheFilesystem(),
-        ]);
+            [$this->temporaryDirectory, $this->getTempFilesystem()],
+            [$this->cacheDirectory, $this->getCacheFilesystem()],
+        ], fn (array $pair): bool => $pair[0] !== null && $pair[1] !== null);
 
         $keys = [];
 
-        foreach ($disks as $basePath => $disk) {
+        foreach ($disks as [$basePath, $disk]) {
             foreach ($disk->allFiles() as $relativePath) {
                 $filename = basename($relativePath);
                 $extension = pathinfo($filename, PATHINFO_EXTENSION);
@@ -436,7 +442,7 @@ class PackagerResult
                     $keys[] = new EncryptionKeyFile(
                         path: $basePath.DIRECTORY_SEPARATOR.$relativePath,
                         filename: $filename,
-                        content: bin2hex($disk->get($relativePath)),
+                        content: bin2hex($disk->get($relativePath) ?? throw EncryptionKeyFileException::unreadable($relativePath)),
                     );
                 }
             }

@@ -27,6 +27,9 @@ class ShakaPackager
         $this->timeout = $timeout;
     }
 
+    /**
+     * @param  array<string, mixed>  $configuration
+     */
     public static function create(
         ?LoggerInterface $logger = null,
         ?array $configuration = null
@@ -69,6 +72,10 @@ class ShakaPackager
         throw new RuntimeException('Cannot parse packager version');
     }
 
+    /**
+     * @param  string|array<int, string>  $command
+     * @param  array<string, mixed>  $options
+     */
     public function command(string|array $command, array $options = []): string
     {
         $arguments = is_array($command) ? $command : [$command];
@@ -116,14 +123,14 @@ class ShakaPackager
                 '/--'.preg_quote($option, '/').'=([^\s]+)/',
                 '--'.$option.'=[REDACTED]',
                 $redacted
-            );
+            ) ?? '[REDACTED]';
 
             // Redact --option value format
             $redacted = preg_replace(
                 '/--'.preg_quote($option, '/').'\s+(?!--)(\S+)/',
                 '--'.$option.' [REDACTED]',
                 $redacted
-            );
+            ) ?? '[REDACTED]';
         }
 
         return $redacted;

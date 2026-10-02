@@ -43,6 +43,8 @@ class TemporaryDirectories
 
     /**
      * Array of all directories
+     *
+     * @var array<int, string>
      */
     protected array $directories = [];
 

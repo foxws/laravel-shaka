@@ -7,6 +7,7 @@ namespace Foxws\Shaka\Support;
 use Foxws\Shaka\Events\PackagingCompleted;
 use Foxws\Shaka\Events\PackagingFailed;
 use Foxws\Shaka\Events\PackagingStarted;
+use Foxws\Shaka\Exceptions\RuntimeException;
 use Foxws\Shaka\Filesystem\MediaCollection;
 use Foxws\Shaka\Filesystem\TemporaryDirectories;
 use Illuminate\Support\Collection;
@@ -15,7 +16,7 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
- * @method $this withBaseUrls(string|array $urls)
+ * @method $this withBaseUrls(string|array<int, string> $urls)
  * @method $this withHlsBaseUrl(string $url)
  * @method $this withHlsKeyUri(string $uri)
  * @method $this withHlsPlaylistType(\Foxws\Shaka\Support\HlsPlaylistType|string $type)
@@ -40,7 +41,7 @@ use Throwable;
  * @method $this withLowLatencyDashMode(bool $enabled = true)
  * @method $this withForceClIndex(bool $enabled = true)
  * @method $this withDashLabel(string $label)
- * @method $this withEncryption(array $encryptionConfig)
+ * @method $this withEncryption(array<string, mixed> $encryptionConfig)
  * @method $this withProtectionScheme(\Foxws\Shaka\Support\ProtectionScheme|string $scheme)
  * @method $this withCryptByteBlock(int $count)
  * @method $this withSkipByteBlock(int $count)
@@ -79,10 +80,10 @@ use Throwable;
  * @method $this withOption(string $key, mixed $value)
  * @method $this removeOption(string $key)
  * @method string build()
- * @method array buildArray()
+ * @method array<int, string> buildArray()
  * @method $this reset()
- * @method \Illuminate\Support\Collection getStreams()
- * @method array getOptions()
+ * @method \Illuminate\Support\Collection<int, \Foxws\Shaka\Support\Stream> getStreams()
+ * @method array<string, mixed> getOptions()
  */
 class Packager
 {
@@ -90,7 +91,7 @@ class Packager
 
     protected ShakaPackager $packager;
 
-    protected ?MediaCollection $mediaCollection = null;
+    protected MediaCollection $mediaCollection;
 
     protected ?LoggerInterface $logger;
 
@@ -100,8 +101,12 @@ class Packager
 
     protected ?string $cacheDirectory = null;
 
+    /** @var array<string, mixed>|null */
     protected ?array $configuration = null;
 
+    /**
+     * @param  array<string, mixed>  $configuration
+     */
     public function __construct(
         ShakaPackager $packager,
         ?LoggerInterface $logger = null,
@@ -110,8 +115,12 @@ class Packager
         $this->packager = $packager;
         $this->logger = $logger;
         $this->configuration = $configuration;
+        $this->mediaCollection = new MediaCollection;
     }
 
+    /**
+     * @param  array<string, mixed>  $configuration
+     */
     public static function create(
         ?LoggerInterface $logger = null,
         ?array $configuration = null
@@ -219,6 +228,8 @@ class Packager
 
     /**
      * Add a video stream to the builder
+     *
+     * @param  array<string, mixed>  $options
      */
     public function addVideoStream(string $input, string $output, array $options = []): self
     {
@@ -235,6 +246,8 @@ class Packager
 
     /**
      * Add an audio stream to the builder
+     *
+     * @param  array<string, mixed>  $options
      */
     public function addAudioStream(string $input, string $output, array $options = []): self
     {
@@ -251,6 +264,8 @@ class Packager
 
     /**
      * Add an text stream to the builder
+     *
+     * @param  array<string, mixed>  $options
      */
     public function addTextStream(string $input, string $output, array $options = []): self
     {
@@ -267,6 +282,8 @@ class Packager
 
     /**
      * Add a stream to the builder
+     *
+     * @param  Stream|array<string, mixed>  $stream
      */
     public function addStream(Stream|array $stream): self
     {
@@ -281,12 +298,10 @@ class Packager
     protected function resolveInputPath(string $input): string
     {
         // Try to find media in collection
-        if ($this->mediaCollection) {
-            $media = $this->mediaCollection->findByPath($input);
+        $media = $this->mediaCollection->findByPath($input);
 
-            if ($media) {
-                return $media->getSafeInputPath();
-            }
+        if ($media) {
+            return $media->getSafeInputPath();
         }
 
         // If not found, assume it's already a full path
@@ -317,7 +332,7 @@ class Packager
         // Use the registered TemporaryDirectories service. Pass the combined
         // size of the configured input media so it can check the root has
         // enough room for this specific job, not just a static floor.
-        $expectedBytes = $this->mediaCollection?->totalSize() ?? 0;
+        $expectedBytes = $this->mediaCollection->totalSize();
 
         $this->temporaryDirectory = app(TemporaryDirectories::class)->create($expectedBytes);
 
@@ -371,7 +386,7 @@ class Packager
         $encryptionKey = EncryptionKey::generateAndWrite($keyFilename);
 
         // Store cache directory for later use in PackagerResult
-        $this->cacheDirectory = dirname($encryptionKey->filePath);
+        $this->cacheDirectory = dirname($encryptionKey->filePath ?? throw new RuntimeException('The encryption key was generated without a key file.'));
 
         // Set individual encryption options directly on the builder
         $this->builder()->withOption('enable_raw_key_encryption', true);
@@ -418,6 +433,9 @@ class Packager
 
     /**
      * Filter sensitive data from options before logging
+     *
+     * @param  array<string, mixed>  $options
+     * @return array<string, mixed>
      */
     protected function filterSensitiveOptions(array $options): array
     {
@@ -523,7 +541,7 @@ class Packager
         try {
             $result = $this->packager->command($command);
 
-            $sourceDisk = $this->mediaCollection?->collection()->first()?->getDisk();
+            $sourceDisk = $this->mediaCollection->collection()->first()?->getDisk();
 
             $packagerResult = new PackagerResult($result, $sourceDisk, $this->temporaryDirectory, $this->cacheDirectory, $this->configuration);
 
@@ -556,6 +574,8 @@ class Packager
     /**
      * Forward all other method calls to the underlying CommandBuilder,
      * returning $this for fluent chaining when the builder returns itself.
+     *
+     * @param  array<int, mixed>  $arguments
      */
     public function __call(string $name, array $arguments): mixed
     {

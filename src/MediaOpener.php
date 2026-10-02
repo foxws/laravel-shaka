@@ -23,18 +23,18 @@ use Illuminate\Support\Traits\ForwardsCalls;
  * @method \Foxws\Shaka\Filesystem\MediaCollection getMediaCollection()
  * @method ?\Foxws\Shaka\Support\CommandBuilder getBuilder()
  * @method \Foxws\Shaka\Support\CommandBuilder builder()
- * @method \Illuminate\Support\Collection streams()
- * @method $this addVideoStream(string $input, string $output, array $options = [])
- * @method $this addAudioStream(string $input, string $output, array $options = [])
- * @method $this addTextStream(string $input, string $output, array $options = [])
- * @method $this addStream(\Foxws\Shaka\Support\Stream|array $stream)
+ * @method \Illuminate\Support\Collection<int, \Foxws\Shaka\Support\Stream> streams()
+ * @method $this addVideoStream(string $input, string $output, array<string, mixed> $options = [])
+ * @method $this addAudioStream(string $input, string $output, array<string, mixed> $options = [])
+ * @method $this addTextStream(string $input, string $output, array<string, mixed> $options = [])
+ * @method $this addStream(\Foxws\Shaka\Support\Stream|array<string, mixed> $stream)
  * @method $this withMpdOutput(string $path)
  * @method $this withHlsMasterPlaylist(string $path)
  * @method \Foxws\Shaka\Support\EncryptionKey withAESEncryption(string $keyFilename = 'key', ?string $protectionScheme = null, ?string $label = null)
  * @method $this withKeyRotationDuration(int $seconds)
  * @method string getCommand()
  * @method \Foxws\Shaka\Support\PackagerResult packageWithBuilder(\Foxws\Shaka\Support\CommandBuilder $builder)
- * @method $this withBaseUrls(string|array $urls)
+ * @method $this withBaseUrls(string|array<int, string> $urls)
  * @method $this withHlsBaseUrl(string $url)
  * @method $this withHlsKeyUri(string $uri)
  * @method $this withHlsPlaylistType(\Foxws\Shaka\Support\HlsPlaylistType|string $type)
@@ -59,7 +59,7 @@ use Illuminate\Support\Traits\ForwardsCalls;
  * @method $this withLowLatencyDashMode(bool $enabled = true)
  * @method $this withForceClIndex(bool $enabled = true)
  * @method $this withDashLabel(string $label)
- * @method $this withEncryption(array $encryptionConfig)
+ * @method $this withEncryption(array<string, mixed> $encryptionConfig)
  * @method $this withProtectionScheme(\Foxws\Shaka\Support\ProtectionScheme|string $scheme)
  * @method $this withCryptByteBlock(int $count)
  * @method $this withSkipByteBlock(int $count)
@@ -98,20 +98,20 @@ use Illuminate\Support\Traits\ForwardsCalls;
  * @method $this withOption(string $key, mixed $value)
  * @method $this removeOption(string $key)
  * @method string build()
- * @method array buildArray()
+ * @method array<int, string> buildArray()
  * @method $this reset()
- * @method \Illuminate\Support\Collection getStreams()
- * @method array getOptions()
+ * @method \Illuminate\Support\Collection<int, \Foxws\Shaka\Support\Stream> getStreams()
+ * @method array<string, mixed> getOptions()
  */
 class MediaOpener
 {
     use ForwardsCalls;
 
-    protected ?Disk $disk = null;
+    protected Disk $disk;
 
-    protected ?Packager $packager = null;
+    protected Packager $packager;
 
-    protected ?MediaCollection $collection = null;
+    protected MediaCollection $collection;
 
     public function __construct(
         Disk|string|null $disk = null,
@@ -141,7 +141,7 @@ class MediaOpener
         return $this;
     }
 
-    public function getDisk(): ?Disk
+    public function getDisk(): Disk
     {
         return $this->disk;
     }
@@ -157,6 +157,8 @@ class MediaOpener
 
     /**
      * Instantiates a Media object for each given path.
+     *
+     * @param  string|UploadedFile|array<int, string|UploadedFile>  $paths
      */
     public function open($paths): self
     {
@@ -180,6 +182,8 @@ class MediaOpener
 
     /**
      * Open files from a specific disk
+     *
+     * @param  string|UploadedFile|array<int, string|UploadedFile>  $paths
      */
     public function openFromDisk(Filesystem|string $disk, $paths): self
     {
@@ -191,6 +195,9 @@ class MediaOpener
         return $this->collection;
     }
 
+    /**
+     * @param  iterable<array-key, mixed>  $items
+     */
     public function each($items, callable $callback): self
     {
         Collection::make($items)->each(function ($item, $key) use ($callback) {
@@ -236,6 +243,11 @@ class MediaOpener
         return $this;
     }
 
+    /**
+     * @param  array<int, mixed>  $arguments
+     * @param  string  $method
+     * @return mixed
+     */
     public function __call($method, $arguments)
     {
         $result = $this->forwardCallTo($packager = $this->getPackager(), $method, $arguments);

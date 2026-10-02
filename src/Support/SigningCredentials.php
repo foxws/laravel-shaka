@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Foxws\Shaka\Support;
 
 use InvalidArgumentException;
+use LogicException;
 
 /**
  * Request-signing credentials for a Widevine/PlayReady key server: either an
@@ -47,9 +48,11 @@ final readonly class SigningCredentials
      */
     public function toOptions(): array
     {
-        return $this->isAes()
-            ? ['aes_signing_key' => $this->aesSigningKey, 'aes_signing_iv' => $this->aesSigningIv]
-            : ['rsa_signing_key_path' => $this->rsaSigningKeyPath];
+        if ($this->aesSigningKey !== null && $this->aesSigningIv !== null) {
+            return ['aes_signing_key' => $this->aesSigningKey, 'aes_signing_iv' => $this->aesSigningIv];
+        }
+
+        return ['rsa_signing_key_path' => $this->rsaSigningKeyPath ?? throw new LogicException('Signing credentials have neither an AES key and IV nor an RSA key path.')];
     }
 
     private static function assertHex(string $label, string $hex): void

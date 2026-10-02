@@ -16,6 +16,7 @@ class CommandBuilder
     /** @var Collection<int, Stream> */
     protected Collection $streams;
 
+    /** @var array<string, mixed> */
     protected array $options = [];
 
     public function __construct()
@@ -35,6 +36,9 @@ class CommandBuilder
      * (in, stream, output, + extra options), which is validated before
      * being added to the streams collection.
      *
+     *
+     * @param  Stream|array<string, mixed>  $stream
+     *
      * @throws InvalidStreamConfigurationException
      */
     public function addStream(Stream|array $stream): self
@@ -48,6 +52,9 @@ class CommandBuilder
         return $this;
     }
 
+    /**
+     * @param  array<string, mixed>  $options
+     */
     public function addVideoStream(string $input, string $output, array $options = []): self
     {
         return $this->addStream(array_merge([
@@ -57,6 +64,9 @@ class CommandBuilder
         ], $options));
     }
 
+    /**
+     * @param  array<string, mixed>  $options
+     */
     public function addAudioStream(string $input, string $output, array $options = []): self
     {
         return $this->addStream(array_merge([
@@ -66,6 +76,9 @@ class CommandBuilder
         ], $options));
     }
 
+    /**
+     * @param  array<string, mixed>  $options
+     */
     public function addTextStream(string $input, string $output, array $options = []): self
     {
         return $this->addStream(array_merge([
@@ -87,6 +100,8 @@ class CommandBuilder
      *
      * Accepts one URL or an array of URLs; each is added as a separate
      * <BaseURL> element immediately under the <MPD> element.
+     *
+     * @param  string|array<int, string>  $urls
      */
     public function withBaseUrls(string|array $urls): self
     {
@@ -520,6 +535,9 @@ class CommandBuilder
         return $this;
     }
 
+    /**
+     * @param  array<string, mixed>  $encryptionConfig
+     */
     public function withEncryption(array $encryptionConfig): self
     {
         foreach ($encryptionConfig as $key => $value) {
@@ -1134,6 +1152,9 @@ class CommandBuilder
         return $parts->implode(' ');
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function buildArray(): array
     {
         $arguments = [];
@@ -1219,6 +1240,9 @@ class CommandBuilder
         return $this->streams;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getOptions(): array
     {
         return $this->options;

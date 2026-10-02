@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Foxws\Shaka\Exceptions\MediaNotFoundException;
 use Foxws\Shaka\Http\DynamicDASHManifest;
 use Foxws\Shaka\Http\DynamicHLSPlaylist;
 use Illuminate\Support\Collection;
@@ -125,3 +126,15 @@ it('can parse hls playlist lines', function () {
     expect($parsed)->toBeInstanceOf(Collection::class);
     expect($parsed->count())->toBe(3);
 });
+
+it('explains that an opened hls playlist does not exist', function () {
+    Storage::fake('local');
+
+    (new DynamicHLSPlaylist('local'))->open('missing/master.m3u8')->all();
+})->throws(MediaNotFoundException::class, "The playlist file missing/master.m3u8 doesn't exist on its disk.");
+
+it('explains that an opened dash manifest does not exist', function () {
+    Storage::fake('local');
+
+    (new DynamicDASHManifest('local'))->open('missing/manifest.mpd')->get();
+})->throws(MediaNotFoundException::class, "The manifest file missing/manifest.mpd doesn't exist on its disk.");

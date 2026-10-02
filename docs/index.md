@@ -2,6 +2,7 @@
 title: Introduction
 metadata:
   role: Media
+  group: media
   eyebrow: "Video · HLS/DASH · Shaka Packager"
   desc: "Package video into HLS and DASH streams with a fluent Laravel API."
   requires: "PHP ^8.3"

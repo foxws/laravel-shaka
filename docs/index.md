@@ -5,6 +5,7 @@ metadata:
   group: media
   eyebrow: "Video · HLS/DASH · Shaka Packager"
   desc: "Package video into HLS and DASH streams with a fluent Laravel API."
+  lead: "Package already-encoded video as HLS and DASH without re-encoding, so it's fast and the output stays about the size of the input."
   requires: "PHP ^8.3"
   laravel: "12.x / 13.x"
   runtime: "Shaka Packager"

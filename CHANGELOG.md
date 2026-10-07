@@ -2,6 +2,17 @@
 
 All notable changes to `laravel-shaka` will be documented in this file.
 
+## 3.0.0 - 2026-10-07
+
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+### What's Changed
+
+#### Other Changes
+
+* Build laravel-shaka 3.0 on laravel-media by @francoism90 in https://github.com/foxws/laravel-shaka/pull/54
+
+**Full Changelog**: https://github.com/foxws/laravel-shaka/compare/2.4.0...3.0.0
+
 ## 2.4.0 - 2026-10-02
 
 <!-- Release notes generated using configuration in .github/release.yml at main -->

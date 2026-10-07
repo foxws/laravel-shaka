@@ -4,31 +4,17 @@ declare(strict_types=1);
 
 namespace Foxws\Shaka\Tests;
 
+use Foxws\Media\MediaServiceProvider;
 use Foxws\Shaka\ShakaServiceProvider;
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
 
-class TestCase extends Orchestra
+abstract class TestCase extends Orchestra
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        // Factory::guessFactoryNamesUsing(
-        //     fn (string $modelName) => 'Foxws\\Shaka\\Database\\Factories\\'.class_basename($modelName).'Factory'
-        // );
-    }
-
-    protected function getPackageProviders($app)
+    protected function getPackageProviders($app): array
     {
         return [
+            MediaServiceProvider::class,
             ShakaServiceProvider::class,
         ];
-    }
-
-    public function getEnvironmentSetUp($app)
-    {
-        config()->set('database.default', 'testing');
-        config()->set('concurrency.default', 'sync');
     }
 }

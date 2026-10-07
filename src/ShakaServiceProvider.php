@@ -4,83 +4,38 @@ declare(strict_types=1);
 
 namespace Foxws\Shaka;
 
-use Foxws\Shaka\Filesystem\MediaOpenerFactory;
-use Foxws\Shaka\Filesystem\TemporaryDirectories;
-use Foxws\Shaka\Support\Packager;
-use Foxws\Shaka\Support\ShakaPackager;
-use Illuminate\Support\Facades\Config;
-use Spatie\LaravelPackageTools\Package;
-use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Foxws\Media\Executables\Executables;
+use Foxws\Media\Opener;
+use Foxws\Media\Packaging\PackagerManager;
+use Foxws\Media\Packaging\PackagingBuilder;
+use Illuminate\Support\ServiceProvider;
 
-class ShakaServiceProvider extends PackageServiceProvider
+class ShakaServiceProvider extends ServiceProvider
 {
-    public function configurePackage(Package $package): void
+    public function register(): void
     {
-        $package
-            ->name('laravel-shaka')
-            ->hasConfigFile('laravel-shaka')
-            ->hasCommands([
-                Commands\PackageInfoCommand::class,
-            ]);
+        $this->mergeConfigFrom(__DIR__.'/../config/shaka.php', 'shaka');
+
+        $this->callAfterResolving(PackagerManager::class, function (PackagerManager $packagers): void {
+            $packagers->extend('shaka', fn (): ShakaPackager => new ShakaPackager);
+        });
+
+        Opener::macro('shaka', function (): PackagingBuilder {
+            /** @var Opener $this */
+            return $this->package()->using('shaka');
+        });
     }
 
-    public function packageRegistered(): void
+    public function boot(): void
     {
-        $this->app->singleton('laravel-shaka-logger', function () {
-            $logChannel = Config::get('laravel-shaka.log_channel');
+        $this->app->make(Executables::class)->register(ShakaExecutable::Packager);
 
-            if ($logChannel === false) {
-                return null;
-            }
+        if (! $this->app->runningInConsole()) {
+            return;
+        }
 
-            return app('log')->channel($logChannel ?: Config::get('logging.default'));
-        });
-
-        $this->app->singleton('laravel-shaka-configuration', function () {
-            $config = Config::get('laravel-shaka', []);
-
-            // Add temporary_directory if configured
-            if (! empty($config['temporary_files_root'])) {
-                $config['temporary_directory'] = $config['temporary_files_root'];
-            }
-
-            return $config;
-        });
-
-        $this->app->singleton(TemporaryDirectories::class, function () {
-            return new TemporaryDirectories(
-                Config::string('laravel-shaka.temporary_files_root', sys_get_temp_dir()),
-                Config::string('laravel-shaka.cache_files_root') ?: null,
-                Config::integer('laravel-shaka.temporary_files_min_free', 0),
-                Config::float('laravel-shaka.temporary_files_size_multiplier', 1.5),
-                Config::integer('laravel-shaka.cache_files_min_free', 0),
-            );
-        });
-
-        // Register the Shaka Packager Driver
-        $this->app->singleton(ShakaPackager::class, function ($app) {
-            $logger = $app->make('laravel-shaka-logger');
-            $config = $app->make('laravel-shaka-configuration');
-
-            return ShakaPackager::create($logger, $config);
-        });
-
-        // Register the Packager
-        $this->app->scoped(Packager::class, function ($app) {
-            $driver = $app->make(ShakaPackager::class);
-            $logger = $app->make('laravel-shaka-logger');
-            $config = $app->make('laravel-shaka-configuration');
-
-            return new Packager($driver, $logger, $config);
-        });
-
-        // Register the main class to use with the facade
-        $this->app->singleton('laravel-shaka', function () {
-            return new MediaOpenerFactory(
-                Config::string('filesystems.default'),
-                null,
-                fn () => app(Packager::class)
-            );
-        });
+        $this->publishes([
+            __DIR__.'/../config/shaka.php' => config_path('shaka.php'),
+        ], ['shaka', 'shaka-config']);
     }
 }

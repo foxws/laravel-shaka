@@ -2,12 +2,18 @@
 
 declare(strict_types=1);
 
-arch('it will not use debugging functions')
-    ->expect(['dd', 'dump', 'ray'])
-    ->not->toBeUsed()
-    ->ignoring('Foxws\\Shaka\\Exporters\\MediaExporter');
+arch()->preset()->php();
 
-arch('classes in src/Support extend nothing or base classes')
-    ->expect('Foxws\\Shaka\\Support')
-    ->classes()
-    ->not->toExtend('Illuminate\\Support\\Facades\\Facade');
+arch()->preset()->security();
+
+arch('it will not use dd(), ddd(), env(), or exit()')
+    ->expect(['dd', 'ddd', 'env', 'exit'])
+    ->each->not->toBeUsed();
+
+arch('the package source declares strict types')
+    ->expect('Foxws\\Shaka')
+    ->toUseStrictTypes();
+
+arch('Shaka Packager runs through laravel-media, not its own processes')
+    ->expect('Foxws\\Shaka')
+    ->not->toUse(['Illuminate\\Support\\Facades\\Process', 'Symfony\\Component\\Process']);

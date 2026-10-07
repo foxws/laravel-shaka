@@ -1,97 +1,97 @@
 ---
 name: laravel-shaka-development
-description: Package video and audio into DASH and HLS with foxws/laravel-shaka (Shaka Packager), including AES encryption, exporting to local or S3 disks, and serving manifests with signed URLs through DynamicHLSPlaylist and DynamicDASHManifest. Use when working with the Shaka facade, Foxws\Shaka classes, config/laravel-shaka.php, or packaging already-encoded media into streaming playlists.
+description: Package already-encoded video and audio into HLS and DASH with foxws/laravel-shaka (Shaka Packager) on top of foxws/laravel-media, including cbcs/cenc encryption with key rotation and clear lead, DRM systems, Widevine and PlayReady key servers, live and low-latency DASH, base URLs, subtitles, exporting to local or S3 disks and faking Shaka Packager in tests. Use when working with $opener->shaka(), the "shaka" packager driver, Foxws\Shaka classes such as ShakaOptions, or config/shaka.php.
 ---
 
 # Packaging with laravel-shaka
 
-`foxws/laravel-shaka` wraps the [Shaka Packager](https://shaka-project.github.io/shaka-packager/html/) binary. Shaka Packager remuxes and segments media that is **already encoded**; it does not transcode. To produce a resolution ladder or change codecs, use `foxws/laravel-streamer` or encode first.
+`foxws/laravel-shaka` is an add-on for `foxws/laravel-media`. It registers a `shaka` driver for laravel-media's packaging builder that runs the [Shaka Packager](https://shaka-project.github.io/shaka-packager/html/) binary. Shaka Packager remuxes and segments media that is **already encoded**; it does not transcode. Opening media, disks, temporary files, the process runner, uploads, encryption keys, signed playlists, events and fakes all come from laravel-media; activate `laravel-media-development` for those.
 
 ## Packaging flow
 
 ```php
-use Foxws\Shaka\Facades\Shaka;
-use Foxws\Shaka\Support\HlsPlaylistType;
+use Foxws\Media\Encryption\ProtectionScheme;
+use Foxws\Media\Facades\Media;
+use Foxws\Media\Filesystem\ExportResult;
+use Foxws\Media\Packaging\PackagingBuilder;
 
-$packager = Shaka::fromDisk('media')->open(['videos/clip.mp4']);
+$result = Media::fromDisk('media')
+    ->open('videos/clip.mp4')
+    ->shaka()                               // = ->package()->using('shaka')
+    ->addVideoStream(output: 'video.mp4')
+    ->addAudioStream(output: 'audio.mp4', language: 'en')
+    ->withHlsPlaylist('master.m3u8')
+    ->withDashManifest('manifest.mpd')
+    ->forVod()
+    ->withEncryption(scheme: ProtectionScheme::Cbcs)
+    ->toDisk('streams')                     // defaults to the source disk
+    ->withVisibility('private')
+    ->withContext(['video_id' => $video->id])
+    ->afterSaving(fn (PackagingBuilder $builder, ExportResult $result) => $video->markAsPackaged())
+    ->save("{$video->id}");
 
-$packager
-    ->addVideoStream('videos/clip.mp4', 'video.mp4')
-    ->addAudioStream('videos/clip.mp4', 'audio.mp4')
-    ->withMpdOutput('index.mpd')
-    ->withHlsMasterPlaylist('master.m3u8')
-    ->withHlsPlaylistType(HlsPlaylistType::Vod);
-
-try {
-    $packager
-        ->export()
-        ->toDisk('segments')
-        ->toPath("{$playlist->getKey()}/")
-        ->withVisibility('private')
-        ->afterSaving(fn ($exporter, $result) => $playlist->markAsReady())
-        ->save();
-} finally {
-    $packager->cleanupTemporaryFiles();
-}
+$result->paths();          // manifests first
+$result->encryptionKey();  // store it for the key or license route
 ```
 
-- The first argument of `add*Stream()` is the path you passed to `open()`; it resolves to a local file. The second is the output filename, written to a temporary directory.
-- Always call `cleanupTemporaryFiles()` in `finally`. Jobs run in long-lived workers, and failed jobs would otherwise leave large files behind.
-- `save()` copies the output to the target disk and then deletes the temporary directory. S3 disks upload concurrently, and large files use multipart uploads. Local disks get a `rename()`.
-- `->dd()` / `->getCommand()` on the exporter shows the packager command without running it.
-- Captions: add them with `addTextStream($path, 'caption.mp4', ['language' => 'en', 'dash_roles' => 'subtitle'])`. Output fragmented MP4 rather than `.vtt`: a bare `.vtt` output gets no segment index, and Shaka Player drops it.
-- Probe inputs first (for example with FFMpeg) and only add the video or audio streams that exist; the packager fails on a missing stream.
+- `save($directory)` packages into a laravel-media temporary directory, then moves or uploads everything to the target disk, and dispatches `ExportCompleted`/`ExportFailed` with the `withContext()` data.
+- Don't call any cleanup: laravel-media deletes temporary files after every queue job and request.
+- `add*Stream($path, $output, ..., $options)`: `$path` defaults to the first opened file; other paths are read from the same disk. `addStreamsFrom()` probes every opened file and adds its video and audio. `$options` are Shaka stream descriptor fields such as `hls_name` or `dash_roles`.
+- Use `.mp4` outputs for subtitles, not `.vtt`: DASH needs the segment index.
+- For several qualities, encode with `$opener->ladder(Ladder::standard(), 'renditions/{height}p.mp4')` first, then add each rendition's video and one audio stream.
+- `MEDIA_PACKAGER=shaka` makes Shaka the driver for `package()`, `exportAsHLS()`, `exportAsDASH()` and `exportAsStreams()` too. Prefer laravel-media's `native` driver (FFmpeg only) unless Shaka-only features are needed: `cbcs`, key rotation, clear lead, DRM systems, live DASH, several audio streams.
 
-## Encryption
+## Shaka options
+
+Typed, validated options go through `ShakaOptions`, passed with `withOptions()`:
 
 ```php
-use Foxws\Shaka\Support\ProtectionScheme;
+use Foxws\Shaka\ProtectionSystem;
+use Foxws\Shaka\ShakaOptions;
 
-$key = $packager->withAESEncryption('key', ProtectionScheme::Cbcs->value);
-
-// Store $key->keyId and $key->key (hex) to serve the key later.
+->withKeyRotation(300)->withClearLead(2)
+->withOptions(
+    ShakaOptions::make()
+        ->baseUrls('https://cdn.example.com/streams/1/')
+        ->protectionSystems(ProtectionSystem::Widevine, ProtectionSystem::PlayReady)
+        ->createSessionKeys()
+)
 ```
 
-- One key file, named after the first argument, is written to `cache_files_root` and uploaded next to the segments. HLS playlists reference it by that name. Serve it only through an authorized route or a short-lived signed URL.
-- `withAESEncryption()` takes the scheme as a string. `null` uses Shaka Packager's default, `cenc`. Use `cbcs` when one set of segments serves both HLS and DASH, including Safari. Avoid `cbc1` and `cens`; few players support them.
-- DASH has no key URI. The player needs the key itself, such as Shaka Player's `drm.clearKeys`.
-- Key rotation with raw keys is testing-grade in Shaka Packager: it derives later keys from the first, and the package only writes and returns the first key. Don't rely on it without testing full playback.
+- URLs and numbering: `baseUrls()`, `hlsBaseUrl()`, `hlsMediaSequenceNumber()`, `hlsStartTimeOffset()`, `startSegmentNumber()`, `transportStreamTimestampOffset()`.
+- Live DASH: `minBufferTime()`, `minimumUpdatePeriod()`, `suggestedPresentationDelay()`, `timeShiftBufferDepth()`, `preservedSegmentsOutsideLiveWindow()`, `utcTimings([...])`, `lowLatencyDashMode()`, `generateStaticLiveMpd()`, `forceClIndex()`. Live playlists: `withHlsPlaylist('master.m3u8', HlsPlaylistType::Live)`.
+- Key servers: `widevine($url, $contentIdHex, $policy)`, `playready($url, $programId)`, `aesSigning()` or `rsaSigning()`, `keyServerTls()`, `maxPixels()`, `groupId()`.
+- Anything else: `withOption('name', $value)`; `true` passes a flag, `null`/`false` leaves it out. Option and field names are validated, and commas in descriptor values are replaced, so values can't inject arguments.
 
-## Serving manifests with signed URLs
+## Serving
 
-Keep segments private and rewrite manifests per request so every URI is signed:
+Use laravel-media's signed playlists: `Media::fromDisk('streams')->open("{$id}/master.m3u8")->hlsPlaylist()->resolveMediaUrlsUsing(...)->resolveKeyUrlsUsing(...)->toResponse($request)`, and `dashManifest()` for DASH. DASH players need the key themselves (e.g. Shaka Player's `drm.clearKeys`).
 
-```php
-$handler = Shaka::dynamicHLSPlaylist()
-    ->setKeyUrlResolver(fn (string $path) => Storage::disk('segments')->temporaryUrl("{$id}/{$path}", now()->addMinutes(10)))
-    ->setMediaUrlResolver(fn (string $path) => Storage::disk('segments')->temporaryUrl("{$id}/{$path}", now()->addHour()))
-    ->setPlaylistUrlResolver(fn (string $path) => URL::temporarySignedRoute('manifest', now()->addHour(), [$id, $path]));
+## Queues and errors
 
-return $handler->fromDisk('segments')->open("{$id}/master.m3u8")->toResponse($request);
-```
-
-`Shaka::dynamicDASHManifest()` works the same with `setInitUrlResolver()` and `setMediaUrlResolver()`.
+- Package in a queued job, with `->timeout($seconds)` below the job's `$timeout` (default `shaka.timeout`).
+- Failures throw `Foxws\Media\Exceptions\ProcessFailedException` (use `isRetryable()`); a missing binary throws `ExecutableNotFoundException`. Invalid options, field names or a fragment longer than the segment throw `InvalidArgumentException`.
+- `command()` returns the command line with keys redacted. Shaka runs with `--quiet`, so only its warnings are logged.
 
 ## Configuration
 
-Publish with `php artisan vendor:publish --tag=shaka-config`. Check the binary with `php artisan shaka:info`.
-
-| Key | Purpose |
-| --- | --- |
-| `packager.binaries` | Path to the `packager` binary |
-| `segment_duration` | Default segment length in seconds |
-| `packager_options` | Array of default options applied to every command |
-| `temporary_files_root` | Where segments are written before upload; needs room for the whole output |
-| `cache_files_root` | Small files such as keys (default `/dev/shm`) |
-| `temporary_files_min_free`, `temporary_files_size_multiplier`, `cache_files_min_free` | Fail fast with `InsufficientStorageException` when a root is too full |
-| `concurrency_workers` | Parallel S3 uploads |
-| `multipart_threshold`, `multipart_part_size`, `multipart_concurrency` | Multipart upload tuning for large files |
-| `timeout` | Process timeout; keep it at or below the queue job's `$timeout` |
-
-## Events
-
-`PackagingStarted`, `PackagingCompleted` (`$result`, `$executionTime`) and `PackagingFailed` (`$exception`, `$executionTime`, `$context`) are dispatched around each run.
+`php artisan vendor:publish --tag=shaka-config` publishes `config/shaka.php` with `binary` (`SHAKA_PACKAGER_BINARY`, default `packager`) and `timeout` (`SHAKA_PACKAGER_TIMEOUT`). `php artisan media:info` lists the binary. Everything else lives in laravel-media's `config/media.php`.
 
 ## Testing
 
-Don't run the real binary in unit tests. Assert on the command with `->getCommand()`, and fake the target with `Storage::fake()`.
+Never run the real binary in tests:
+
+```php
+use Foxws\Media\Facades\Media;
+use Foxws\Shaka\ShakaExecutable;
+use Foxws\Shaka\Testing\FakeShaka;
+
+Storage::fake('media');
+$fake = FakeShaka::respond(Media::fake());   // writes placeholder outputs and manifests
+
+// ... run the code under test
+
+$fake->assertRan(ShakaExecutable::Packager, fn (array $arguments) => in_array('--protection_scheme=cbcs', $arguments, true));
+$fake->assertSaved('1/master.m3u8', 'media');
+$fake->failNext(ShakaExecutable::Packager, 'Packaging Error'); // test failures
+```

@@ -4,64 +4,62 @@ metadata:
   role: Media
   group: media
   eyebrow: "Video · HLS/DASH · Shaka Packager"
-  desc: "Package video into HLS and DASH streams with a fluent Laravel API."
-  requires: "PHP ^8.3"
-  laravel: "12.x / 13.x"
-  runtime: "Shaka Packager"
+  desc: "Package video into HLS and DASH streams with Shaka Packager."
+  lead: "Package already-encoded video into HLS and DASH with Shaka Packager, including DRM and live DASH. Read from any Laravel disk, and write to any disk."
+  requires: "PHP ^8.4"
+  laravel: "13.x"
+  runtime: "Shaka Packager, foxws/laravel-media"
   licence: MIT
   used_by:
-    name: Stry
-    desc: "A self-hosted video streaming app."
-    href: "https://github.com/francoism90/stry"
+    - name: Stry
+      desc: "A self-hosted video streaming app."
+      href: "https://github.com/francoism90/stry"
 ---
 
 # Introduction
 
-This package runs [Shaka Packager](https://github.com/shaka-project/shaka-packager) from Laravel. It turns video and audio files into HLS and DASH streams, reads the source from any Laravel disk, and writes the result to any disk.
+This package runs [Shaka Packager](https://github.com/shaka-project/shaka-packager) from Laravel. It turns video and audio files into HLS and DASH streams.
+
+It's an add-on for [foxws/laravel-media](https://github.com/foxws/laravel-media): it adds a `shaka` driver to laravel-media's packaging builder. You open media with laravel-media, and `shaka()` packages it:
 
 ```php
-use Foxws\Shaka\Facades\Shaka;
+use Foxws\Media\Facades\Media;
 
-Shaka::fromDisk('media')
+Media::fromDisk('media')
     ->open('videos/clip.mp4')
-    ->addVideoStream('videos/clip.mp4', 'video.mp4')
-    ->addAudioStream('videos/clip.mp4', 'audio.mp4')
-    ->withMpdOutput('index.mpd')
-    ->withHlsMasterPlaylist('master.m3u8')
-    ->export()
+    ->shaka()
+    ->addStreamsFrom()
+    ->withHlsPlaylist()
+    ->withDashManifest()
     ->toDisk('s3')
-    ->toPath('streams/clip/')
-    ->save();
+    ->save('streams/clip');
 ```
 
 ## What it does, and what it doesn't
 
 Shaka Packager **packages**. It cuts already-encoded video into segments and writes the playlists that players read. It does not re-encode, so it's fast, and the output is about the same size as the input.
 
-It can't make a 720p version out of a 1080p file. If you need several qualities, either encode them first (for example with FFmpeg) and add each file as a stream, or use [Laravel Streamer](https://github.com/foxws/laravel-streamer), which encodes and packages in one step.
+To get several qualities, encode them first with laravel-media's rendition ladder, then add each file as a stream.
+
+laravel-media's own `native` packager needs only FFmpeg. Use Shaka Packager when you need what the native packager doesn't do: `cbcs` encryption for Safari, key rotation, a clear lead, Widevine and PlayReady, live and low-latency DASH, or several audio streams.
 
 ## Features
 
-- Read input from, and write output to, any Laravel disk: local, S3 or your own.
-- Build DASH and HLS from the same segments in one run.
-- Encrypt with AES and a generated key.
-- Serve private streams by signing every URL in a playlist when it's requested.
-- Upload to S3 in parallel, with multipart uploads for large files.
+- Every packaging feature of laravel-media: any Laravel disk for input and output, DASH and HLS from the same segments, AES encryption with a generated key, signed playlists with `DynamicHLSPlaylist` and `DynamicDASHManifest`, concurrent S3 uploads, events and temporary file cleanup.
+- Shaka Packager's own options as typed methods with `ShakaOptions`: DRM systems, Widevine and PlayReady key servers, live DASH, base URLs and segment numbering.
+- `Media::fake()` in tests, with `FakeShaka` writing placeholder outputs.
 
 ## Requirements
 
-- PHP 8.3 or higher
-- Laravel 12 or 13
-- The Shaka Packager binary
+- PHP 8.4 or higher
+- Laravel 13
+- [foxws/laravel-media](https://github.com/foxws/laravel-media) 0.3.4 or higher
+- The [Shaka Packager](https://github.com/shaka-project/shaka-packager/releases) binary
 
 ## Pages
 
 - [Installation](installation.md)
 - [Usage](usage.md)
-- [URL Resolvers](url-resolvers.md)
-- [Queues](queue-integration.md)
-- [Encryption](aes-encryption.md)
+- [Testing](testing.md)
 - [Configuration](configuration.md)
-- [Quick Reference](quick-reference.md)
-- [How It Works](architecture.md)
-- [Troubleshooting](troubleshooting.md)
+- [Upgrading from 2.x](upgrading.md)

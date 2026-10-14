@@ -56,6 +56,16 @@ laravel-media's own `native` packager needs only FFmpeg. Use Shaka Packager when
 - [foxws/laravel-media](https://github.com/foxws/laravel-media) 0.3.4 or higher
 - The [Shaka Packager](https://github.com/shaka-project/shaka-packager/releases) binary
 
+> [!TIP]
+> Let your AI agent do the hard parts. This package ships a [Laravel Boost](https://laravel.com/docs/boost) skill, `laravel-shaka-development`, that teaches your agent how to install, configure and use Laravel Shaka. Install Boost and select the skill when prompted:
+>
+> ```bash
+> composer require laravel/boost --dev
+> php artisan boost:install
+> ```
+>
+> Already using Boost? Run `php artisan boost:update --discover` to pick up the skill. Then just ask, for example: *"Package my encoded videos into HLS and DASH with cbcs encryption."*
+
 ## Pages
 
 - [Installation](installation.md)

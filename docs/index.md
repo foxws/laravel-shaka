@@ -6,7 +6,7 @@ metadata:
   eyebrow: "Video · HLS/DASH · Shaka Packager"
   desc: "Package video into HLS and DASH streams with Shaka Packager."
   lead: "Package already-encoded video into HLS and DASH with Shaka Packager, including DRM and live DASH. Read from any Laravel disk, and write to any disk."
-  requires: "PHP ^8.4"
+  requires: "PHP ^8.5"
   laravel: "13.x"
   runtime: "Shaka Packager, foxws/laravel-media"
   licence: MIT
@@ -51,7 +51,7 @@ laravel-media's own `native` packager needs only FFmpeg. Use Shaka Packager when
 
 ## Requirements
 
-- PHP 8.4 or higher
+- PHP 8.5 or higher
 - Laravel 13
 - [foxws/laravel-media](https://github.com/foxws/laravel-media) 0.3.4 or higher
 - The [Shaka Packager](https://github.com/shaka-project/shaka-packager/releases) binary

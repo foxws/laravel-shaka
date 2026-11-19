@@ -12,7 +12,7 @@ See the [full documentation](docs): [Installation](docs/installation.md), [Usage
 
 ## Requirements
 
-- PHP 8.4 or higher
+- PHP 8.5 or higher
 - Laravel 13
 - [foxws/laravel-media](https://github.com/foxws/laravel-media) 0.3.4 or higher
 - The [Shaka Packager](https://github.com/shaka-project/shaka-packager/releases) binary
